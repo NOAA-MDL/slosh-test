@@ -39,4 +39,6 @@ int load_bsndta (char *filename, char *abrev, bsndta_type *bsn,
 int saveLLx (char *buffer, char *filename, char *Header, int *imxb,
              int *jmxb);
 
+int memSetLLx (char *buffer, int *Imxb, int *Jmxb);
+
 #endif

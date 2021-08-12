@@ -877,6 +877,11 @@ void tclose_ (int *fid)
    TIO_type *tp = tFind ((unsigned short int) *fid);
    tClose (tp);
 }
+void tflush_ (void)
+{
+   fflush (stdout);
+   fflush (stderr);
+}
 #endif
 /*****************************************************************************
  * Hp-FORTRAN Calls :: Arthur Taylor TDL
@@ -936,5 +941,10 @@ void tclose (int *fid)
 {
    TIO_type *tp = tFind ((unsigned short int) *fid);
    tClose (tp);
+}
+void tflush (void)
+{
+   fflush (stdout);
+   fflush (stderr);
 }
 #endif

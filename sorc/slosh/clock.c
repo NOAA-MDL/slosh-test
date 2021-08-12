@@ -201,6 +201,52 @@ int Clock_NumDay (int month, int day, sInt4 year, char f_tot)
 }
 
 /*****************************************************************************
+ * hrSinceBegYear --- Arthur Taylor / MDL
+ *
+ * PURPOSE
+ *   Compute the number of hours since the beginning of the year
+ * (Useful for yearly contant tidal constituents, nodal factor and
+ *  equilibrium arguments.)
+ *
+ * ARGUMENTS
+ *    year = Which year [1850...2025]. (Input)
+ *   month = Which month [1..12]. (Input)
+ *     day = Which day [1..31]. (Input)
+ *    hour = Which hour [0..23]. (Input)
+ *
+ * RETURNS: double
+ *     ans = number of hours since beginning of year
+ *      -1 = Input error
+ *
+ * HISTORY
+ *   11/17/2010 Legacy code from tide3.c written by Arthur Taylor
+ *    2/28/2011 Modified comments and added user error checking. Amy Haase
+ *    5/21/2013 Added to clock.c to keep time procedures together. AAT.
+ *
+ * NOTES
+ *****************************************************************************/
+double Clock_hrSinceBegYear (int year, int month, int day, double hour)
+{
+   int ans;
+   const int jfmo[12] = { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304,
+                          334 };
+   /* Check to make sure year is between 1 and 12. Alerts user, but does not
+    * kill program. */
+   if ((month < 1) || (month > 12)) {
+      fprintf (stderr, "Month not valid, enter a value between 1 and 12.\n");
+      return -1;
+   }
+   /* Want time in hours since beginning of year. */
+   ans = hour + 24 * (jfmo[month - 1] + (day - 1));
+   if (((year % 4) == 0) && (((year % 100) != 0) || ((year % 400) == 0))) {
+      if (month >= 3) {
+         ans += 24;
+      }
+   }
+   return ans;
+}
+
+/*****************************************************************************
  * Clock_FormatParse() --
  *
  * Arthur Taylor / MDL
@@ -629,14 +675,15 @@ void Clock_PrintDate (double clock, sInt4 * year, int *month, int *day,
  * NOTES
  *****************************************************************************
  */
-void Clock_Print (char *buffer, int n, double clock, char *format,
-                  char f_gmt)
+void Clock_Print (char *buffer, unsigned int n, double clock,
+                  const char *format, char f_gmt)
 {
    sInt4 totDay, year;
    sInt4 sec;
    double floatSec;
    int month, day;
-   int i, j;
+   unsigned int i;
+   unsigned int j;
    char f_perc;
    char locBuff[100];
    int timeZone;        /* # of hrs to adjust the clock by because of
@@ -921,7 +968,7 @@ int Clock_ScanMonth (char *ptr)
  *
  * ARGUMENTS
  *
- * RETURNS: void
+ * RETURNS: -1 on error
  *
  * HISTORY
  *   3/2005 Arthur Taylor (MDL/RSIS): Commented.
@@ -929,15 +976,26 @@ int Clock_ScanMonth (char *ptr)
  * NOTES
  *****************************************************************************
  */
-void Clock_PrintMonth3 (int mon, char *buffer, int buffLen)
+int Clock_PrintMonth3 (int mon, char *buffer, int buffLen)
 {
    static char *MonthName[] = {
       "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT",
       "NOV", "DEC"
    };
-   myAssert ((mon > 0) && (mon < 13));
+   if ((mon <= 0) || (mon >= 13)) {
+      fprintf (stderr, "Month %d is not allowed in Clock_PrintMonth3()\n",
+               mon);
+      return -1;
+   }
+   myAssert((mon > 0) && (mon < 13));
+   if (buffLen <= 3) {
+      fprintf (stderr, "%d is not long enough for %s\n", buffLen,
+               MonthName[mon - 1]);
+      return -1;
+   }
    myAssert (buffLen > 3);
    strcpy (buffer, MonthName[mon - 1]);
+   return 0;
 }
 
 /*****************************************************************************
@@ -949,7 +1007,7 @@ void Clock_PrintMonth3 (int mon, char *buffer, int buffLen)
  *
  * ARGUMENTS
  *
- * RETURNS: void
+ * RETURNS: -1 on error.
  *
  * HISTORY
  *   3/2005 Arthur Taylor (MDL/RSIS): Commented.
@@ -957,15 +1015,26 @@ void Clock_PrintMonth3 (int mon, char *buffer, int buffLen)
  * NOTES
  *****************************************************************************
  */
-void Clock_PrintMonth (int mon, char *buffer, int buffLen)
+int Clock_PrintMonth (int mon, char *buffer, int buffLen)
 {
    static char *MonthName[] = {
       "January", "February", "March", "April", "May", "June", "July",
       "August", "September", "October", "November", "December"
    };
+   if ((mon <= 0) || (mon >= 13)) {
+      fprintf (stderr, "Month %d is not allowed in Clock_PrintMonth()\n",
+               mon);
+      return -1;
+   }
    myAssert ((mon > 0) && (mon < 13));
+   if (buffLen <= 9) {
+      fprintf (stderr, "%d is not long enough for %s\n", buffLen,
+               MonthName[mon - 1]);
+      return -1;
+   }
    myAssert (buffLen > 9);
    strcpy (buffer, MonthName[mon - 1]);
+   return 0;
 }
 
 /*****************************************************************************

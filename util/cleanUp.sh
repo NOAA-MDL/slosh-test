@@ -1,6 +1,6 @@
 #!/bin/bash
 #------------------------------------------------------------------------------
-# cleanUp.sh                                            Last Change: 2021-06-14
+# cleanUp.sh                                            Last Change: 2021-06-17
 #                                                        Arthur.Taylor@noaa.gov
 #                                                              NWS/OSTI/MDL/DSD
 #------------------------------------------------------------------------------
@@ -24,6 +24,8 @@ cd $srcDir/..
 echo "[*] Cleaning the ./sorc directory"
 cd sorc/slosh
 make -f makefile.dos clean
+rm sloshDos*
+rm sloshLinux*
 cd ../stm2trk
 make -f makefile.win clean
 cd ../../

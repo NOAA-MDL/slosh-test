@@ -15,12 +15,22 @@
 
 #ifndef SINT4_TYPE
  #define SINT4_TYPE
- #ifdef _64Bit
+ #ifdef __64BIT__
   typedef signed int sInt4;
   typedef unsigned int uInt4;
  #else
-  typedef signed long int sInt4;
-  typedef unsigned long int uInt4;
+  #ifdef _64Bit
+   typedef signed int sInt4;
+   typedef unsigned int uInt4;
+  #else
+   #if SIZEOF_LONG_INT == 8
+    typedef signed int sInt4;
+    typedef unsigned int uInt4;
+   #else
+    typedef signed long int sInt4;
+    typedef unsigned long int uInt4;
+   #endif
+  #endif
  #endif
  typedef unsigned char uChar;
  typedef signed char sChar;

@@ -2,67 +2,96 @@
 SHELL = /usr/bin/bash
 
 ############################
-# This makefile is intended to create the DOS executable.
+# This makefile is intended to create the Linux executable.
 #
 # USAGE:
-#    make B=gcc342 | gcc450 | gcc453 (cygwin MPI) | gcc461 (B is for build)
+#    make B=gcc446 | B=intl1215 (B is for build)
 #
 # Other options...
-#    make MEM=true, DEBUG=true, DOUBLE=true, MPI=true, EXPR=true
-#    MPI currently only works for cygwin (gcc453)...
+#    make MEM=true, DEBUG=true, BIT=32 | 64, DOUBLE=true, MPI=true, EXPR=true
 #    EXPR=true means enable experimental options.
 #       EXPR should be false for FOIA CD so it has well tested options.
 ############################
-#B=gcc342
+#B=gcc446
 #DOUBLE=false
 B=gcc450
 MEM=false
 DEBUG=false
+BIT=32
 DOUBLE=true
 MPI=false
-MINGW=true
 EXPR=true
-
-# MPI currently only works for cygwin (gcc453)...
-ifeq ($(MPI),true)
-  B=gcc453
-  MINGW=false
-endif
 
 ############################
 # Set up the path.
 ############################
-ifeq ($(MINGW),true)
-  ifeq ($(B),gcc342)
-  BINDIR = /cygdrive/c/sys/MinGW/MinGW-3.4.2/bin
-  else
-    ifeq ($(B),gcc450)
-    BINDIR = /cygdrive/c/sys/MinGW/MinGW-4.5.0/bin
+EXTRADIR = 
+ifeq ($(MPI),true) 
+  BINDIR = /usrx/local/intel/impi/4.0.3.008/intel64/bin
+  ifeq ($(B),intl1215)
+    ifeq ($(BIT),32)
+      EXTRADIR = /usrx/local/intel/composer_xe_2011_sp1.11.339/bin/ia32:/usr/bin
     else
-    BINDIR = /cygdrive/c/sys/MinGW/MinGW-4.6.1/bin
+      EXTRADIR = /usrx/local/intel/composer_xe_2011_sp1.11.339/bin/intel64:/usr/bin
     endif
+  else
+    EXTRADIR = /bin:/usr/bin
   endif
 else
-  BINDIR=/usr/bin
+  ifeq ($(B),intl1215)
+    ifeq ($(BIT),32)
+      BINDIR = /usrx/local/intel/composer_xe_2011_sp1.11.339/bin/ia32
+    else
+      BINDIR = /usrx/local/intel/composer_xe_2011_sp1.11.339/bin/intel64
+    endif
+    EXTRADIR = /usr/bin
+  else
+    BINDIR := $(PATH)
+  endif
 endif
-PATH := $(BINDIR)
+
+PATH := $(BINDIR):$(EXTRADIR)
+
+ifeq ($(MPI),true) 
+  ifeq ($(BIT),32)
+    MPI_INC = -I/usrx/local/intel/impi/4.0.3.008/ia32/include
+    MPI_LIB = -L/usrx/local/intel/impi/4.0.3.008/ia32/lib
+    MPI_RUNLIB = -R/usrx/local/intel/impi/4.0.3.008/ia32/lib
+  else
+    MPI_INC = -I/usrx/local/intel/impi/4.0.3.008/intel64/include
+    MPI_LIB = -L/usrx/local/intel/impi/4.0.3.008/intel64/lib
+    MPI_RUNLIB = -R/usrx/local/intel/impi/4.0.3.008/intel64/lib
+  endif
+endif
+
+ifeq ($(B),intl1215)
+  ifeq ($(BIT),32)
+    INTEL_LIB = /usrx/local/intel/composer_xe_2011_sp1.11.339/compiler/lib/ia32
+  else
+    INTEL_LIB = /usrx/local/intel/composer_xe_2011_sp1.11.339/compiler/lib/intel64
+  endif
+endif
 
 ############################
 # Set up the binary files and version info.
 ############################
 HEAD = /usr/bin/head
-CUT = /usr/bin/cut
-CP = /usr/bin/cp
-MKDIR = /usr/bin/mkdir
-RM = /usr/bin/rm
-ifeq ($(MPI),true)
-  CC = mpicc
+CUT = /bin/cut
+CP = /bin/cp
+RM = /bin/rm
+ifeq ($(B),intl1215)
+  ifeq ($(MPI),true)
+    CC = mpiicc
+  else
+    CC = icc
+  endif
+  F77 = ifort
 else
-  CC = gcc
-endif
-ifeq ($(B),gcc342)
-  F77 = g77
-else
+  ifeq ($(MPI),true)
+    CC = mpicc
+  else
+    CC = gcc
+  endif
   F77 = gfortran
 endif
 STRIP = strip
@@ -71,34 +100,36 @@ STRIP = strip
 # Set up Targets
 ############################
 ifeq ($(MPI),true)
-  NAME = sloshCygwinMPI
+  NAME = sloshMPI
 else
-  NAME = sloshDos
+  NAME = sloshLinux
 endif
 ifeq ($(DOUBLE),true)
-  PRJ_NAME = $(NAME)_$(B)Dbl
-else
-  PRJ_NAME = $(NAME)_$(B)
+  PRJ_NAME = $(NAME)_$(B)_$(BIT)Dbl
+else 
+  PRJ_NAME = $(NAME)_$(B)_$(BIT)
 endif
 TARGETS = $(PRJ_NAME)
-SUFFIX = .exe
+SUFFIX = 
 
 ############################
 # Set up Compiler flags...
 #   CFLAGS (via STD_DEF and STD_INC) and FFLAGS
 ############################
+      # _LINUX_ ==> Indicates this is linux (vs aix)
+STD_DEF = -D_LINUX_
       # _GCC_ ==> Means use GCC wrappings for connecting to fortran.
-STD_DEF = -D_GCC_
+STD_DEF += -D_GCC_
+      # SIZEOF_LONG_INT ==> long int is 8 vs 4 bytes (file I/O)
+ifeq ($(BIT),64)
+  STD_DEF += -DSIZEOF_LONG_INT=8
+endif
       # CC_VER ==> embeds the compiler version into exectuable.
-CC_VER := $(shell $(BINDIR)/$(CC) --version | $(HEAD) -n1 | $(CUT) -d' ' -f2,3 --output-delimiter='-')
+CC_VER := $(shell $(CC) --version | $(HEAD) -n1 | $(CUT) -d' ' -f2,3 --output-delimiter='-')
 STD_DEF += -DCC_VER="\"$(CC_VER)\""
       # Compile with double precision flags.
 ifeq ($(DOUBLE),true)
   STD_DEF += -DDOUBLE_FORTRAN
-endif
-      # Allows Mingw specific sleep(), mkdir() functions.
-ifeq ($(MINGW),true)
-  STD_DEF += -D_MINGW_
 endif
       # Compile with MPI
 ifeq ($(MPI),true)
@@ -114,44 +145,66 @@ else
      STD_DEF += -DDEBUG
   endif
   MEMWATCH =
-  STD_INC =
 endif
    # check to see if EXPR options should be enabled (not true in FOIA case)
 ifeq ($(EXPR),true)
   STD_DEF += -D_EXPR_
 endif
 
+ifeq ($(MPI),true)
+  STD_INC += $(MPI_INC)
+endif
 STD_INC += -I.
 
 CFLAGS = -O3 -Wall -Wextra -pedantic -ansi
+ifeq ($(BIT),32) 
+  CFLAGS += -m32
+endif
 CFLAGS += $(STD_DEF) $(STD_INC)
 
 ifeq ($(DOUBLE),true)
   FFLAGS = -O3
-  FFLAGS += -fdefault-real-8
+  ifeq ($(F77),ifort)
+    FFLAGS += -r8
+  else 
+    FFLAGS += -fdefault-real-8
+  endif
 else
-  FFLAGS = -O0
+  ifeq ($(F77),gfortran)
+    FFLAGS = -O0
+  endif
+endif
+ifeq ($(BIT),32) 
+  FFLAGS += -m32
 endif
 
 ############################
 # Set up Linker flags...
 #    STD_LIB and LD_FLAGS
 ############################
-ifeq ($(DOUBLE),true)
-  LD_FLAGS = -Wl,--stack,32000000
+ifeq ($(B),intl1215)
+  ifeq ($(BIT),32)
+    # Following tells it where the runtime library is.
+    LD_FLAGS = -Wl,-R$(INTEL_LIB)
+    ifeq ($(MPI),true)
+      LD_FLAGS += -Wl,$(MPI_RUNLIB)
+    endif
+  else 
+    LD_FLAGS = 
+  endif
+  STD_LIB = -L$(INTEL_LIB) -lifcore -limf -lintlc
 else
-  LD_FLAGS = -Wl,--stack,16000000
+  LD_FLAGS = 
+  STD_LIB = -lgfortran
+  ifeq ($(BIT),32)
+    STD_LIB += -L/usr/lib -lm
+  else
+    STD_LIB += -L/usr/lib64 -lm
+  endif
 endif
-ifeq ($(B),gcc342)
-  STD_LIB = -lg2c
-else
-  STD_LIB = -Wl,-Bstatic -lgfortran
-endif
-      # Compile with MPI
 ifeq ($(MPI),true)
-  STD_LIB += -Wl,-Bdynamic -lmpi -lesmtp
+  STD_LIB += $(MPI_LIB)
 endif
-STD_LIB += -L/usr/lib -lm
 
 ############################
 # FILES
@@ -162,8 +215,8 @@ SOURCE = amyutil.c \
          mpiutil.c \
          myassert.c \
          myutil.c \
-         pack.c \
          rex.c \
+         pack.c \
          savellx.c \
          setup.c \
          slosh2.c \
@@ -209,16 +262,14 @@ all: $(TARGETS)
 	@echo ""
 
 help:
-	@echo "make B=(gcc342 | gcc450 | gcc453 (cygwin) | gcc461)"
-	@echo "     other options: MEM=true, DEBUG=true, DOUBLE=true, MPI=true, EXPR=true"
-	@echo "Note: MPI currently only works for cygwin (gcc453)"
+	@echo "make B=(gcc446 | intl1215 )"
+	@echo "     other options: MEM=true, DEBUG=true, BIT=(32 | 64), DOUBLE=true, MPI=true, EXPR=true"
 
 $(PRJ_NAME): $(OBJECTS) $(C_MAIN) $(HEADERS)
 	$(CC) $(C_MAIN) $(CFLAGS) $(LD_FLAGS) $(OBJECTS) $(STD_LIB) -o $(PRJ_NAME)
 	$(STRIP) -s $(PRJ_NAME)$(SUFFIX)
 
 install: $(TARGETS)
-	$(MKDIR) -p ../../exec
 #	$(CP) $(PRJ_NAME)$(SUFFIX) ../../exec
 	$(CP) $(PRJ_NAME)$(SUFFIX) ../../exec/$(NAME)$(SUFFIX)
 

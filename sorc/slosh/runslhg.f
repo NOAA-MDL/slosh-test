@@ -59,18 +59,18 @@ C
       DATA ZSUBCE/-1./,JSUB,JSUB1/38,50/
       DATA LDTMG/5*33,8*35,5*34,
      1 30,29,29,28,27,26,26,24,22,20,21,22,22,21,
-     2 68*1,500*1/
+     2 68*1,700*1/
       DATA NODRY/74/
       DATA IDRY/21,22,22,23,23,23,23,24,24,24,24,25,25,25,25,26,26,26,
      1          27,27,27,28,28,28,29,29,29,29,30,30,30,30,30,30,31,31,
      2          31,31,28,28,28,28,28,29,29,29,29,30,30,30,30,30,31,31,
      3          31,32,32,32,32,32,32,32,33,33,33,33,33,34,34,34,34,34,
-     4          34,34,926*1/
+     4          34,34,5926*1/
       DATA JDRY/28,28,29,27,28,29,30,27,28,29,30,26,27,28,29,26,27,28,
      1          24,25,26,23,24,25,22,23,24,25,20,21,22,23,24,25,19,20,
      2          25,21,26,27,28,29,30,27,28,29,30,26,27,28,29,30,26,27,
      3          28,23,24,25,26,27,28,29,23,26,27,28,29,20,21,22,23,27,
-     4          28,29,926*1/
+     4          28,29,5926*1/
 C
        END
       SUBROUTINE MAINE()
@@ -362,6 +362,7 @@ C
 C
 C        TOTAL RUN TIME
       T=ITEND-IBGNT
+C      write (*,*) "Mhalt", MHALT, (T*3600.+1.)/DELT
       MHALT=(T*3600.+1.)/DELT
 CC      write (*,*)' total hours and time steps',t,mhalt
 C
@@ -699,15 +700,24 @@ C        ADVANCE 1ST HOUR SUBSCRIPT
 C
 C         X/Y-COMP OF STORM TRAVERSE FOR FIRST UNIT OF TIME
 C         RECORD STORM POSITIONS AT ANY TIME IN (X,Y) PLANE (FT)
-      AX=AX+X12(11)
-      AY=AY+X12(12)
+CC      Arthur 6/8/2012 ... Don't timestep the positions here.
+CC          We're initializing variables here so timestep should
+CC          be done in STMVAL otherwise we have a double step at beginning.
+CC          For Betsy this resulted in a change of position of next to last
+CC          point from "09/10/1965 12:00:00 (31.900293, 92.113121)"
+CC                  to "09/10/1965 12:00:00 (31.899822, 92.109535)"
+CC           should be "09/10/1965 12:00:00 (31.900000, 92.110000)"
+CC      AX=AX+X12(11)
+CC      AY=AY+X12(12)
       X12(49)=C1+AX
       X12(50)=C2+AY
 C
 C         UPDATED PRESS DROP, AND STORM SIZE, FOR UNIT TIME INTERVAL
-C         UPDATED PRESS DROP, AND STORM SIZE, FOR UNIT TIME INTERVAL
-      YDELP=YDELP+PTENCY
-      YC24 =YC24 +RTENCY
+CC      Arthur 6/8/2012 ... Don't timestep the delp/rmax here.
+CC          We're initializing variables here so timestep should
+CC          be done in STMVAL otherwise we have a double step at beginning.
+CC      YDELP=YDELP+PTENCY
+CC      YC24 =YC24 +RTENCY
       PN=YDELP
       PNN=PN
 C
@@ -827,7 +837,11 @@ C STIME interferes with C code, so switched to STIME2
 C
 C
 C        TEST FOR INCREMENTAL HOURLY CHANGES IN STORM TRACK
-      IF(ITIME.NE.NHRAD) GO TO 100
+C        The -1 is needed to make sure that the shift from one timestep to
+C        another occurs on the hour, rather than one timestep before the hour
+C        The first timestep (ITIME) past the hour is when the new delt kicks
+C        in.
+      IF(ITIME-1.NE.NHRAD) GO TO 100
 C        PRINTOUT SELECTED HOURS FOR SNAPSHOT SURGES
       IF (ITMADV.NE.MAPIN(NUMBER)) GO TO 20
       CALL SNAPSH
@@ -850,7 +864,7 @@ C        RETURN TO INTERMEDIATE TIME STEP 3 HR AFTER NEAREST APPROACH.
  144  CONTINUE
 C
 C        RECOMPUTE THE PARAMETERS DEPENDING ON TIME STEP AS DELT CHANGED
-      MHALT=ITIME+(MHALT-ITIME)*DELT/DELT1 + .01
+      MHALT=(ITIME-1)+(MHALT-(ITIME-1))*DELT/DELT1 + .01
       DELT=DELT1
       NDLTHR=3600./(DELT-.001)
       IPRTSV=IPRTSV-IPRTAD
@@ -1454,16 +1468,16 @@ c
       IF (ISMOOTH.EQ.'&') ISMTH=10
       IF (ISMOOTH.EQ.'=') ISMTH=11
       
-      write (*,*) 'sta,', sta
-      write (*,*) 'ebsn (type of basin)', ebsn
-      write (*,*) 'dollar (closed basin or msy)', dollar
-      write (*,*) 'ebsn1 (smoothing types)', ebsn1 
-      write (*,*) 'ebsn2 (j-i vs i-j for output)', ebsn2
-      write (*,*) 'isouth (southern hemi)', isouth
-      write (*,*) 'nofld (no flood and overtop barriers)', nofld
-      write (*,*) 'nof1d (no 1d flow)', nof1d
-      write (*,*) 'High Terr (35 - 56 feet to flood)', HTER
-      write (*,*) 'Smooth Method (smoothing type)', ISMTH
+C      write (*,*) 'sta,', sta
+C      write (*,*) 'ebsn (type of basin)', ebsn
+C      write (*,*) 'dollar (closed basin or msy)', dollar
+C      write (*,*) 'ebsn1 (smoothing types)', ebsn1
+C      write (*,*) 'ebsn2 (j-i vs i-j for output)', ebsn2
+C      write (*,*) 'isouth (southern hemi)', isouth
+C      write (*,*) 'nofld (no flood and overtop barriers)', nofld
+C      write (*,*) 'nof1d (no 1d flow)', nof1d
+C      write (*,*) 'High Terr (35 - 56 feet to flood)', HTER
+C      write (*,*) 'Smooth Method (smoothing type)', ISMTH
 
 c
 C
@@ -1860,13 +1874,20 @@ C        RADII OF MAX WINDS IN ST MILES, ALL 1 HOURS APART
 C
 C ht1 < 99.9 implies init water was for tide + anomaly (so tide)
 C ht1 = 99.9 implies init water was missing (so surge)
-C 150 < ht1 < 250 implies init water was for anomaly (so surge) (with anomaly = ht1 - 200)
-C 350 < ht1 < 450 implies we added a tide field (SLOSH + tide) (so tide) (with anomaly = ht1 - 400)
+C 150 < ht1 or -250 > ht1 implies anomaly can be found by
+C    mod ((ht1 + 50), 100) - 50)
+C The exception would be 999.9, but that shouldn't be used anymore
+C   and I don't believe that was in any .trk files.
 C
-      IF ((SEADTM.GE.150).AND.(SEADTM.LE.250)) THEN
-      SEADTM = INT((SEADTM - 200)*10 + .5)/10.
-      ELSE IF ((SEADTM.GE.350).AND.(SEADTM.LE.450)) THEN
-      SEADTM = INT((SEADTM - 400)*10 + .5)/10.
+      IF (INT(SEADTM * 10 + .5) == 999) THEN
+C ht1 = 99.9 implies init water was missing (so surge)
+        SEADTM = 0
+        DTMLAK = 0
+      ENDIF
+      IF ((SEADTM.GE.150).OR.(SEADTM.LE.-250)) THEN
+      SEADTM = MOD ((SEADTM + 50), 100.) - 50
+C Then round to nearest 10th of a foot.
+C      SEADTM = INT(SEADTM * 10 + .5)/10.
       ENDIF
 c      write (*,*) '  sea datum, and lake datum =', seadtm, dtmlak
 c      read (*,*) seadtm,dtmlak
@@ -2195,22 +2216,35 @@ C---------------------- FOR OKEECHOBEE BASIN ONLY ----
  1111 CONTINUE
       DO 10 J=1,JMXB1
       DO 10 I=1,IMXB1
+C The Tree test is to see if the cell is in the lake.
       IF (ITREE(I,J).EQ.'7'.OR.ITREE(I+1,J).EQ.'7'.OR.
      1   ITREE(I,J+1).EQ.'7'.OR.ITREE(I+1,J+1).EQ.'7') THEN
         HB(I,J)=AMAX1(-ZB(I,J),AMAX1(DTMLAK,-ZB(I,J)))
+C The -10 is to test if the cell is < 10 feet above datum
+C So it is a potential channel.
         ELSE IF (ZB(I,J).GT.-10.) THEN
           HB(I,J)=AMAX1(DTMCHN,-zb(i,j))
+C Else the cell is >= 10 feet above datum so it is dry.
+C EOKE (v2) NorthWest Channel wasn't completely wet.
           ELSE
           HB(I,J)=-ZB(I,J)
           ENDIF
  10   CONTINUE
+
+C Start added Arthur for Ok3...
+      DO  L=1,NODRY
+      I=IDRY(L)
+      J=JDRY(L)
+      HB(I,J)=-ZB(I,J)
+      ENDDO
+C Finished added Arthur for Ok3...
+
 C       RESET CANNEL WATER LEVEL AS LAKE LEVEL
 C       SUPPRESS WIND FOR ALL CANALS WITH 'TREE' OPTION IN 1D FLOW.
       DO 12 L=1,NSQRWC
       IF (KTREE(L).EQ.'T') THEN
        I=ISQR(L)
        J=JSQR(L)
-CC       write (*,*) l,i,j
        HB(I,J)=AMAX1(DTMLAK,-ZB(I,J))
        K=ISIDE(L)
        II=I+IHH(K)
@@ -2319,6 +2353,7 @@ C
       CHARACTER*256 FLE5,FLE9,FLE8,FLE91,FLE99,FLE10,FLE20,FLE30,FLE1
       CHARACTER*256   FILNAM
       CHARACTER*80    DUM
+      REAL *4 XX
 C
 CC      WRITE (*,*)' READ IN LAT/LONG OF THE GRIDS'
 C      READ (*,'(A)') FILNAM
@@ -2333,12 +2368,14 @@ C      READ (*,'(A)') FILNAM
       ENDIF
       DO L=1,JMXB
         DO K=1,IMXB
-          CALL TREADF(25,YLT(K,L),1)
+          CALL TREADF(25,XX,1)
+          YLT(K,L) = XX
         END DO
       END DO
       DO L=1,JMXB
         DO K=1,IMXB
-          CALL TREADF(25,YLG(K,L),1)
+          CALL TREADF(25,XX,1)
+          YLT(K,L) = XX
         END DO
       END DO
       CALL TCLOSE(25)
@@ -2393,8 +2430,8 @@ C             2    8    8    8    9    9    9    1    1
 C DEEP WATER-) (-INTERMEDIATE----) (-SHALLOW----) (--LAND----
 C
       IF (IMXB.GT.M_.OR.JMXB.GT.N_) THEN
-CC      WRITE (*,*) ' BASIN DIMENSIONS ',IMXB,JMXB
-CC      WRITE (*,*) ' HAS EXCEEDS THE COMPILE DIMENSIONS',M_,N_
+      WRITE (*,*) ' BASIN DIMENSIONS ',IMXB,JMXB
+      WRITE (*,*) ' HAS EXCEEDS THE COMPILE DIMENSIONS',M_,N_
       STOP
       endif
 C        INITIALIZE ZBM(I,J) FOR ENTIRE GRIDS
@@ -2476,6 +2513,12 @@ C       READ IN BANK DATA
       IF (AC.EQ.'Y') NBNKS=2000+NBNKS
       IF (AC.EQ.'Z') NBNKS=3000+NBNKS
       IF (AC.EQ.'W') NBNKS=4000+NBNKS
+      IF (AC.EQ.'V') NBNKS=5000+NBNKS
+      IF (AC.EQ.'U') NBNKS=6000+NBNKS
+      IF (AC.EQ.'T') NBNKS=7000+NBNKS
+      IF (AC.EQ.'S') NBNKS=8000+NBNKS
+      IF (AC.EQ.'R') NBNKS=9000+NBNKS
+      IF (AC.EQ.'Q') NBNKS=10000+NBNKS
 C    WRITE(*,520) NBNKS
       READ(9,250)(IBNK(I),JBNK(I),AC,ISBNK(I),BKI(I),BKE(I),
      1 WCHN(I),I=1,NBNKS)
@@ -2642,6 +2685,7 @@ c------------ FOR BIX BASIN ONLY
       READ (9,'(i4)') NODRY
       IF(NODRY.GT.ND_) THEN
         WRITE(*,*) "Too many Dry cells"
+        STOP
       ENDIF
       IF(NODRY.GT.1)THEN
       READ (9,'(9(I3,1X,I3,1X))')(IDRY(K),JDRY(K),K=1,NODRY)
@@ -2720,6 +2764,7 @@ C           CALLED IN SUBROUTINE 'INITLZ'.
 C
        INCLUDE 'parm.for'
 C
+      PARAMETER (NBCPTS=1600)
       common /opts/   nofld,nof1d
       character*1     nofld,nof1d
       COMMON /DUMB3/  IMXB,JMXB,IMXB1,JMXB1,IMXB2,JMXB2
@@ -2728,7 +2773,7 @@ C
       COMMON /BSN/    PHI,ALTO,ALNO,PHI1,ALT1,ALN1,ALT1C
       COMMON /SPLN/   ALT(15),ALN(15),AX(15),AY(15),RL(15),ANGD(15),
      1                PT(15),RT(15),XLAT(100),YLONG(100),RLNGTH
-      COMMON /BCPTS/  NBCPT,ISH(1600),JSH(1600)
+      COMMON /BCPTS/  TIDESH(NBCPTS),NBCPT,ISH(NBCPTS),JSH(NBCPTS)
       COMMON /FLWCPT/ NSQRS,NSQRW,NSQRWC,NPSS,NCUT
       COMMON /SWTCH/  IOPERL(5)
       COMMON /GPRT1/  DOLLAR,EBSN
@@ -3010,6 +3055,10 @@ C      DEFINE GRID COORDINATES FORSTATIC BOUNDARY CONDITION.
       DO 1200 J=1,JMXB1
       IF (KSKP(I,J).NE.'2') GOTO 1200
       N=N+1
+      IF (N.GT.NBCPTS) THEN
+        WRITE (*,*) 'Number of boundary points exceeded', N, NBCPTS
+        STOP
+      ENDIF
       ISH(N)=I
       JSH(N)=J
       KSKP(I,J)='0'
@@ -3361,7 +3410,8 @@ C      WHICH RESIDES IN OVERLAY 'CMPUTE'
 C
       INCLUDE 'parm.for'
 C
-      COMMON /BCPTS/  NBCPT,ISH(1600),JSH(1600)
+      PARAMETER (NBCPTS=1600)
+      COMMON /BCPTS/  TIDESH(NBCPTS),NBCPT,ISH(NBCPTS),JSH(NBCPTS)
       COMMON /DUMMY4/ S(800),C(800),P(800),DELP(800)
       COMMON /STRMSB/ C1,C2,C21,C22,AX,AY,PTENCY,RTENCY
 C STIME interferes with C code, so switched to STIME2
@@ -3386,7 +3436,7 @@ C
       R2=K
       DR=R1-R2
       K=MIN0(K,790)
-      HB(I,J)=DELP(K)+DR*(DELP(K+1)-DELP(K))+SEADTM
+      HB(I,J)=DELP(K)+DR*(DELP(K+1)-DELP(K))+SEADTM+TIDESH(N)
   100 CONTINUE
 C
 C      STATIC HEIGHTS ON SIDE BOUNDARIES
@@ -5341,13 +5391,13 @@ C
  140  MM2G=M
       MCMX=MM
       IF (MM2G.GE.M2G_) THEN
-CC       WRITE(*,1998) M2G_,I2G(M),J2G(M)
+       WRITE(*,1998) M2G_,I2G(M),J2G(M)
  1998  FORMAT(' TOTAL HGHT. POINTS FOR SMOOTHING REACHES MAX.',I8,
      1 ' LAST I,J =',2I8)
       STOP
       ENDIF
       IF (MCMX.GE.MCT_) THEN
-CC      WRITE(*,1997) MCT_,I2G(M),J2G(M)
+      WRITE(*,1997) MCT_,I2G(M),J2G(M)
  1997 FORMAT(' TOTAL SPECIAL CORNER POINTS (HGHTS) REACHES MAX.',I8,
      1 ' LAST I,J =',2I8)
       STOP
@@ -5857,11 +5907,14 @@ C
        RETURN
        END
 
-      SUBROUTINE XFILTER
+      SUBROUTINE XFILTER(VERSION)
 C        SEPTEMBER 1980    JYE CHEN    TDL   IBM 360/195
 C        PURPOSE
 C           TO SMOOTH THE SURGE HEIGHTS ONCE AN HOUR TO ELIMINATE
 C           2-INTERVAL NOISES IN THE FIELDS.
+C
+C           VERSION=1 means use original version for backward compat.
+C           VERSION=2 means use current correct version.
 C
 C        DATA SET USE
 C           NONE
@@ -6193,8 +6246,8 @@ C                 accordingly
 C                 --------------------------------------------------------
                   IF (II .EQ. IMXB .OR. JJ .EQ. JMXB .OR.
      &               HSUB(II,JJ) + ZB(II,JJ) .LT. HCRT) THEN
-CCC                     MASKII(K) = 0
-CCC                     MBARRI(K) = 0
+CCC already set to 0    MASKII(K) = 0
+CCC already set to 0    MBARRI(K) = 0
                      MBOUNI(K) = 1
                   ELSE
 C                    --------------------------------------------
@@ -6209,14 +6262,14 @@ C                    --------------------------------------------
                      Z   = ZBM(IA,JA)
                      ZZ  = ZBM(IB,JB)
                      ZZZ = AMIN1(Z,ZZ) + HCRT
-                     IF (HSUB(I,J) .LT. ZZZ .AND. HSUB(II,JJ) .LT. ZZZ)
 C   ??                    IF (HSUB(I,J) .LT. ZZZ .OR. HSUB(II,JJ) .LT. ZZZ)
+                     IF (HSUB(I,J) .LT. ZZZ .AND. HSUB(II,JJ) .LT. ZZZ)
      &               THEN
-CCC                        MASKII(K) = 0
+CCC already set to 0       MASKII(K) = 0
                         MBARRI(K) = 1
                      ELSE
                         MASKII(K) = 1
-CCC                        MBARRI(K) = 0
+CCC already set to 0       MBARRI(K) = 0
                      END IF
                   END IF
 
@@ -6258,8 +6311,8 @@ C                 accordingly
 C                 --------------------------------------------------------
                   IF (IX .EQ. IMXB .OR. JX .EQ. JMXB .OR.
      &               HSUB(IX,JX) + ZB(IX,JX) .LT. HCRT) THEN
-CCC                     MASKIX(K) = 0
-CCC                     MBARRX(K) = 0
+CCC  already set to 0   MASKIX(K) = 0
+CCC  already set to 0   MBARRX(K) = 0
                      MBOUNX(K) = 1
                   ELSE
 C                    -------------------------------------------------
@@ -6292,14 +6345,14 @@ C                    -------------------------------------------------
      &                    (HSUB(IX ,JX ) .GE. XXX .AND.
      &                     HSUB(IA1,JA1) .GE. WWW))    )
      &               THEN
-CCC                        XSM = XSM + HSUB(IX,JX)
-CCC                        XZZ = HSUB(IX,JX)
+CCC  un-used variable      XSM = XSM + HSUB(IX,JX)
+CCC  un-used variable      XZZ = HSUB(IX,JX)
                         MASKIX(K) = 1
-CCC                        MBARRX(K) = 0
+CCC  already set to 0      MBARRX(K) = 0
                      ELSE
-CCC                        XSM = XSM + HSUB(I,J)
-CCC                        XZZ = HSUB(I,J)
-CCC                        MASKIX(K) = 0
+CCC  un-used variable      XSM = XSM + HSUB(I,J)
+CCC  un-used variable      XZZ = HSUB(I,J)
+CCC  already set to 0      MASKIX(K) = 0
                         MBARRX(K) = 1
                      END IF
                   END IF
@@ -6500,17 +6553,18 @@ C                 In this case 0 .ne. (G-D)/3 -(G-D)/2 +(H-D)/3 -(H-D)/2
 C                 I would argue that they should cancel, so XSM doesn't need
 C                 to take this into consideration.
 C                 ------------------------------------------------------
-
-CCC                  XSM2 = XSM2 + 0.5 *
-CCC     &                  ((MASKIX(KM) * MASKII(KM) * MASKC * MASKIX(KKM))
-CCC     &                 * HSUB(IX,JX) -
-CCC     &                   (MASKIX(KM) * MASKII(KM) * MASKC * MASKIX(KKM))
-CCC     &                 * HSUB( I, J))
-
+               if (VERSION.eq.1) then
+C Use original bad formulation for backward compatibility with hch2.
+                  XSM2 = XSM2 + 0.5 *
+     &                  ((MASKIX(KM) * MASKII(KM) * MASKC * MASKIX(KKM))
+     &                 * HSUB(IX,JX) -
+     &                   (MASKIX(KM) * MASKII(KM) * MASKC * MASKIX(KKM))
+     &                 * HSUB( I, J))
+               else
                   XSM2 = XSM2 + 0.5 * 
      &                   MASKC * MASKIX(KM)*MASKII(KM)*MASKII(KM1M)*   
      &                   (HSUB(IX,JX) - HSUB(I, J))
-
+               endif
 cc                  if (MASKII(KM).eq.0) then
 cc                    XSM2 = XSM2 + 1/6 * 
 cc     &                     MASKC * MASKIX(KM)*MASKIX(KKM)*   

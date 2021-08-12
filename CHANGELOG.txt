@@ -1,27 +1,118 @@
+2013-05-24  v4.11
+   * May 15, 2013 - Switch to using double precision gcc 4.50 as default
+     compiler
+
+   * Apr 3, 2013 - Handed code to P-Surge revision r1415
+
+   * Mar 21, 2013 - Allowing MEOW track generation to use rhumb lines vs great
+     circles
+
+   * Feb 1, 2013 - Implemented SLOSH + Tide V2 and the beginning of V3.
+   
+   * Added a Tidesh (static-height) to common block BCPTS to contain the tide
+     value on the static boundary.
+
+   * Cleaned up allocation of names (adj,bhc,ft03), and removed YLT,YLG passing
+
+   * Jan 23, 2013 - Correcting the way dry cells are indicated when computing
+     with tide version 1 (had set to 99.9 rather than -ZB)
+
+   * Updated grid dimension to 800x800 (vs 600x600)
+
+   * Jan 18, 2013 - Updating the order of [BAS_Y][BAS_X] because C and FORTRAN
+     swap the order of 2-d arrays.
+
+   * Sep 10, 2012 - Updated the init dry routine and the number of init dry
+     cells to handle the new EOK3 basin.
+
+   * Jul 12, 2012 - Switching from 'tide' to 'tidefile'
+
+   * Jun 29, 2012 - Adding datum values to the envelopes.  This allows the SDP
+     to properly display whether they were tideV0, tideV1, surgeOnly, etc.
+     Also correcting the code to auto determine the datum, so user can specify
+     anomaly vs tide.
+
+   * Added f_tide to saveRex, so it can properly label the tide method used
+
+   * Jun 29, 2012 - Aborted having the FORTRAN code create the envelopes, so it
+     correctly reflects surge+tide.  In the case of Surge-Only, the envelope
+     filter in the FORTRAN code will still work.
+
+   * Correcting initialization of the hb_max[][] so it can detect dry cells.
+
+   * Jun 28, 2012 - Adjusting the timing so it doesn't take an extra step at
+     the beginning in SETCMP (with NHRAD), but rather corrects the time at
+     which to switch to a different time-step with a -1 in STMVAL
+
+   * Recalculating MHALT (stop computations) based on changes to NHRAD
+
+   * Jun 8, 2012 - SETCMP() was doing a time-step advance.  Since STMVAL() also
+     did a time-step advance, there was a double step for delp,rmax,x,y during
+     the first time-step.
+        The delp,rmax are reset every hour based on the value from file, so they
+     recovered after the first hour; however the position information doesn't
+     reset, so it continues to be off by "about" a time-step.  The "about" is 
+     because the FWD speed info is used to move the storm and it is reset on the
+     hour, so the storm would follow a slightly different track.
+        The result is that Rmax/Delp after the first hour is correct, but the
+     position is off by about a DT.  Not much, but enough to impact the results.
+
+   * Jun 8, 2012 - Adjusting how the NHRAD is initialized so the switch in
+     time-steps occurs on the hour rather than 1 time-step before the hour.
+     This will make the model run 1 time-step longer before switching (both
+     times) and 1 time-step longer overall.
+         --> This likely impacts test results
+
+   * Shifting f_tide calculation into CleanUp routine.
+
+   * Moving the data passing logic for the tide + surge grids into slosh2.c.
+
+   * Moving from clock1 + etime to modelClock.
+
+   * Moving time and tide manipulation into RunLoopStep routine.
+
+   * May 21, 2012 - Merging in changes needed to get SLOSH + Tide.
+
+   * Turning on enhanced output for stm2trk to provide users with more help.
+
+   * Jan 24, 2012 - Allow HCH2 to use the incorrect formulation of the XFILTER
+     code for backward compatibility
+
 2012-01-20  v3.97
-   * Updated number of cuts and 1d flows to 20,000 (from 13,000)
+   * Updated the number of cuts and 1d flows to 20,000 (from 13,000)
+
    * Set critical threshold for smoothing to 0.1 (vs 0.5) feet
         --> This likely impacts test results
+
    * Added XFILTER smoothing routine.  Originally did smoothing in a + Laplacian
      pattern.  Now we added the corners for the X Laplacian.
+
    * Apr 5, 2011 - Adjusted high terrain to 56 feet (from 36 feet) at request of
      Nuclear Regulatory Commission.  Done by Narayanaswamy S Muthukumar (NSM).
      Use a '+' in column 20 to denote it is safe to treat 56 (vs 36) as high
      terrain.
+
    * Added more smoothing options (to first line of the DTA file).  Now uses the 
      following symbols... '^', '*', '=', '+', '!', '@', '&', '#', '%'
 
 2011-02-17  v3.96 (originally - FOIA_4.00)
    * Feb 9, 2011 - SLOSH releases officially switched to MinGW 4.5.0 (from 3.4.2)
+
    * Updating number of cuts and 1d flows to 13,000 (from 12,000)
 
 2010-10-19  v3.95
    * HCHS changed time step (20s to 10s) which impacted 1989-Hugo (in HCHS)
+
    * HMI3 replaced HMIA, so 1992-Andrew now uses HMI3
+
    * Set default REX version to 2.0 (vs 1.0)
+
    * Updated initialized dry dimension to 1000 (vs 500)
+
    * Updated grid dimension to 600x600 (vs 400x400)
+
    * Set critical threshold for smoothing to 0.5 (vs 1.0) feet
+
    * Adjusted trk-file format so that ocean type of 150-250 indicates pure
      anomaly, while 350-450 indicates anomaly + gridded tide.
 

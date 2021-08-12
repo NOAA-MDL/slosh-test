@@ -6,6 +6,7 @@
 #include "savellx.h"
 #include "complex.h"
 #include "tendian.h"
+#include "slosh2.h"
 
 /* RADPDG is radians per degree. */
 /* ECCEN is the Ecentricity of the Earth. */
@@ -281,7 +282,7 @@ void xy2pq (double x, double y, double *p, double *q, bsndta_type * bsn)
  *     integer into a F4.1 statement.  Also F4.5 is allowed.
  *     (I checked both lahey and microsoft DOS fortran compilers)
  ****************************************************************************/
-double Fort_atof (char *s, int w, int d)
+static double Fort_atof (char *s, unsigned int w, int d)
 {
    char c;
    double ans;
@@ -674,3 +675,165 @@ int saveLLx (char *buffer, char *filename, char *Header, int *Imxb,
    fclose (fp);
    return 0;
 }
+
+/* Directly compute the YLT, YLG in C and set the FORTRAN common block.
+ * Advantage: Don't have to do file I/O for write & read of llxfile
+ * Advantage: More accurate in double (Real *8) mode.
+ *   Note: Original FORTRAN code RDLTLG used default number (Real *4 or *8)
+ *   to read from file that was created with REAL *4.  This causes an error.
+ */
+/* Access FORTRAN common block "llxfle" */
+#pragma pack(2)
+ extern struct {
+#ifdef DOUBLE_FORTRAN
+  double YLT[BAS_Y][BAS_X], YLG[BAS_Y][BAS_X];
+#else
+  float YLT[BAS_Y][BAS_X], YLG[BAS_Y][BAS_X];
+#endif
+ }
+#ifdef _GCC_
+ llxfle_;
+ #define LLXFLE llxfle_
+#else
+ llxfle;
+ #define LLXFLE llxfle
+#endif
+#pragma pack()
+
+int memSetLLx (char *buffer, int *Imxb, int *Jmxb)
+{
+   bsndta_type bsn;
+   tanplane_type slsh;
+   double temp1, temp2;
+   double scale, x1, y1;
+   LatLon DX;
+   int i, j;
+
+   str2bsndta (buffer, &bsn, &slsh);
+
+/* Compute the basic SLOSH basin parameters. */
+   temp1 = bsn.Xppt - bsn.Xgpt;
+   temp2 = bsn.Yppt - bsn.Ygpt;
+   bsn.Rg2p = sqrt (temp1 * temp1 + temp2 * temp2);
+   bsn.Thtg2p = 180. + atan2 (temp1, temp2) / RADPDG;
+   if (bsn.type == 'e') {
+      bsn.Abqab = -1;
+      bsn.Delrg =
+         RADPDG * (90. - bsn.gsize) / (((int) (bsn.yjg + 0.001)) - 1.);
+      bsn.Rg2p = .5 * bsn.Rg2p / cos (bsn.gsize * RADPDG);
+/* For e-case only-- reset math origin as center point.  X-axis changed to
+ *   be perpendicular to line of P-point to G-point.
+ */
+      bsn.Thtg2p = bsn.Thtg2p + 90.;
+      bsn.Xppt = 0.;
+      bsn.Yppt = 0.;
+   } else if (bsn.type == 'h') {
+      bsn.Abqab = (1. - bsn.elipty) / (1. + bsn.elipty);
+      bsn.Rg2p = bsn.Rg2p / (1. + bsn.Abqab);
+      if (bsn.name[0] == '+')
+         bsn.Delrg = 360. * RADPDG / (bsn.yjmax - bsn.yjmin);
+      else
+         bsn.Delrg = bsn.gsize / bsn.Rg2p;
+   } else {
+      bsn.Abqab = 0;
+      temp1 = bsn.gsize / (2. * bsn.Rg2p);
+      bsn.Delrg = 2. * log (sqrt (1.0 + temp1 * temp1) + temp1);
+   }
+   bsn.Delthg = bsn.Delrg / RADPDG;
+   if ((bsn.ximax > BAS_X) || (bsn.yjmax > BAS_Y)) {
+      fprintf (stderr, "Dimmensions %f %f exceed compiled dimmensions %d %d\n",
+               bsn.ximax, bsn.yjmax, BAS_X, BAS_Y);
+      return -1;
+   }
+
+/* Now that grid transform is set, loop over grid computing llx cells. */
+   *Imxb = bsn.ximax;
+   *Jmxb = bsn.yjmax;
+   for (j = 0; j < *Jmxb; j++) {
+      for (i = 0; i < *Imxb; i++) {
+         /* i+1, j+1 to convert to [1..imxb] system */
+         pq2xy (i + 1, j + 1, &x1, &y1, &bsn);
+         sxy2ll (x1, y1, &DX, &slsh);
+         LLXFLE.YLG[j][i] = -1 * DX.lon;
+         cnf2cl (DX.lat, &(DX.lat), &scale);
+         LLXFLE.YLT[j][i] = DX.lat;
+      }
+   }
+   return 0;
+}
+
+#ifdef TEST_SAVELLX
+int main (int argc, char **argv) 
+{
+   char buffer[] =  "BOS BOSTON             42.37000   70.40000   41.50000   71.22000  31.0  51.0 1.5000  1.0 80.0  1.0 65.0  1.0  1.0 80.0 65.0";
+
+   bsndta_type bsn;
+   tanplane_type slsh;
+   double temp1, temp2;
+   float temp;
+   double scale, x1, y1;
+   sInt4 imxb, jmxb;
+   LatLon DX;
+   int i, j;
+
+   str2bsndta (buffer, &bsn, &slsh);
+
+/* Compute the basic SLOSH basin parameters. */
+   temp1 = bsn.Xppt - bsn.Xgpt;
+   temp2 = bsn.Yppt - bsn.Ygpt;
+   bsn.Rg2p = sqrt (temp1 * temp1 + temp2 * temp2);
+   bsn.Thtg2p = 180. + atan2 (temp1, temp2) / RADPDG;
+   if (bsn.type == 'e') {
+      bsn.Abqab = -1;
+      bsn.Delrg =
+         RADPDG * (90. - bsn.gsize) / (((int) (bsn.yjg + 0.001)) - 1.);
+      bsn.Rg2p = .5 * bsn.Rg2p / cos (bsn.gsize * RADPDG);
+/* For e-case only-- reset math origin as center point.  X-axis changed to
+ *   be perpendicular to line of P-point to G-point.
+ */
+      bsn.Thtg2p = bsn.Thtg2p + 90.;
+      bsn.Xppt = 0.;
+      bsn.Yppt = 0.;
+   } else if (bsn.type == 'h') {
+      bsn.Abqab = (1. - bsn.elipty) / (1. + bsn.elipty);
+      bsn.Rg2p = bsn.Rg2p / (1. + bsn.Abqab);
+      if (bsn.name[0] == '+')
+         bsn.Delrg = 360. * RADPDG / (bsn.yjmax - bsn.yjmin);
+      else
+         bsn.Delrg = bsn.gsize / bsn.Rg2p;
+   } else {
+      bsn.Abqab = 0;
+      temp1 = bsn.gsize / (2. * bsn.Rg2p);
+      bsn.Delrg = 2. * log (sqrt (1.0 + temp1 * temp1) + temp1);
+   }
+   bsn.Delthg = bsn.Delrg / RADPDG;
+
+/*
+ *  imxb = bsn.ximax + 1;
+ *  jmxb = bsn.yjmax + 1;
+ */
+   imxb = bsn.ximax;
+   jmxb = bsn.yjmax;
+         
+   i = 0;
+   j = 0;
+   pq2xy (i + 1, j + 1, &x1, &y1, &bsn);
+   sxy2ll (x1, y1, &DX, &slsh);
+   temp = -1 * DX.lon;
+
+   printf ("FORTRAN 1, 1 -> Conformal Lat %f %f\n", DX.lat, temp);
+   cnf2cl (DX.lat, &(DX.lat), &scale);
+   printf ("FORTRAN 1, 1 -> Clarke Lat %f %f\n", DX.lat, temp);
+   
+   pq2xy (i + 1.5, j + 1.5, &x1, &y1, &bsn);
+   sxy2ll (x1, y1, &DX, &slsh);
+   temp = -1 * DX.lon;
+   printf ("FORTRAN 1.5, 1.5 -> Conformal Lat %f %f\n", DX.lat, temp);
+   cnf2cl (DX.lat, &(DX.lat), &scale);
+   printf ("FORTRAN 1.5, 1.5 -> Clarke Lat %f %f\n", DX.lat, temp);
+   
+   return 0;
+}
+
+#endif
+

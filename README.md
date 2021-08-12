@@ -5,14 +5,33 @@ The intent of this file is to help the user start using the SLOSH model.
 -------------------------------------------------------------------------------
 ## ASSUMPTIONS
 
-1. **MS-Windows**: Cygwin has been installed.  If not, see:
+You have a git-hub Personal Access Token (PAT).  If not, see:
+   [setup-pat](../master/docs/SETUP-pat.md)
+
+**MS-WINDOWS**
+
+1. Cygwin has been installed.  If not, see:
    [setup-cygwin](../master/docs/SETUP-cygwin.md)
 
-2. **MS-Windows**: MinGW has been installed.  If not, see:
+2. MinGW 4.5.0 has been installed.  If not, see:
    [setup-mingw](../master/docs/SETUP-mingw.md)
 
-3. You have a git-hub Personal Access Token (PAT).  If not, see:
-   [setup-pat](../master/docs/SETUP-pat.md)
+**LINUX**
+
+1. GCC 4.5.0 has been installed.  If not, see:
+   [setup-gcc](../master/docs/SETUP-gcc.md)
+
+-------------------------------------------------------------------------------
+### SLOSH COMPILER VERSION
+
+SLOSH's official compiler has evolved over time as follows:
+
+| Date        | Version          | Notes                      |
+| ----------- | ---------------- | -------------------------- |
+| Early 1990s | Lahey FORTRAN    | Pure FORTRAN code          |
+| Late 1990s  | Borland C++ 4.52 | Utilized FORTRAN to C code |
+| 2000s       | gcc v3.4.2       | Utilized g77               |
+| 2013-04-03  | gcc v4.5.0       | Utilized gfortran          |
 
 -------------------------------------------------------------------------------
 ## BUILD THE SLOSH MODEL
@@ -33,9 +52,18 @@ The intent of this file is to help the user start using the SLOSH model.
    cd slosh
 ```
 
-2. **MS-WINDOWS**: Add MinGW to front of PATH
+2. Add the correct version of 'GCC' to the path:
+
+**MS-WINDOWS**
 ```bash
    export PATH=/cygdrive/c/sys/MinGW/MinGW-4.5.0/bin:$PATH
+```
+
+**LINUX**
+
+```bash
+   export PATH=/home/$USER/gcc/gcc-4.5.0/bin:$PATH
+   export LD_LIBRARY_PATH=/home/$USER/gcc/gcc-4.5.0/lib:/home/$USER/gcc/lib64
 ```
 
 3. Build, install, and clean up - SLOSH model
@@ -65,13 +93,13 @@ The intent of this file is to help the user start using the SLOSH model.
 1. Get the required basins for the tests:
 ```bash
    cd ~/save/slosh/parm
-   getBasin.sh v3.97
+   getBasin.sh v4.11
 ```
 
 2. Get the required storms for the tests:
 ```bash
    cd ~/save/slosh/dev
-   getStorm.sh v3.97
+   getStorm.sh v4.11
 ```
 
 3. Run the tests:
@@ -80,8 +108,8 @@ The intent of this file is to help the user start using the SLOSH model.
    runme.sh go
 ```
 
-While runme.sh calls check.sh to compare the outputs with the expected results,
-you can do so yourself via:
+While runme.sh compares the outputs with the expected results, you can do so
+yourself via:
 
 4. Compare the envelopes (max value in each grid cell for entire run):
 ```bash

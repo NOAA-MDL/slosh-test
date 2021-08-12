@@ -47,7 +47,7 @@
 2. [NWS Disclaimer](https://www.weather.gov/disclaimer)
 
 > The user assumes the entire risk related to its use of information on NWS Web
-> pages.  NWS [-is-] provides such information "as is," and NWS disclaims any
+> pages.  NWS [~~is~~] provides such information "as is," and NWS disclaims any
 > and all warranties, whether express or implied, including (without limitation)
 > any implied warranties of merchantability or fitness for a particular purpose.
 > In no event will NWS be liable to you or to any third party for any direct,

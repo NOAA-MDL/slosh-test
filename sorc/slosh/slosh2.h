@@ -1,17 +1,26 @@
 #ifndef SLOSH2_H
 #define SLOSH2_H
-#define PROGRAM_VERSION "3.97a"
-#define PROGRAM_DATE "1/20/2012"
+#define PROGRAM_VERSION "4.11"
+#define PROGRAM_DATE "05/24/2013"
 #ifndef PROGRAM_COMMENT
 #define PROGRAM_COMMENT ""
 #endif
 
 #include "halotype.h"
 #include <stdio.h>
+#include "tideutil.h"         /* Tide functions. */
+#include "rex.h"
+
+/* MY_MAX_PATH is 256 + 1 (null chacater) */
+#ifndef MY_MAX_PATH
+ #define MY_MAX_PATH 257
+#endif
+/* Typically defined in /MinGW-3.4.2/include/windef.h as 260. */
+/* Needs to agree between C and intrface.f so easier to set at 257. */
 
 #define WNDU 200
 
-/* 
+/*
 #define DOUBLE_FORTRAN
 */
 /* #define BAS_X 600 (see halotype.h) */
@@ -27,15 +36,21 @@ typedef struct {
 /* Fortran intrface variables... */
 typedef struct {
 #ifdef DOUBLE_FORTRAN
-  double zb[BAS_X][BAS_Y];
-  double hb[BAS_X][BAS_Y];
+  double zb[BAS_Y][BAS_X];
+  double hb[BAS_Y][BAS_X];
+  double hb_max[BAS_Y][BAS_X];
+  double tide[BAS_Y][BAS_X];
+  double tide_V1max[BAS_Y][BAS_X]; /* Used only for Tide Version 1,2 */
 /* Instantaneous Track information...*/
   double storm_lat, storm_lon;
   double wspeed, wdirect, delp, size2;
 /*  char rexBuff[BAS_X*BAS_Y*2];*/
 #else
-  float zb[BAS_X][BAS_Y];
-  float hb[BAS_X][BAS_Y];
+  float zb[BAS_Y][BAS_X];
+  float hb[BAS_Y][BAS_X];
+  float hb_max[BAS_Y][BAS_X];
+  float tide[BAS_Y][BAS_X];
+  float tide_V1max[BAS_Y][BAS_X]; /* Used only for Tide Version 1,2 */
 /* Instantaneous Track information...*/
   float storm_lat, storm_lon;
   float wspeed, wdirect, delp, size2;
@@ -43,19 +58,30 @@ typedef struct {
 #endif
 } slosh_type;
 
-int SaveRexStep (char f_resetOffset, FILE * fp, slosh_type * gt, int imxb,
-                 int jmxb, basingrid_type ** grid, char f_type,
-                 const char *trkName, const char *bsnAbrev, char f_env,
-                 double clock, char header1[200], char header2[200]);
+int InitWater_TideModeOverride (float *ht1, int f_tide, float *ht2);
 
-void RunLoopStep (slosh_type *gt, int imxb, int jmxb, basingrid_type **grid,
-                  int *itime, int *mhalt, short csflag, short f_smooth,
-                  int f_graphics, short f_passdata, double *del_t);
+void RunLoopStep (slosh_type * st, int imxb, int jmxb,
+                  int *itime, int *mhalt,
+                  short csflag, short f_smooth, 
+                  short f_wantRex, double *modelClock, double rextime,
+                  int f_first, TideGridType *tgrid, int f_tide, int tideThresh, int f_stat);
 
-int CleanUp (slosh_type *gt, int imxb, int jmxb, basingrid_type **grid,
-             int f_saveEnv);
+int CleanUp (slosh_type *st, int imxb, int jmxb, int f_saveEnv, int f_tide,
+             char *envName, char envComment[161], float ht1, float ht2,
+             TideGridType *tgrid);
 
-void RunInit (slosh_type *gt, char *trkName, char *dtaName, char *xxxName,
-              char *llxName, char *ft40Name, int *mhalt, double *clock);
+int RunInit (slosh_type * st, char trkName[MY_MAX_PATH], char dtaName[MY_MAX_PATH],
+             char envName[MY_MAX_PATH], char ft40Name[MY_MAX_PATH], int *mhalt,
+             double *modelClock, int f_tide, int tideThresh, char *ft03Name, char *tideName,
+             TideGridType *tgrid, char *adjDatumName, int spinUp, int f_saveSpinUp,
+             rexType *rex, char f_wantRex, int rexSaveMin);
+
+int ReadTrkFile (char trkName[MY_MAX_PATH], char rexComment[201],
+                 char envComment[161], float *ht1, float *ht2);
+
+int PerformRun (char *bsnAbrev, char dtaName[MY_MAX_PATH], char trkName[MY_MAX_PATH],
+                char envName[MY_MAX_PATH], char *rexName, char *tideDir, int imxb, int jmxb, int bsnStatus,
+                int rexSaveMin, sChar verbose,
+                int f_tide, int tideThresh, int f_stat, int spinUp, int f_saveSpinUp, double asOf);
 
 #endif

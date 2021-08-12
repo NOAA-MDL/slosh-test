@@ -1,6 +1,6 @@
 #!/bin/bash
 #------------------------------------------------------------------------------
-# runme.sh                                              Last Change: 2021-06-11
+# runme.sh                                              Last Change: 2021-06-17
 #                                                        Arthur.Taylor@noaa.gov
 #                                                              NWS/OSTI/MDL/DSD
 #------------------------------------------------------------------------------
@@ -20,50 +20,69 @@ fi
 #------------------------------------------------------------------ START -----
 # srcDir=$(cd "$(dirname "$0")" && pwd)
 
-#--------------------------------------
-# Copy bnt files and dta files to a common folder (due to old version of SLOSH)
-#--------------------------------------
-mkdir parm
-cp ../parm/dta/hchsdta parm
-cp ../parm/dta/hmi3dta parm
-cp ../parm/bnt/hbasins.dta parm
-
 # Create a working directory for answers
-mkdir work
+mkdir -p work
+
+#--------------------------------------
+# Determine the system 
+#--------------------------------------
+if [[ $(uname -o) == "Cygwin" ]] ; then
+#   SYS=Cygwin
+   SLOSH=../exec/sloshDos
+else
+#   SYS=Linux
+   ulimit -s 84500
+   SLOSH=../exec/sloshLinux
+fi
 
 #--------------------------------------
 # Run the tests 
 #--------------------------------------
-echo "[*] Creating 100x 1-hour track input file for Hugo"
-../exec/stm2trk storms/hugo.stm work/hugo.trk 59 70 76
+T+=(1989-Hugo:HCH2:59:70:76)
+T+=(1992-Andrew:HMI3:61:70:77)
 
-echo "[*] Running the SLOSH model"
-../exec/sloshDos -basin hchs -bsnDir parm -trk work/hugo.trk -rex work/hugo.rex \
-      -env work/hugo.env
+for tst in ${T[@]} ; do
+   tstRay=(${tst//:/ })
+   aRay=(${tstRay[0]//-/ })
+   name=${aRay[1],,}
+   bsn=${tstRay[1],,}
+   begHr=${tstRay[2]}
+   lfHr=${tstRay[3]}
+   endHr=${tstRay[4]}
 
-echo -e "\n------------------------------------------------------"
-echo "[*] Creating 100x 1-hour track input file for Andrew-1992"
-../exec/stm2trk storms/andrew.stm work/andrew.trk 61 70 77
+   #--------------------------------------
+   # Create the work/.trk file
+   #--------------------------------------
+   if [[ ! -e storms/$name.trk ]] ; then
+      echo "[*] Creating 100x 1-hour track input file for ${tstRay[0]}"
+      ../exec/stm2trk storms/$name.stm storms/$name.trk $begHr $lfHr $endHr
+   fi
+   # following removes inadvertent carriage returns from the .trk file
+   sed 's/\r$//' storms/$name.trk > work/$name.trk
 
-echo "[*] Running the SLOSH model"
-../exec/sloshDos -basin hmi3 -bsnDir parm -trk work/andrew.trk -rex work/andrew.rex \
-      -env work/andrew.env
+   #--------------------------------------
+   # Run the model
+   #--------------------------------------
+   echo "[*] Running the SLOSH model for ${tstRay[0]} in $bsn"
+   # For v4.11, -verbose 1 is too quiet, 2 is too noisy.
+   $SLOSH -basin $bsn -rootDir ../parm -trk work/$name.trk \
+         -rex work/$name.rex -env work/$name.env -verbose 1
 
-#--------------------------------------
-# Clean Up 
-#--------------------------------------
-echo -e "\n------------------------------------------------------"
-echo "[*] Removing temporary file (hchs.llx)"
-rm hchs.llx
-echo "[*] Removing temporary file (hmi3.llx)"
-rm hmi3.llx
+   #--------------------------------------
+   # Check the results
+   #--------------------------------------
+   echo "[?] Checking results for ${tstRay[0]}" ; f_bad=0
+   cmp -s -- work/$name.env sample/$name.env ; if [[ $? != 0 ]] ; then
+      echo -e "  \x1B[1;31m[X]\x1B[0m Envelope file 'work/$name.env' differs"
+      f_bad=1
+   fi
+   cmp -s -- work/$name.rex sample/$name.rex ; if [[ $? != 0 ]] ; then
+      echo -e "  \x1B[1;31m[X]\x1B[0m Rex file 'work/$name.rex' differs"
+      f_bad=1
+   fi
+   if [[ $f_bad == 0 ]] ; then
+      echo -e "  \x1B[1;32m[*]\x1B[0m ${tstRay[0]} is good!"
+   fi
 
-echo "[*] Removing temporary copy of parm folder"
-rm -rf parm
-
-#--------------------------------------
-# Check the results 
-#--------------------------------------
-echo -e "\n------------------------------------------------------"
-echo "[*] Comparing the results to previous solutions"
-./check.sh go
+   echo -e "\n------------------------------------------------------"
+done

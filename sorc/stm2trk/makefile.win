@@ -4,7 +4,7 @@ SHELL = /bin/sh
 CC = gcc
 STD_FLAGS = -O3 -Wall -ansi
 
-STD_DEF = -D_WINDOWS_ -D_GCC_
+STD_DEF = -D_WINDOWS_ -D_GCC_ -DPRINT
 
 STD_INC= -I.
 

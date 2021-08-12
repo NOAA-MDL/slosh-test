@@ -268,10 +268,12 @@ sInt4 memStuff2_xxx (char **ptr, uChar * bufLoc, sInt4 val, char f_flag)
 */
       return count;
    }
-   if (((val > 700) && (val != 999)) || (val < -320))
+   if (((val > 700) && (val != 999)) || (val < -320)) {
       return -1;
-   if (val == 999)
+   }
+   if (val == 999) {
       val = 701;
+   }
    val += 320;
 
    if (val == prev) {

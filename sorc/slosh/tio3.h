@@ -183,6 +183,7 @@ int tSet (TFLAG_SYSTEM sys);
   void twritec_ (int *fid, char *ptr, int *num);
   void twrites_ (int *fid, short int *ptr, int *num);
   void tclose_ (int *fid);
+  void tflush_ (void);
 #endif
 
 /* HP-Fortran Calls */
@@ -196,6 +197,7 @@ int tSet (TFLAG_SYSTEM sys);
   void twritec (int *fid, char *ptr, int *num);
   void twrites (int *fid, short int *ptr, int *num);
   void tclose (int *fid);
+  void tflush (void);
 #endif
 
 
