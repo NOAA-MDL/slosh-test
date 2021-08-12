@@ -1,0 +1,80 @@
+#!/bin/make
+SHELL = /bin/sh
+
+############################
+# This makefile is intended to create simply the DOS executable.
+############################
+
+CC = gcc
+F77 = gfortran
+STRIP = strip
+
+STD_FLAGS = -O3 -Wall -pedantic -ansi
+FFLAGS =
+LD_FLAGS = -Wl,--stack,8000000
+
+STD_DEF = -D_WINDOWS_ -D_GCC_
+STD_INC = -I.
+STD_LIB = -lgfortran -L/usr/lib -lm
+
+CFLAGS = $(STD_FLAGS) $(STD_DEF) $(STD_INC)
+PRJ_NAME = sloshDos
+TARGETS = $(PRJ_NAME)
+
+############################
+# FILES
+############################
+SOURCE = slosh2.c \
+         pack.c \
+         myassert.c \
+         myutil.c \
+         savellx.c \
+         complex.c \
+         clock.c \
+         tendian.c \
+         tio3.c
+
+FSOURCE = runslhg.f \
+          intrface.f
+
+OBJECTS = $(SOURCE:.c=.o) \
+          $(FSOURCE:.f=.o) \
+          $(MEMWATCH)
+
+HEADERS = slosh2.h \
+          pack.h \
+          myassert.h \
+          myutil.h \
+          savellx.h \
+          complex.h \
+          clock.h \
+          tendian.h \
+          tio3.h
+
+C_MAIN = cstart.c
+
+############################
+# TARGETS
+############################
+all: $(TARGETS)
+	@echo ""
+
+$(PRJ_NAME): $(OBJECTS) $(C_MAIN) $(HEADERS)
+	$(CC) $(C_MAIN) $(CFLAGS) $(LD_FLAGS) $(OBJECTS) $(STD_LIB) -o $(PRJ_NAME)
+	$(STRIP) -s $(PRJ_NAME).exe
+
+install:
+	cp $(PRJ_NAME).exe ../../exec
+
+clean:
+	rm -f *.o *.bak *.BAK
+
+############################
+# SUFFIXES
+############################
+.c.o : $(HEADERS)
+	$(CC) -c $(CFLAGS) $<
+
+.f.o :
+	${F77} -c ${FFLAGS} $<
+

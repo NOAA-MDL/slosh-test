@@ -1,0 +1,13 @@
+# Ignore the executables
+exec
+sorc/slosh/sloshDos.exe
+util/*.exe
+# Ignore the basin files
+parm/bnt
+parm/dta
+parm/tar
+# Ignore the test files
+dev/sample
+dev/storms
+dev/work
+dev/tar

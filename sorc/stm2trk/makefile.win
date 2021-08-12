@@ -1,0 +1,53 @@
+#!/bin/make
+SHELL = /bin/sh
+
+CC = gcc
+STD_FLAGS = -O3 -Wall -ansi
+
+STD_DEF = -D_WINDOWS_ -D_GCC_
+
+STD_INC= -I.
+
+STD_LIB = -L/usr/lib -lm
+
+PRJ_NAME = stm2trk
+
+CFLAGS = $(STD_FLAGS) $(STD_DEF) $(STD_INC)
+
+C_SOURCES = myutil.c \
+            myassert.c \
+            spline.c \
+            sphere.c \
+            clock.c
+
+H_SOURCES = myutil.h \
+            myassert.h \
+            spline.h \
+            sphere.h \
+            clock.h \
+            type.h
+
+C_MAIN = stm2trk.c
+
+C_OBJECTS = $(C_SOURCES:.c=.o)
+
+############################
+#
+# TARGETS
+#
+############################
+all: $(PRJ_NAME)
+
+$(PRJ_NAME): $(C_OBJECTS) $(C_MAIN) $(H_SOURCES)
+	$(CC) $(C_MAIN) $(CFLAGS) $(C_OBJECTS) $(STD_LIB) -o $(PRJ_NAME)
+
+clean:
+	rm -f *.o *.bak *.BAK
+
+############################
+#
+# SUFFIXES
+#
+############################
+.c.o : $(H_SOURCES)
+	$(CC) -c $(CFLAGS) $<

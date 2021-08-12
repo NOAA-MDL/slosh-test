@@ -1,0 +1,2049 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
+#include <math.h>
+#include <ctype.h>
+#include "clock.h"
+#include "myutil.h"
+#include "myassert.h"
+#ifdef MEMWATCH
+#include "memwatch.h"
+#endif
+
+#define PERIOD_YEARS 146097L
+#define SEC_DAY 86400L
+#define ISLEAPYEAR(y) (((y)%400 == 0) || (((y)%4 == 0) && ((y)%100 != 0)))
+
+/*****************************************************************************
+ * Clock_Epock2YearDay() --
+ *
+ * Arthur Taylor / MDL
+ *
+ * PURPOSE
+ *   To convert the days since the beginning of the epoch to days since
+ * beginning of the year and years since the beginning of the epoch.
+ *
+ * ARGUMENTS
+ * totDay = Number of days since the beginning of the epoch. (Input)
+ *    Day = The days since the beginning of the year. (Output)
+ *     Yr = The years since the epoch. (Output)
+ *
+ * RETURNS: void
+ *
+ * HISTORY
+ *   9/2002 Arthur Taylor (MDL/RSIS): Created.
+ *   6/2004 AAT (MDL): Updated.
+ *
+ * NOTES
+ *****************************************************************************
+ */
+static void Clock_Epoch2YearDay (sInt4 totDay, int *Day, sInt4 * Yr)
+{
+   sInt4 year;          /* Local copy of the year. */
+
+   year = 1970;
+   /* Jump to the correct 400 year period of time. */
+   if ((totDay <= -PERIOD_YEARS) || (totDay >= PERIOD_YEARS)) {
+      year += 400 * (totDay / PERIOD_YEARS);
+      totDay -= PERIOD_YEARS * (totDay / PERIOD_YEARS);
+   }
+   if (totDay >= 0) {
+      while (totDay >= 366) {
+         if (ISLEAPYEAR (year)) {
+            if (totDay >= 1461) {
+               year += 4;
+               totDay -= 1461;
+            } else if (totDay >= 1096) {
+               year += 3;
+               totDay -= 1096;
+            } else if (totDay >= 731) {
+               year += 2;
+               totDay -= 731;
+            } else {
+               year++;
+               totDay -= 366;
+            }
+         } else {
+            year++;
+            totDay -= 365;
+         }
+      }
+      if ((totDay == 365) && (!ISLEAPYEAR (year))) {
+         year++;
+         totDay -= 365;
+      }
+   } else {
+      while (totDay <= -366) {
+         year--;
+         if (ISLEAPYEAR (year)) {
+            if (totDay <= -1461) {
+               year -= 3;
+               totDay += 1461;
+            } else if (totDay <= -1096) {
+               year -= 2;
+               totDay += 1096;
+            } else if (totDay <= -731) {
+               year--;
+               totDay += 731;
+            } else {
+               totDay += 366;
+            }
+         } else {
+            totDay += 365;
+         }
+      }
+      if (totDay < 0) {
+         year--;
+         if (ISLEAPYEAR (year)) {
+            totDay += 366;
+         } else {
+            totDay += 365;
+         }
+      }
+   }
+   *Day = (int) totDay;
+   *Yr = year;
+}
+
+/*****************************************************************************
+ * Clock_MonthNum() --
+ *
+ * Arthur Taylor / MDL
+ *
+ * PURPOSE
+ *   Determine which numbered month it is given the day since the beginning of
+ * the year, and the year since the beginning of the epoch.
+ *
+ * ARGUMENTS
+ *  day = Day since the beginning of the year. (Input)
+ * year = Year since the beginning of the epoch. (Input)
+ *
+ * RETURNS: int (which month it is)
+ *
+ * HISTORY
+ *   9/2002 Arthur Taylor (MDL/RSIS): Created.
+ *   6/2004 AAT (MDL): Updated.
+ *
+ * NOTES
+ *****************************************************************************
+ */
+static int Clock_MonthNum (int day, sInt4 year)
+{
+   if (day < 31)
+      return 1;
+   if (ISLEAPYEAR (year))
+      day -= 1;
+   if (day < 59)
+      return 2;
+   if (day <= 89)
+      return 3;
+   if (day == 242)
+      return 8;
+   return ((day + 64) * 5) / 153 - 1;
+}
+
+/*****************************************************************************
+ * Clock_NumDay() --
+ *
+ * Arthur Taylor / MDL
+ *
+ * PURPOSE
+ *   Returns either the number of days in the month or the number of days
+ * since the begining of the year.
+ *
+ * ARGUMENTS
+ * month = Month in question. (Input)
+ *   day = Day of month in question (Input)
+ *  year = years since the epoch (Input)
+ * f_tot = 1 if we want total days from begining of year,
+ *         0 if we want total days in the month. (Input)
+ *
+ * RETURNS: int
+ *  Either the number of days in the month, or
+ *  the number of days since the beginning of they year.
+ *
+ * HISTORY
+ *   9/2002 Arthur Taylor (MDL/RSIS): Created.
+ *
+ * NOTES
+ *****************************************************************************
+ */
+static int Clock_NumDay (int month, int day, sInt4 year, char f_tot)
+{
+   if (f_tot == 1) {
+      if (month > 2) {
+         if (ISLEAPYEAR (year)) {
+            return ((month + 1) * 153) / 5 - 63 + day;
+         } else {
+            return ((month + 1) * 153) / 5 - 64 + day;
+         }
+      } else {
+         return (month - 1) * 31 + day - 1;
+      }
+   } else {
+      if (month == 1) {
+         return 31;
+      } else if (month != 2) {
+         if ((((month - 3) % 5) % 2) == 1) {
+            return 30;
+         } else {
+            return 31;
+         }
+      } else {
+         if (ISLEAPYEAR (year)) {
+            return 29;
+         } else {
+            return 28;
+         }
+      }
+   }
+}
+
+/*****************************************************************************
+ * Clock_FormatParse() --
+ *
+ * Arthur Taylor / MDL
+ *
+ * PURPOSE
+ *   To format part of the output clock string.
+ *
+ * ARGUMENTS
+ *    buffer = The output string to write to. (Output)
+ *       sec = Seconds since beginning of day. (Input)
+ * floatSec = Part of a second since beginning of second. (Input)
+ *   totDay = Days since the beginning of the epoch. (Input)
+ *      year = Years since the beginning of the epoch (Input)
+ *     month = Month since the beginning of the year (Input)
+ *       day = Days since the beginning of the year (Input)
+ *    format = Which part of the format string we are working on. (Input)
+ *
+ * RETURNS: void
+ *
+ * HISTORY
+ *   9/2002 Arthur Taylor (MDL/RSIS): Created.
+ *   6/2004 AAT (MDL): Updated.
+ *
+ * NOTES
+ *****************************************************************************
+ */
+static void Clock_FormatParse (char buffer[100], sInt4 sec, float floatSec,
+                               sInt4 totDay, sInt4 year, int month, int day,
+                               char format)
+{
+   static char *MonthName[] = {
+      "January", "February", "March", "April", "May", "June", "July",
+      "August", "September", "October", "November", "December"
+   };
+   static char *DayName[] = {
+      "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
+      "Saturday"
+   };
+   int dy;              /* # of days from start of year to start of month. */
+   int i;               /* Temporary variable to help with computations. */
+   char temp[100];      /* Helps parse the %D, %T, %r, and %R options. */
+
+   switch (format) {
+      case 'd':
+         dy = (Clock_NumDay (month, 1, year, 1) - 1);
+         sprintf (buffer, "%02d", day - dy);
+         return;
+      case 'm':
+         sprintf (buffer, "%02d", month);
+         return;
+      case 'E':
+         sprintf (buffer, "%2d", month);
+         return;
+      case 'Y':
+         sprintf (buffer, "%04ld", year);
+         return;
+      case 'H':
+         sprintf (buffer, "%02d", (int) ((sec % 86400L) / 3600));
+         return;
+      case 'G':
+         sprintf (buffer, "%2d", (int) ((sec % 86400L) / 3600));
+         return;
+      case 'M':
+         sprintf (buffer, "%02d", (int) ((sec % 3600) / 60));
+         return;
+      case 'S':
+         sprintf (buffer, "%02d", (int) (sec % 60));
+         return;
+      case 'f':
+         sprintf (buffer, "%05.2f", ((int) (sec % 60)) + floatSec);
+         return;
+      case 'n':
+         sprintf (buffer, "\n");
+         return;
+      case '%':
+         sprintf (buffer, "%%");
+         return;
+      case 't':
+         sprintf (buffer, "\t");
+         return;
+      case 'y':
+         sprintf (buffer, "%02d", (int) (year % 100));
+         return;
+      case 'I':
+         i = ((sec % 43200L) / 3600);
+         if (i == 0) {
+            sprintf (buffer, "12");
+         } else {
+            sprintf (buffer, "%02d", i);
+         }
+         return;
+      case 'p':
+         if (((sec % 86400L) / 3600) >= 12) {
+            sprintf (buffer, "PM");
+         } else {
+            sprintf (buffer, "AM");
+         }
+         return;
+      case 'B':
+         strcpy (buffer, MonthName[month - 1]);
+         return;
+      case 'A':
+         strcpy (buffer, DayName[(4 + totDay) % 7]);
+         return;
+      case 'b':
+      case 'h':
+         strcpy (buffer, MonthName[month - 1]);
+         buffer[3] = '\0';
+         return;
+      case 'a':
+         strcpy (buffer, DayName[(4 + totDay) % 7]);
+         buffer[3] = '\0';
+         return;
+      case 'w':
+         sprintf (buffer, "%d", (int) ((4 + totDay) % 7));
+         return;
+      case 'j':
+         sprintf (buffer, "%03d", day + 1);
+         return;
+      case 'e':
+         dy = (Clock_NumDay (month, 1, year, 1) - 1);
+         sprintf (buffer, "%d", (int) (day - dy));
+         return;
+      case 'W':
+         i = (1 - ((4 + totDay - day) % 7)) % 7;
+         if (day < i)
+            sprintf (buffer, "00");
+         else
+            sprintf (buffer, "%02d", ((day - i) / 7) + 1);
+         return;
+      case 'U':
+         i = (-((4 + totDay - day) % 7)) % 7;
+         if (day < i)
+            sprintf (buffer, "00");
+         else
+            sprintf (buffer, "%02d", ((day - i) / 7) + 1);
+         return;
+      case 'D':
+         Clock_FormatParse (buffer, sec, floatSec, totDay, year, month,
+                            day, 'm');
+         strcat (buffer, "/");
+         Clock_FormatParse (temp, sec, floatSec, totDay, year, month,
+                            day, 'd');
+         strcat (buffer, temp);
+         strcat (buffer, "/");
+         Clock_FormatParse (temp, sec, floatSec, totDay, year, month,
+                            day, 'Y');
+         strcat (buffer, temp);
+         return;
+      case 'T':
+         Clock_FormatParse (buffer, sec, floatSec, totDay, year, month,
+                            day, 'H');
+         strcat (buffer, ":");
+         Clock_FormatParse (temp, sec, floatSec, totDay, year, month,
+                            day, 'M');
+         strcat (buffer, temp);
+         strcat (buffer, ":");
+         Clock_FormatParse (temp, sec, floatSec, totDay, year, month,
+                            day, 'S');
+         strcat (buffer, temp);
+         return;
+      case 'r':
+         Clock_FormatParse (buffer, sec, floatSec, totDay, year, month,
+                            day, 'I');
+         strcat (buffer, ":");
+         Clock_FormatParse (temp, sec, floatSec, totDay, year, month,
+                            day, 'M');
+         strcat (buffer, temp);
+         strcat (buffer, ":");
+         Clock_FormatParse (temp, sec, floatSec, totDay, year, month,
+                            day, 'S');
+         strcat (buffer, temp);
+         strcat (buffer, " ");
+         Clock_FormatParse (temp, sec, floatSec, totDay, year, month,
+                            day, 'p');
+         strcat (buffer, temp);
+         return;
+      case 'R':
+         Clock_FormatParse (buffer, sec, floatSec, totDay, year, month,
+                            day, 'H');
+         strcat (buffer, ":");
+         Clock_FormatParse (temp, sec, floatSec, totDay, year, month,
+                            day, 'M');
+         strcat (buffer, temp);
+         return;
+      default:
+         sprintf (buffer, "unknown %c", format);
+         return;
+   }
+}
+
+/*****************************************************************************
+ * Clock_GetTimeZone() --
+ *
+ * Arthur Taylor / MDL
+ *
+ * PURPOSE
+ *   Returns the time zone offset in hours to adjust to UTC.
+ *
+ * ARGUMENTS
+ *
+ * RETURNS: int
+ *
+ * HISTORY
+ *   6/2004 Arthur Taylor (MDL): Created.
+ *
+ * NOTES
+ *****************************************************************************
+ */
+int Clock_GetTimeZone ()
+{
+   char buff[10];
+   struct tm time;
+   time_t ansTime;
+   static int timeZone = 9999;
+
+   if (timeZone == 9999) {
+      /* Cheap method of getting global time_zone variable. */
+      memset (&time, 0, sizeof (struct tm));
+      time.tm_year = 70;
+      time.tm_mday = 1;
+      ansTime = mktime (&time);
+      strftime (buff, 10, "%H", gmtime (&ansTime));
+      timeZone = atoi (buff);
+      if (timeZone < 0) {
+         timeZone += 24;
+      }
+   }
+   return timeZone;
+}
+
+/*****************************************************************************
+ * Clock_IsDaylightSaving() --
+ *
+ * Arthur Taylor / MDL
+ *
+ * PURPOSE
+ *   To determine if daylight savings is in effect.  Daylight savings is in
+ * effect from the first sunday in April to the last sunday in October.
+ * At 2 AM ST (or 3 AM DT) in April   -> 3 AM DT (and we return 1)
+ * At 2 AM DT (or 1 AM ST) in October -> 1 AM ST (and we return 0)
+ *
+ * ARGUMENTS
+ *    clock = The time stored as a double. (Input)
+ * TimeZone = # of hrs to adjust the clock by because of timeZone. (Input)
+ *
+ * RETURNS: int
+ *   0 if not in daylight savings time.
+ *   1 if in daylight savings time.
+ *
+ * HISTORY
+ *   9/2002 Arthur Taylor (MDL/RSIS): Created.
+ *   6/2004 AAT (MDL): Updated.
+ *
+ * NOTES
+ *****************************************************************************
+ */
+int Clock_IsDaylightSaving (double clock, sInt4 TimeZone)
+{
+   sInt4 totDay, year;
+   int day, first;
+   double secs;
+
+   clock = clock - ((double) TimeZone);
+   /* Clock should now be in Standard Time, so comparisons later have to be
+    * based on Standard Time. */
+
+   totDay = (sInt4) floor (clock / SEC_DAY);
+   Clock_Epoch2YearDay (totDay, &day, &year);
+   /* Figure out number of seconds since beginning of year. */
+   secs = clock - (totDay - day) * SEC_DAY;
+
+   /* figure out if 1/1/year is mon/tue/.../sun */
+   first = ((4 + (totDay - day)) % 7); /* -day should get 1/1 but may need
+                                        * -day+1 => sun == 0, ... sat == 6 */
+
+   /* figure out if year is a leap year */
+   if (((year % 4) == 0) && (((year % 100) != 0) || ((year % 400) == 0))) {
+      /* look up extents of daylight savings. for leap year. */
+      switch (first) {
+         case 0:
+            if ((secs >= 7869600.0) && (secs <= 26010000.0))
+               return 1;
+            else
+               return 0;
+         case 1:
+            if ((secs >= 8388000.0) && (secs <= 25923600.0))
+               return 1;
+            else
+               return 0;
+         case 2:
+            if ((secs >= 8301600.0) && (secs <= 25837200.0))
+               return 1;
+            else
+               return 0;
+         case 3:
+            if ((secs >= 8215200.0) && (secs <= 25750800.0))
+               return 1;
+            else
+               return 0;
+         case 4:
+            if ((secs >= 8128800.0) && (secs <= 26269200.0))
+               return 1;
+            else
+               return 0;
+         case 5:
+            if ((secs >= 8042400.0) && (secs <= 26182800.0))
+               return 1;
+            else
+               return 0;
+         case 6:
+            if ((secs >= 7956000.0) && (secs <= 26096400.0))
+               return 1;
+            else
+               return 0;
+      }
+   } else {
+      switch (first) {
+         case 0:
+            if ((secs >= 7869600.0) && (secs <= 26010000.0))
+               return 1;
+            else
+               return 0;
+         case 1:
+            if ((secs >= 7783200.0) && (secs <= 25923600.0))
+               return 1;
+            else
+               return 0;
+         case 2:
+            if ((secs >= 8301600.0) && (secs <= 25837200.0))
+               return 1;
+            else
+               return 0;
+         case 3:
+            if ((secs >= 8215200.0) && (secs <= 25750800.0))
+               return 1;
+            else
+               return 0;
+         case 4:
+            if ((secs >= 8128800.0) && (secs <= 26664400.0))
+               return 1;
+            else
+               return 0;
+         case 5:
+            if ((secs >= 8042400.0) && (secs <= 26182800.0))
+               return 1;
+            else
+               return 0;
+         case 6:
+            if ((secs >= 7956000.0) && (secs <= 26096400.0))
+               return 1;
+            else
+               return 0;
+      }
+   }
+   return 0;
+}
+
+void Clock_PrintDate (double clock, sInt4 * year, int *month, int *day,
+                      int *hour, int *min, double *sec)
+{
+   sInt4 totDay;
+   sInt4 intSec;
+
+   totDay = (sInt4) floor (clock / SEC_DAY);
+   Clock_Epoch2YearDay (totDay, day, year);
+   *month = Clock_MonthNum (*day, *year);
+   *day = *day - Clock_NumDay (*month, 1, *year, 1) + 1;
+   *sec = clock - ((double) totDay) * SEC_DAY;
+   intSec = (sInt4) (*sec);
+   *hour = (int) ((intSec % 86400L) / 3600);
+   *min = (int) ((intSec % 3600) / 60);
+   *sec = (intSec % 60) + (*sec - intSec);
+}
+
+/*****************************************************************************
+ * Clock_Print() --
+ *
+ * Arthur Taylor / MDL
+ *
+ * PURPOSE
+ *   To create formated output from a time structure that is stored as a
+ * double.
+ *
+ * ARGUMENTS
+ * buffer = Destination to write the format to. (Output)
+ *      n = The number of characters in buffer. (Input)
+ *  clock = The time stored as a double. (Input)
+ * format = The desired output format. (Input)
+ *  f_gmt = 0 output GMT, 1 output LDT, 2 output LST. (Input)
+ *
+ * RETURNS: void
+ *
+ * HISTORY
+ *   9/2002 Arthur Taylor (MDL/RSIS): Created.
+ *   6/2004 AAT (MDL): Updated.
+ *
+ * NOTES
+ *****************************************************************************
+ */
+void Clock_Print (char *buffer, int n, double clock, char *format,
+                  char f_gmt)
+{
+   sInt4 totDay, year;
+   sInt4 sec;
+   double floatSec;
+   int month, day;
+   int i, j;
+   char f_perc;
+   char locBuff[100];
+   int timeZone;        /* # of hrs to adjust the clock by because of
+                         * timeZone. */
+
+   /* Handle gmt problems. */
+   if (f_gmt != 0) {
+      timeZone = Clock_GetTimeZone ();
+      clock -= timeZone * 3600;
+      if ((f_gmt == 1) && (Clock_IsDaylightSaving (clock, 0) == 1)) {
+         clock = clock + 3600;
+      }
+   }
+
+   /* Convert from seconds to days and seconds. */
+   totDay = (sInt4) floor (clock / SEC_DAY);
+   Clock_Epoch2YearDay (totDay, &day, &year);
+   month = Clock_MonthNum (day, year);
+   floatSec = clock - ((double) totDay) * SEC_DAY;
+   sec = (sInt4) floatSec;
+   floatSec = floatSec - sec;
+
+   f_perc = 0;
+   j = 0;
+   for (i = 0; i < strlen (format); i++) {
+      if (j >= n)
+         return;
+      if (format[i] == '%') {
+         f_perc = 1;
+      } else {
+         if (f_perc == 0) {
+            buffer[j] = format[i];
+            j++;
+            buffer[j] = '\0';
+         } else {
+            Clock_FormatParse (locBuff, sec, floatSec, totDay, year, month,
+                               day, format[i]);
+            buffer[j] = '\0';
+            strncat (buffer, locBuff, n - j);
+            j += strlen (locBuff);
+            f_perc = 0;
+         }
+      }
+   }
+}
+
+/*****************************************************************************
+ * Clock_Clicks() --
+ *
+ * Arthur Taylor / MDL
+ *
+ * PURPOSE
+ *   Returns the number of clicks since the program started execution.
+ *
+ * ARGUMENTS
+ *
+ * RETURNS: double
+ *  Number of clicks since the beginning of the program.
+ *
+ * HISTORY
+ *   6/2004 Arthur Taylor (MDL): Created.
+ *
+ * NOTES
+ *****************************************************************************
+ */
+double Clock_Clicks (void)
+{
+   double ans;
+
+   ans = clock ();
+   return ans;
+}
+
+/*****************************************************************************
+ * Clock_Seconds() --
+ *
+ * Arthur Taylor / MDL
+ *
+ * PURPOSE
+ *   Returns the current number of seconds since the beginning of the epoch.
+ * Using the local system time zone.
+ *
+ * ARGUMENTS
+ *
+ * RETURNS: double
+ *  Number of seconds since beginning of the epoch.
+ *
+ * HISTORY
+ *   6/2004 Arthur Taylor (MDL): Created.
+ *
+ * NOTES
+ *****************************************************************************
+ */
+double Clock_Seconds (void)
+{
+   double ans;
+
+   ans = time (NULL);
+   return ans;
+}
+
+/*****************************************************************************
+ * Clock_ScanZone() --
+ *
+ * Arthur Taylor / MDL
+ *
+ * PURPOSE
+ *   Scans a character string to determine the timezone.
+ *
+ * ARGUMENTS
+ *      ptr = The character string to scan. (Input)
+ * TimeZone = # of hrs to shift from UTC. (Output)
+ *    f_day = True if we are dealing with daylight savings. (Output)
+ *
+ * RETURNS: int
+ *  0 if we read TimeZone, -1 if not.
+ *
+ * HISTORY
+ *   9/2002 Arthur Taylor (MDL/RSIS): Created.
+ *   6/2004 AAT (MDL): Updated.
+ *
+ * NOTES
+ *****************************************************************************
+ */
+int Clock_ScanZone (char *ptr, sInt4 * TimeZone, char *f_day)
+{
+   switch (ptr[0]) {
+      case 'G':
+         if (strcmp (ptr, "GMT") == 0) {
+            *f_day = 0;
+            *TimeZone = 0;
+            return 0;
+         }
+         return -1;
+      case 'U':
+         if (strcmp (ptr, "UTC") == 0) {
+            *f_day = 0;
+            *TimeZone = 0;
+            return 0;
+         }
+         return -1;
+      case 'E':
+         if (strcmp (ptr, "EDT") == 0) {
+            *f_day = 1;
+            *TimeZone = 5 * 3600;
+            return 0;
+         } else if (strcmp (ptr, "EST") == 0) {
+            *f_day = 0;
+            *TimeZone = 5 * 3600;
+            return 0;
+         }
+         return -1;
+      case 'C':
+         if (strcmp (ptr, "CDT") == 0) {
+            *f_day = 1;
+            *TimeZone = 6 * 3600;
+            return 0;
+         } else if (strcmp (ptr, "CST") == 0) {
+            *f_day = 0;
+            *TimeZone = 6 * 3600;
+            return 0;
+         }
+         return -1;
+      case 'Y':
+         if (strcmp (ptr, "YDT") == 0) {
+            *f_day = 1;
+            *TimeZone = 9 * 3600;
+            return 0;
+         } else if (strcmp (ptr, "YST") == 0) {
+            *f_day = 0;
+            *TimeZone = 9 * 3600;
+            return 0;
+         }
+         return -1;
+      case 'M':
+         if (strcmp (ptr, "MDT") == 0) {
+            *f_day = 1;
+            *TimeZone = 7 * 3600;
+            return 0;
+         } else if (strcmp (ptr, "MST") == 0) {
+            *f_day = 0;
+            *TimeZone = 7 * 3600;
+            return 0;
+         }
+         return -1;
+      case 'P':
+         if (strcmp (ptr, "PDT") == 0) {
+            *f_day = 1;
+            *TimeZone = 8 * 3600;
+            return 0;
+         } else if (strcmp (ptr, "PST") == 0) {
+            *f_day = 0;
+            *TimeZone = 8 * 3600;
+            return 0;
+         }
+         return -1;
+      case 'Z':
+         if (strcmp (ptr, "Z") == 0) {
+            *f_day = 0;
+            *TimeZone = 0;
+            return 0;
+         }
+         return -1;
+   }
+   return -1;
+}
+
+/*****************************************************************************
+ * Clock_ScanMonth() --
+ *
+ * Arthur Taylor / MDL
+ *
+ * PURPOSE
+ *   Scans a string looking for a month word.  Assumes string is all caps.
+ *
+ * ARGUMENTS
+ * ptr = The character string to scan. (Input)
+ *
+ * RETURNS: int
+ * Returns the month number read, or -1 if no month word seen.
+ *
+ * HISTORY
+ *   9/2002 Arthur Taylor (MDL/RSIS): Created.
+ *   6/2004 AAT (MDL): Updated.
+ *
+ * NOTES
+ *****************************************************************************
+ */
+int Clock_ScanMonth (char *ptr)
+{
+   switch (*ptr) {
+      case 'A':
+         if ((strcmp (ptr, "APR") == 0) || (strcmp (ptr, "APRIL") == 0))
+            return 4;
+         else if ((strcmp (ptr, "AUG") == 0) ||
+                  (strcmp (ptr, "AUGUST") == 0))
+            return 8;
+         return -1;
+      case 'D':
+         if ((strcmp (ptr, "DEC") == 0) || (strcmp (ptr, "DECEMBER") == 0))
+            return 12;
+         return -1;
+      case 'F':
+         if ((strcmp (ptr, "FEB") == 0) || (strcmp (ptr, "FEBRUARY") == 0))
+            return 2;
+         return -1;
+      case 'J':
+         if ((strcmp (ptr, "JAN") == 0) || (strcmp (ptr, "JANUARY") == 0))
+            return 1;
+         else if ((strcmp (ptr, "JUN") == 0) || (strcmp (ptr, "JUNE") == 0))
+            return 6;
+         else if ((strcmp (ptr, "JUL") == 0) || (strcmp (ptr, "JULY") == 0))
+            return 7;
+         return -1;
+      case 'M':
+         if ((strcmp (ptr, "MAR") == 0) || (strcmp (ptr, "MARCH") == 0))
+            return 3;
+         else if (strcmp (ptr, "MAY") == 0)
+            return 5;
+         return -1;
+      case 'N':
+         if ((strcmp (ptr, "NOV") == 0) || (strcmp (ptr, "NOVEMBER") == 0))
+            return 11;
+         return -1;
+      case 'O':
+         if ((strcmp (ptr, "OCT") == 0) || (strcmp (ptr, "OCTOBER") == 0))
+            return 10;
+         return -1;
+      case 'S':
+         if ((strcmp (ptr, "SEP") == 0) || (strcmp (ptr, "SEPTEMBER") == 0))
+            return 9;
+         return -1;
+   }
+   return -1;
+}
+
+void Clock_PrintMonth3 (int mon, char *buffer, int buffLen)
+{
+   static char *MonthName[] = {
+      "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT",
+      "NOV", "DEC"
+   };
+   myAssert ((mon > 0) && (mon < 13));
+   myAssert (buffLen > 3);
+   strcpy (buffer, MonthName[mon - 1]);
+}
+
+void Clock_PrintMonth (int mon, char *buffer, int buffLen)
+{
+   static char *MonthName[] = {
+      "January", "February", "March", "April", "May", "June", "July",
+      "August", "September", "October", "November", "December"
+   };
+   myAssert ((mon > 0) && (mon < 13));
+   myAssert (buffLen > 9);
+   strcpy (buffer, MonthName[mon - 1]);
+}
+
+/*****************************************************************************
+ * Clock_ScanWeekday() --
+ *
+ * Arthur Taylor / MDL
+ *
+ * PURPOSE
+ *   Scans a string looking for a day word.  Assumes string is all caps.
+ *
+ * ARGUMENTS
+ * ptr = The character string to scan. (Input)
+ *
+ * RETURNS: int
+ * Returns the day number read, or -1 if no day word seen.
+ *
+ * HISTORY
+ *   9/2002 Arthur Taylor (MDL/RSIS): Created.
+ *   6/2004 AAT (MDL): Updated.
+ *
+ * NOTES
+ *****************************************************************************
+ */
+static int Clock_ScanWeekday (char *ptr)
+{
+   switch (*ptr) {
+      case 'S':
+         if ((strcmp (ptr, "SUN") == 0) || (strcmp (ptr, "SUNDAY") == 0))
+            return 0;
+         else if ((strcmp (ptr, "SAT") == 0) ||
+                  (strcmp (ptr, "SATURDAY") == 0))
+            return 6;
+         return -1;
+      case 'M':
+         if ((strcmp (ptr, "MON") == 0) || (strcmp (ptr, "MONDAY") == 0))
+            return 1;
+         return -1;
+      case 'T':
+         if ((strcmp (ptr, "TUE") == 0) || (strcmp (ptr, "TUESDAY") == 0))
+            return 2;
+         else if ((strcmp (ptr, "THU") == 0) ||
+                  (strcmp (ptr, "THURSDAY") == 0))
+            return 4;
+         return -1;
+      case 'W':
+         if ((strcmp (ptr, "WED") == 0) || (strcmp (ptr, "WEDNESDAY") == 0))
+            return 3;
+         return -1;
+      case 'F':
+         if ((strcmp (ptr, "FRI") == 0) || (strcmp (ptr, "FRIDAY") == 0))
+            return 5;
+         return -1;
+   }
+   return -1;
+}
+
+/*****************************************************************************
+ * Clock_ScanColon() --
+ *
+ * Arthur Taylor / MDL
+ *
+ * PURPOSE
+ *   Parses a word assuming it is : separated and is dealing with
+ * hours:minutes:seconds or hours:minutes.  Returns the resulting time as
+ * a double.
+ *
+ * ARGUMENTS
+ * ptr = The character string to scan. (Input)
+ *
+ * RETURNS: double
+ * The time after converting the : separated string.
+ *
+ * HISTORY
+ *   9/2002 Arthur Taylor (MDL/RSIS): Created.
+ *   6/2004 AAT (MDL): Updated.
+ *
+ * NOTES
+ *****************************************************************************
+ */
+static double Clock_ScanColon (char *ptr)
+{
+   sInt4 hour, min;
+   double sec;
+   char *ptr3;
+
+   ptr3 = strchr (ptr, ':');
+   *ptr3 = '\0';
+   hour = atoi (ptr);
+   *ptr3 = ':';
+   ptr = ptr3 + 1;
+   /* Check for second :, other wise it is hh:mm */
+   if ((ptr3 = strchr (ptr, ':')) == NULL) {
+      min = atoi (ptr);
+      sec = 0;
+   } else {
+      *ptr3 = '\0';
+      min = atoi (ptr);
+      *ptr3 = ':';
+      ptr = ptr3 + 1;
+      sec = atof (ptr);
+   }
+   return (sec + 60 * min + 3600 * hour);
+}
+
+/*****************************************************************************
+ * Clock_ScanSlash() --
+ *
+ * Arthur Taylor / MDL
+ *
+ * PURPOSE
+ *   Parses a word assuming it is / separated and is dealing with
+ * months/days/years or months/days.
+ *
+ * ARGUMENTS
+ *   word = The character string to scan. (Input)
+ *    mon = The month that was seen. (Output)
+ *    day = The day that was seen. (Output)
+ *   year = The year that was seen. (Output)
+ * f_year = True if the year is valid. (Output)
+ *
+ * RETURNS: int
+ * -1 if mon or day is out of range.
+ *  0 if no problems.
+ *
+ * HISTORY
+ *   9/2002 Arthur Taylor (MDL/RSIS): Created.
+ *   6/2004 AAT (MDL): Updated.
+ *
+ * NOTES
+ *****************************************************************************
+ */
+static int Clock_ScanSlash (char *word, int *mon, int *day, sInt4 * year,
+                            char *f_year)
+{
+   char *ptr3;
+   char *ptr = word;
+
+   ptr3 = strchr (ptr, '/');
+   *ptr3 = '\0';
+   *mon = atoi (ptr);
+   *ptr3 = '/';
+   ptr = ptr3 + 1;
+   /* Check for second /, other wise it is mm/dd */
+   if ((ptr3 = strchr (ptr, '/')) == NULL) {
+      *day = atoi (ptr);
+      *year = 1970;
+      *f_year = 0;
+   } else {
+      *ptr3 = '\0';
+      *day = atoi (ptr);
+      *ptr3 = '/';
+      ptr = ptr3 + 1;
+      *year = atoi (ptr);
+      *f_year = 1;
+   }
+   if ((*mon < 1) || (*mon > 12) || (*day < 1) || (*day > 31)) {
+      printf ("Errors parsing %s\n", word);
+      return -1;
+   }
+   return 0;
+}
+
+/* prj::slosh prj::stm2trk and prj::degrib use this with clock zero'ed
+   out, so I have now made sure clock is zero'ed. */
+void Clock_ScanDate (double *clock, sInt4 year, int mon, int day)
+{
+   int i;
+   sInt4 delt, temp, totDay;
+
+   myAssert ((mon >= 1) && (mon <= 12));
+
+   /* Makes sure clock is zero'ed out. */
+   *clock = 0;
+
+   if ((mon < 1) || (mon > 12) || (day < 0) || (day > 31))
+      return;
+   totDay = Clock_NumDay (mon, day, year, 0);
+   if (day > totDay)
+      return;
+   totDay = Clock_NumDay (mon, day, year, 1);
+   temp = 1970;
+   delt = year - temp;
+   if ((delt >= 400) || (delt <= -400)) {
+      i = (delt / 400);
+      temp += 400 * i;
+      totDay += 146097L * i;
+   }
+   if (temp < year) {
+      while (temp < year) {
+         if (((temp % 4) == 0) &&
+             (((temp % 100) != 0) || ((temp % 400) == 0))) {
+            if ((temp + 4) < year) {
+               totDay += 1461;
+               temp += 4;
+            } else if ((temp + 3) < year) {
+               totDay += 1096;
+               temp += 3;
+            } else if ((temp + 2) < year) {
+               totDay += 731;
+               temp += 2;
+            } else {
+               totDay += 366;
+               temp++;
+            }
+         } else {
+            totDay += 365;
+            temp++;
+         }
+      }
+   } else if (temp > year) {
+      while (temp > year) {
+         temp--;
+         if (((temp % 4) == 0) &&
+             (((temp % 100) != 0) || ((temp % 400) == 0))) {
+            if (year < temp - 3) {
+               totDay -= 1461;
+               temp -= 3;
+            } else if (year < (temp - 2)) {
+               totDay -= 1096;
+               temp -= 2;
+            } else if (year < (temp - 1)) {
+               totDay -= 731;
+               temp--;
+            } else {
+               totDay -= 366;
+            }
+         } else {
+            totDay -= 365;
+         }
+      }
+   }
+   *clock = *clock + ((double) (totDay)) * 24 * 3600;
+}
+
+/* Word_types: none, ':' word, '/' word, integer word, 'AM'/'PM' word,
+ * timeZone word, month word, weekDay word, Preceeder to a relativeDate word,
+ * Postceeder to a relativeDate word, relativeDate word unit, Adjust Day word
+ */
+enum {
+   WT_NONE, WT_COLON, WT_SLASH, WT_INTEGER, WT_AMPM, WT_TIMEZONE, WT_MONTH,
+   WT_DAY, WT_PRE_RELATIVE, WT_POST_RELATIVE, WT_RELATIVE_UNIT, WT_ADJDAY
+};
+
+/* Start at *Start.  Advance Start until it is at first non-space,
+ * non-',' non-'.' character.  Move End to first space, ',' or '.' after
+ * new Start location.  Copy upto 30 characters (in caps) into word. */
+/* return -1 if no next word, 0 otherwise */
+static int Clock_GetWord (char **Start, char **End, char word[30],
+                          int *wordType)
+{
+   char *ptr;
+   int cnt;
+   int f_integer;
+
+   *wordType = WT_NONE;
+   if (*Start == NULL) {
+      return -1;
+   }
+   ptr = *Start;
+   /* Find start of next word (first non-space non-',' non-'.' char.) */
+   while ((*ptr == ' ') || (*ptr == ',') || (*ptr == '.')) {
+      ptr++;
+   }
+   /* There is no next word. */
+   if (*ptr == '\0') {
+      return -1;
+   }
+   *Start = ptr;
+   /* Find end of next word. */
+   cnt = 0;
+   f_integer = 1;
+   while ((*ptr != ' ') && (*ptr != ',') && (*ptr != '\0')) {
+      if (cnt < 29) {
+         word[cnt] = (char) toupper (*ptr);
+         cnt++;
+      }
+      if (*ptr == ':') {
+         *wordType = WT_COLON;
+         f_integer = 0;
+      } else if (*ptr == '/') {
+         *wordType = WT_SLASH;
+         f_integer = 0;
+      } else if (*ptr == '-') {
+         if (ptr != *Start) {
+            f_integer = 0;
+         }
+      } else if (*ptr == '.') {
+         if (!isdigit (*(ptr + 1))) {
+            break;
+         } else {
+            f_integer = 0;
+         }
+      } else if (!isdigit (*ptr)) {
+         f_integer = 0;
+      }
+      ptr++;
+   }
+   word[cnt] = '\0';
+   *End = ptr;
+   if (f_integer) {
+      *wordType = WT_INTEGER;
+   }
+   return 0;
+}
+
+typedef struct {
+   sInt4 val;
+   int len;             /* read from len char string? */
+} stackType;
+
+typedef struct {
+   int relUnit;
+   int f_negate;
+   int amount;
+} relType;
+
+int Clock_Scan (double *clock, char *buffer, char f_gmt)
+{
+   char *ptr, *ptr2;
+   char *ptr3;
+   char word[30];
+   int wordType;
+   int lastWordType;
+   sInt4 TimeZone = Clock_GetTimeZone (); /* Initialize it to local time */
+   char f_dayLight = 0;
+   int month;
+   int day;
+   sInt4 year;
+   char f_year = 0;
+   int index;
+   int ans;
+   stackType *Stack = NULL;
+   relType *Rel = NULL;
+   int lenRel = 0;
+   int lenStack = 0;
+   static char *PreRel[] = { "LAST", "THIS", "NEXT", NULL };
+   static char *RelUnit[] = {
+      "YEAR", "YEARS", "MONTH", "MONTHS", "FORTNIGHT", "FORTNIGHTS", "WEEK",
+      "WEEKS", "DAY", "DAYS", "HOUR", "HOURS", "MIN", "MINS", "MINUTE",
+      "MINUTES", "SEC", "SECS", "SECOND", "SECONDS", NULL
+   };
+   static char *AdjDay[] = { "YESTERDAY", "TODAY", "TOMORROW", NULL };
+   char f_ampm = -1;
+   char f_timeZone = 0;
+   char f_time = 0;
+   char f_date = 0;
+   char f_slashWord = 0;
+   char f_dateWord = 0;
+   char f_monthWord = 0;
+   char f_dayWord = 0;
+   double curTime;
+   sInt4 sec;
+   int i;
+   int monthAdj;
+   int yearAdj;
+
+   /* Check that they gave us a string */
+   ptr = buffer;
+   if (*ptr == '\0')
+      return 0;
+
+   f_time = 0;
+   f_date = 0;
+   lastWordType = WT_NONE;
+   curTime = 0;
+   while (Clock_GetWord (&ptr, &ptr2, word, &wordType) == 0) {
+      if (wordType == WT_COLON) {
+         if (f_time) {
+            printf ("Detected multiple time pieces\n");
+            goto errorReturn;
+         }
+         curTime = Clock_ScanColon (word);
+         f_time = 1;
+      } else if (wordType == WT_SLASH) {
+         if ((f_slashWord) || (f_dateWord)) {
+            printf ("Detected multiple date pieces\n");
+            goto errorReturn;
+         }
+         Clock_ScanSlash (word, &month, &day, &year, &f_year);
+         f_slashWord = 1;
+      } else if (wordType == WT_INTEGER) {
+         lenStack++;
+         Stack = (stackType *) realloc ((void *) Stack,
+                                        lenStack * sizeof (stackType));
+         Stack[lenStack - 1].val = atoi (word);
+         Stack[lenStack - 1].len = strlen (word);
+      } else if (strcmp (word, "AM") == 0) {
+         if (f_ampm != -1) {
+            printf ("Detected multiple am/pm\n");
+            goto errorReturn;
+         }
+         f_ampm = 1;
+         wordType = WT_AMPM;
+      } else if (strcmp (word, "PM") == 0) {
+         if (f_ampm != -1) {
+            printf ("Detected multiple am/pm\n");
+            goto errorReturn;
+         }
+         f_ampm = 2;
+         wordType = WT_AMPM;
+      } else if (Clock_ScanZone (word, &TimeZone, &f_dayLight) == 0) {
+         if (f_timeZone) {
+            printf ("Detected multiple time zones.\n");
+            goto errorReturn;
+         }
+         if (f_dayLight == 0) {
+            f_gmt = 2;
+         } else {
+            f_gmt = 1;
+         }
+         f_timeZone = 1;
+         wordType = WT_TIMEZONE;
+      } else if ((index = Clock_ScanMonth (word)) != -1) {
+         if ((f_slashWord) || (f_monthWord)) {
+            printf ("Detected multiple months or already defined month.\n");
+            goto errorReturn;
+         }
+         month = index;
+         /* Get the next word? First preserve the pointer */
+         ptr3 = ptr2;
+         ptr = ptr2;
+         ans = Clock_GetWord (&ptr, &ptr2, word, &wordType);
+         if ((ans != 0) || (wordType != WT_INTEGER)) {
+            /* Next word not integer, so previous word is integral day. */
+            if (lastWordType != WT_INTEGER) {
+               printf ("Problems with month word and finding the day.\n");
+               goto errorReturn;
+            }
+            lenStack--;
+            day = Stack[lenStack].val;
+            /* Put the next word back under consideration. */
+            wordType = WT_MONTH;
+            ptr2 = ptr3;
+         } else {
+            /* If word is trailed by comma, then it is day, and the next one
+             * is the year, otherwise it is a year, and the number before the
+             * month is the day.  */
+            if (*ptr2 == ',') {
+               day = atoi (word);
+               ptr = ptr2;
+               ans = Clock_GetWord (&ptr, &ptr2, word, &wordType);
+               if ((ans != 0) || (wordType != WT_INTEGER)) {
+                  printf ("Couldn't find the year after the day.\n");
+                  goto errorReturn;
+               }
+               year = atoi (word);
+               f_year = 1;
+            } else {
+               year = atoi (word);
+               f_year = 1;
+               if (lastWordType != WT_INTEGER) {
+                  printf ("Problems with month word and finding the day.\n");
+                  goto errorReturn;
+               }
+               lenStack--;
+               day = Stack[lenStack].val;
+            }
+         }
+         f_monthWord = 1;
+         f_dateWord = 1;
+
+         /* Ignore the day of the week info? */
+      } else if ((index = Clock_ScanWeekday (word)) != -1) {
+         if ((f_slashWord) || (f_dayWord)) {
+            printf ("Detected multiple day of week or already defined "
+                    "day.\n");
+            goto errorReturn;
+         }
+         wordType = WT_DAY;
+         f_dayWord = 1;
+         f_dateWord = 1;
+      } else if (GetIndexFromStr (word, PreRel, &index) != -1) {
+         wordType = WT_PRE_RELATIVE;
+         /* Next word must be a unit word. */
+         ptr = ptr2;
+         if (Clock_GetWord (&ptr, &ptr2, word, &wordType) != 0) {
+            printf ("Couldn't get the next word after Pre-Relative time "
+                    "word\n");
+            goto errorReturn;
+         }
+         if (GetIndexFromStr (word, RelUnit, &ans) == -1) {
+            printf ("Couldn't get the Relative unit\n");
+            goto errorReturn;
+         }
+         if (index != 1) {
+            lenRel++;
+            Rel = (relType *) realloc ((void *) Rel,
+                                       lenRel * sizeof (relType));
+            Rel[lenRel - 1].relUnit = ans;
+            Rel[lenRel - 1].amount = 1;
+            if (index == 0) {
+               Rel[lenRel - 1].f_negate = 1;
+            } else {
+               Rel[lenRel - 1].f_negate = 0;
+            }
+         }
+         printf ("Pre Relative Word: %s %d\n", word, index);
+
+      } else if (strcmp (word, "AGO") == 0) {
+         if ((lastWordType != WT_PRE_RELATIVE) ||
+             (lastWordType != WT_RELATIVE_UNIT)) {
+            printf ("Ago did not follow relative words\n");
+            goto errorReturn;
+         }
+         Rel[lenRel - 1].f_negate = 1;
+         wordType = WT_POST_RELATIVE;
+      } else if (GetIndexFromStr (word, RelUnit, &index) != -1) {
+         lenRel++;
+         Rel = (relType *) realloc ((void *) Rel, lenRel * sizeof (relType));
+         Rel[lenRel - 1].relUnit = index;
+         Rel[lenRel - 1].amount = 1;
+         Rel[lenRel - 1].f_negate = 0;
+         if (lastWordType == WT_INTEGER) {
+            lenStack--;
+            Rel[lenRel - 1].amount = Stack[lenStack].val;
+         }
+         wordType = WT_RELATIVE_UNIT;
+      } else if (GetIndexFromStr (word, AdjDay, &index) != -1) {
+         if (index != 1) {
+            lenRel++;
+            Rel = (relType *) realloc ((void *) Rel,
+                                       lenRel * sizeof (relType));
+            Rel[lenRel - 1].relUnit = 13; /* DAY in RelUnit list */
+            Rel[lenRel - 1].amount = 1;
+            if (index == 0) {
+               Rel[lenRel - 1].f_negate = 1;
+            } else {
+               Rel[lenRel - 1].f_negate = 0;
+            }
+         }
+         wordType = WT_ADJDAY;
+      } else {
+         printf ("unknown: %s\n", word);
+         goto errorReturn;
+      }
+      ptr = ptr2;
+      lastWordType = wordType;
+   }
+
+   /* Deal with time left on the integer stack. */
+   if (lenStack > 1) {
+      printf ("Too many integers on the stack?\n");
+      goto errorReturn;
+   }
+   if (lenStack == 1) {
+      if (Stack[0].val < 0) {
+         printf ("Unable to deduce a negative time?\n");
+         goto errorReturn;
+      }
+      if (f_time) {
+         if (f_dateWord || f_slashWord) {
+            printf ("Already have date and time...\n");
+            goto errorReturn;
+         }
+         if ((Stack[0].len == 6) || (Stack[0].len == 8)) {
+            year = Stack[0].val / 10000;
+            f_year = 1;
+            month = (Stack[0].val % 10000) / 100;
+            day = Stack[0].val % 100;
+            f_slashWord = 1;
+            if ((month < 1) || (month > 12) || (day < 1) || (day > 31)) {
+               printf ("Unable to deduce the integer value\n");
+               return -1;
+            }
+         } else {
+            printf ("Unable to deduce the integer value\n");
+            goto errorReturn;
+         }
+      } else {
+         if (Stack[0].len < 3) {
+            curTime = Stack[0].val * 3600;
+            f_time = 1;
+         } else if (Stack[0].len < 5) {
+            curTime = ((Stack[0].val / 100) * 3600. +
+                       (Stack[0].val % 100) * 60.);
+            f_time = 1;
+         } else if ((Stack[0].len == 6) || (Stack[0].len == 8)) {
+            year = Stack[0].val / 10000;
+            f_year = 1;
+            month = (Stack[0].val % 10000) / 100;
+            day = Stack[0].val % 100;
+            f_slashWord = 1;
+            if ((month < 1) || (month > 12) || (day < 1) || (day > 31)) {
+               printf ("Unable to deduce the integer value\n");
+               return -1;
+            }
+         } else {
+            printf ("Unable to deduce the time\n");
+            goto errorReturn;
+         }
+      }
+      lenStack = 0;
+   }
+   if (!f_time) {
+      if (f_ampm != -1) {
+         printf ("Problems setting the time to 0\n");
+         goto errorReturn;
+      }
+      curTime = 0;
+   }
+   if (f_ampm == 1) {
+      /* Adjust for 12 am */
+      sec = (sInt4) (curTime - (floor (curTime / SEC_DAY)) * SEC_DAY);
+      if (((sec % 43200L) / 3600) == 0) {
+         curTime -= 43200L;
+      }
+   } else if (f_ampm == 2) {
+      /* Adjust for 12 pm */
+      curTime += 43200L;
+      sec = (sInt4) (curTime - (floor (curTime / SEC_DAY)) * SEC_DAY);
+      if (((sec % 43200L) / 3600) == 0) {
+         curTime -= 43200L;
+      }
+   }
+   for (i = 0; i < lenRel; i++) {
+      if (Rel[i].f_negate) {
+         Rel[i].amount = -1 * Rel[i].amount;
+      }
+   }
+   /* Deal with adjustments by year or month. */
+   if (f_dateWord || f_slashWord) {
+      /* Check if we don't have the year. */
+      if (!f_year) {
+         *clock = Clock_Seconds ();
+         Clock_Epoch2YearDay ((sInt4) (floor (*clock / SEC_DAY)), &i, &year);
+      }
+      /* Deal with relative adjust by year and month. */
+      for (i = 0; i < lenRel; i++) {
+         if ((Rel[i].relUnit == 0) || (Rel[i].relUnit == 1)) {
+            year += Rel[i].amount;
+         } else if ((Rel[i].relUnit == 2) || (Rel[i].relUnit == 3)) {
+            month += Rel[i].amount;
+         }
+      }
+      while (month < 1) {
+         year--;
+         month += 12;
+      }
+      while (month > 12) {
+         year++;
+         month -= 12;
+      }
+      *clock = 0;
+      Clock_ScanDate (clock, year, month, day);
+
+   } else {
+      /* Pure Time words. */
+      *clock = Clock_Seconds ();
+      /* round off to start of day */
+      *clock = (floor (*clock / SEC_DAY)) * SEC_DAY;
+      /* Deal with relative adjust by year and month. */
+      monthAdj = 0;
+      yearAdj = 0;
+      for (i = 0; i < lenRel; i++) {
+         if ((Rel[i].relUnit == 0) || (Rel[i].relUnit == 1)) {
+            if (Rel[i].f_negate) {
+               yearAdj -= Rel[i].amount;
+            } else {
+               yearAdj += Rel[i].amount;
+            }
+         } else if ((Rel[i].relUnit == 2) || (Rel[i].relUnit == 3)) {
+            if (Rel[i].f_negate) {
+               monthAdj -= Rel[i].amount;
+            } else {
+               monthAdj += Rel[i].amount;
+            }
+         }
+      }
+      if ((monthAdj != 0) || (yearAdj != 0)) {
+         /* Break clock into mon/day/year */
+         Clock_Epoch2YearDay ((sInt4) (floor (*clock / SEC_DAY)),
+                              &day, &year);
+         month = Clock_MonthNum (day, year);
+         day -= (Clock_NumDay (month, 1, year, 1) - 1);
+         month += monthAdj;
+         year += yearAdj;
+         while (month < 1) {
+            year--;
+            month += 12;
+         }
+         while (month > 12) {
+            year++;
+            month -= 12;
+         }
+         *clock = 0;
+         Clock_ScanDate (clock, year, month, day);
+      }
+   }
+
+   /* Join the date and the time. */
+   *clock += curTime;
+
+   /* Finish the relative adjustments. */
+   for (i = 0; i < lenRel; i++) {
+      switch (Rel[i].relUnit) {
+         case 3:       /* Fortnight. */
+         case 4:
+            *clock += (Rel[i].amount * 14 * 24 * 3600.);
+            break;
+         case 5:       /* Week. */
+         case 6:
+            *clock += (Rel[i].amount * 7 * 24 * 3600.);
+            break;
+         case 7:       /* Day. */
+         case 8:
+            *clock += (Rel[i].amount * 24 * 3600.);
+            break;
+         case 9:       /* Hour. */
+         case 10:
+            *clock += (Rel[i].amount * 3600.);
+            break;
+         case 11:      /* Minute. */
+         case 12:
+         case 13:
+         case 14:
+            *clock += (Rel[i].amount * 60.);
+            break;
+         case 15:      /* Second. */
+         case 16:
+         case 17:
+         case 18:
+            *clock += Rel[i].amount;
+            break;
+      }
+   }
+
+   /* Handle gmt problems. We are going from Local time to GMT so we add the
+    * TimeZone here. */
+   if (f_gmt != 0) {
+      *clock = *clock + TimeZone * 3600;
+      /* IsDaylightSaving takes clock in GMT, and Timezone. */
+      if ((f_gmt == 2) && (Clock_IsDaylightSaving (*clock, TimeZone) == 1)) {
+         *clock = *clock - 3600;
+      }
+   }
+
+   free (Stack);
+   free (Rel);
+   return 0;
+
+ errorReturn:
+   free (Stack);
+   free (Rel);
+   return -1;
+}
+
+#ifdef CLOCK_DEBUG
+int main (int argc, char **argv)
+{
+   int f_timeAdj;       /* 0 no adjust, 1 adjust as LDT, 2 adjust as LST */
+   double d_clock;
+   double d_amount;
+   int i;
+   sInt4 TimeZone;
+   char f_dayLight;
+   char *formatPtr = NULL;
+   char ans[200];
+   char *buffer = NULL;
+   int lenBuffer = 0;
+   sInt4 year;
+   int month;
+   int day;
+   sInt4 totDay;
+   double d_remain;
+   char f_isYear;
+
+   if (argc < 2) {
+      printf ("Usage: %s <clicks/format/scan/seconds/IsDaylightSaving/"
+              "IsLeap/add> etc\n", argv[0]);
+      return -1;
+   }
+
+   /* Handle format option. */
+   if (strcmp (argv[1], "format") == 0) {
+      if ((argc != 3) && (argc != 5) && (argc != 7) && (argc != 9) &&
+          (argc != 11)) {
+         printf ("Usage: %s format (<value> or 'stdin') -format <string> "
+                 "?-gmt <(0 or 1)>? ?-zone <timeZone>? ?-local <(0 or 1)>?\n",
+                 argv[0]);
+         return -1;
+      }
+      strToLower (argv[2]);
+      if (strcmp (argv[2], "stdin") == 0) {
+         if (reallocFGets (&buffer, &lenBuffer, stdin) == 0) {
+            printf ("Expecting stdin to contain one line of data\n");
+            printf ("Usage: %s format (<value> or 'stdin') -format <string> "
+                    "?-gmt <(0 or 1)>? ?-zone <timeZone>? ?-local <(0 or 1)>"
+                    "?\n", argv[0]);
+            free (buffer);
+            return -1;
+         }
+         strTrim (buffer);
+         if (!myIsReal (buffer, &d_clock)) {
+            printf ("Expecting stdin to contain one double of data\n");
+            printf ("Usage: %s format (<value> or 'stdin') -format <string> "
+                    "?-gmt <(0 or 1)>? ?-zone <timeZone>? ?-local <(0 or 1)>"
+                    "?\n", argv[0]);
+            free (buffer);
+            return -1;
+         }
+         free (buffer);
+         buffer = NULL;
+         lenBuffer = 0;
+      } else {
+         d_clock = atof (argv[2]);
+      }
+      f_timeAdj = 1;
+      for (i = 3; i < argc; i += 2) {
+         if (strcmp (argv[i], "-format") == 0) {
+            formatPtr = argv[i + 1];
+         } else if (strcmp (argv[i], "-gmt") == 0) {
+            if (atoi (argv[i + 1])) {
+               f_timeAdj = 0;
+            }
+         } else if (strcmp (argv[i], "-local") == 0) {
+            if (f_timeAdj != 0) {
+               if (atoi (argv[i + 1])) {
+                  f_timeAdj = 2;
+               }
+            }
+         } else if (strcmp (argv[i], "-zone") == 0) {
+            if (Clock_ScanZone (argv[i + 1], &TimeZone, &f_dayLight) == 0) {
+               /* TimeZone is number of sec to adjust GMT by. */
+               d_clock -= TimeZone;
+               if (f_dayLight == 1)
+                  d_clock += 3600.0;
+               f_timeAdj = 0;
+            }
+         }
+      }
+      if (formatPtr == NULL) {
+         printf ("Usage: %s format <value> -format <string> ?-gmt <(0 or"
+                 " 1)>? ?-zone <timeZone>? ?-local <(0 or 1)>?\n", argv[0]);
+         return -1;
+      }
+      ans[0] = '\0';
+      Clock_Print (ans, 200, d_clock, formatPtr, f_timeAdj);
+      printf ("%s\n", ans);
+
+      /* Handle scan option. */
+   } else if (strcmp (argv[1], "scan") == 0) {
+      if ((argc != 3) && (argc != 5) && (argc != 7) && (argc != 9)) {
+         printf ("Usage: %s scan <DateString> ?-gmt <(0 or 1)>? "
+                 "?-zone <timeZone>? ?-local <(0 or 1)>?\n", argv[0]);
+         return -1;
+      }
+      d_clock = 0;
+      f_timeAdj = 2;
+      f_dayLight = 0;
+      TimeZone = 0;
+      for (i = 3; i < argc; i += 2) {
+         if (strcmp (argv[i], "-gmt") == 0) {
+            if (atoi (argv[i + 1])) {
+               f_timeAdj = 0;
+            }
+         } else if (strcmp (argv[i], "-local") == 0) {
+            if (f_timeAdj != 0) {
+               if (atoi (argv[i + 1])) {
+                  f_timeAdj = 2;
+               }
+            }
+         } else if (strcmp (argv[i], "-zone") == 0) {
+            if (Clock_ScanZone (argv[i + 1], &TimeZone, &f_dayLight) == 0) {
+               /* TimeZone is number of sec to adjust GMT by. */
+               d_clock -= TimeZone;
+               if (f_dayLight == 1)
+                  d_clock += 3600.0;
+               f_timeAdj = 0;
+            }
+         }
+      }
+      strToLower (argv[2]);
+      if (strcmp (argv[2], "stdin") == 0) {
+         if (reallocFGets (&buffer, &lenBuffer, stdin) == 0) {
+            printf ("Expecting stdin to contain one line of data\n");
+            printf ("Usage: %s format (<value> or 'stdin') -format <string> "
+                    "?-gmt <(0 or 1)>? ?-zone <timeZone>? ?-local <(0 or 1)>?\n",
+                    argv[0]);
+            free (buffer);
+            return -1;
+         }
+         strTrim (buffer);
+         if (Clock_Scan (&d_clock, buffer, f_timeAdj) != 0) {
+            fprintf (stderr, "Problems scanning '%s'\n", argv[2]);
+            free (buffer);
+            return -1;
+         }
+         free (buffer);
+         buffer = NULL;
+         lenBuffer = 0;
+      } else {
+         if (Clock_Scan (&d_clock, argv[2], f_timeAdj) != 0) {
+            printf ("Problems scanning '%s'\n", argv[2]);
+            return -1;
+         }
+      }
+      /* adjust d_clock based on zone.. */
+      /* TimeZone is number of sec to adjust GMT by. */
+      /* We are going from Local time to GMT so we + TimeZone here. */
+      d_clock += TimeZone;
+      if (f_dayLight == 1)
+         d_clock -= 3600.0;
+      printf ("%f\n", d_clock);
+      return 0;
+
+      /* Handle clicks option. */
+   } else if (strcmp (argv[1], "clicks") == 0) {
+      printf ("%.0f\n", Clock_Clicks ());
+      return 0;
+
+      /* Handle seconds option. */
+   } else if (strcmp (argv[1], "seconds") == 0) {
+      if ((argc != 2) && (argc != 4) && (argc != 6) && (argc != 8)) {
+         printf ("Usage: %s seconds ?-gmt <(0 or 1)>? "
+                 "?-zone <timeZone>? ?-local <(0 or 1)>?\n", argv[0]);
+         return -1;
+      }
+      d_clock = Clock_Seconds ();
+      f_timeAdj = 2;
+      f_dayLight = 0;
+      TimeZone = 0;
+      for (i = 2; i < argc; i += 2) {
+         if (strcmp (argv[i], "-gmt") == 0) {
+            if (atoi (argv[i + 1])) {
+               f_timeAdj = 0;
+            }
+         } else if (strcmp (argv[i], "-local") == 0) {
+            if (f_timeAdj != 0) {
+               if (atoi (argv[i + 1])) {
+                  f_timeAdj = 2;
+               }
+            }
+         } else if (strcmp (argv[i], "-zone") == 0) {
+            if (Clock_ScanZone (argv[i + 1], &TimeZone, &f_dayLight) == 0) {
+               /* TimeZone is number of sec to adjust GMT by. */
+               f_timeAdj = 1;
+            }
+         }
+      }
+      if ((f_timeAdj == 0) || (f_timeAdj == 1)) {
+         if (Clock_IsDaylightSaving (d_clock, Clock_GetTimeZone ())) {
+            d_clock = d_clock - (Clock_GetTimeZone () - 1) * 3600;
+         } else {
+            d_clock = d_clock - Clock_GetTimeZone () * 3600;
+         }
+      }
+      if (f_timeAdj == 1) {
+         d_clock += TimeZone;
+         if (f_dayLight) {
+            d_clock -= 3600;
+         }
+      }
+      printf ("%f\n", d_clock);
+      return 0;
+
+      /* Handle Daylight option. */
+   } else if (strcmp (argv[1], "IsDaylightSaving") == 0) {
+      if (argc != 5) {
+         printf ("Usage: %s IsDaylightSaving (<value> or 'stdin') "
+                 "-inZone <zone>\n", argv[0]);
+         return -1;
+      }
+      strToLower (argv[2]);
+      if (strcmp (argv[2], "stdin") == 0) {
+         if (reallocFGets (&buffer, &lenBuffer, stdin) == 0) {
+            printf ("Expecting stdin to contain one line of data\n");
+            printf ("Usage: %s format (<value> or 'stdin') -format <string> "
+                    "?-gmt <(0 or 1)>? ?-zone <timeZone>? ?-local <(0 or"
+                    " 1)>?\n", argv[0]);
+            free (buffer);
+            return -1;
+         }
+         strTrim (buffer);
+         if (!myIsReal (buffer, &d_clock)) {
+            printf ("Expecting stdin to contain one double of data\n");
+            printf ("Usage: %s format (<value> or 'stdin') -format <string> "
+                    "?-gmt <(0 or 1)>? ?-zone <timeZone>? ?-local <(0 or"
+                    " 1)>?\n", argv[0]);
+            free (buffer);
+            return -1;
+         }
+         free (buffer);
+         buffer = NULL;
+         lenBuffer = 0;
+      } else {
+         d_clock = atof (argv[2]);
+      }
+      if (Clock_ScanZone (argv[4], &TimeZone, &f_dayLight) == 0) {
+         /* TimeZone is number of sec to adjust GMT by. */
+         d_clock -= TimeZone;
+         if (f_dayLight == 1)
+            d_clock += 3600.0;
+         f_timeAdj = 0;
+      }
+      if (Clock_IsDaylightSaving (d_clock, TimeZone)) {
+         printf ("1\n");
+      } else {
+         printf ("0\n");
+      }
+
+   } else if (strcmp (argv[1], "IsLeap") == 0) {
+      if (argc != 5) {
+         printf ("Usage: %s IsLeap <value or 'stdin' || year> "
+                 "-inputIsYear <(0 or 1)>\n", argv[0]);
+         return -1;
+      }
+      f_isYear = 0;
+      for (i = 3; i < argc; i += 2) {
+         if (strcmp (argv[i], "-inputIsYear") == 0) {
+            if (atoi (argv[i + 1])) {
+               f_isYear = 1;
+            }
+         }
+      }
+      strToLower (argv[2]);
+      if (strcmp (argv[2], "stdin") == 0) {
+         if (reallocFGets (&buffer, &lenBuffer, stdin) == 0) {
+            printf ("Expecting stdin to contain one line of data\n");
+            printf ("Usage: %s format (<value> or 'stdin') -format <string> "
+                    "?-gmt <(0 or 1)>? ?-zone <timeZone>? ?-local <(0 or 1)>"
+                    "?\n", argv[0]);
+            free (buffer);
+            return -1;
+         }
+         strTrim (buffer);
+         if (!myIsReal (buffer, &d_clock)) {
+            printf ("Expecting stdin to contain one double of data\n");
+            printf ("Usage: %s format (<value> or 'stdin') -format <string> "
+                    "?-gmt <(0 or 1)>? ?-zone <timeZone>? ?-local <(0 or 1)>"
+                    "?\n", argv[0]);
+            free (buffer);
+            return -1;
+         }
+         if (f_isYear) {
+            year = d_clock;
+         }
+         free (buffer);
+         buffer = NULL;
+         lenBuffer = 0;
+      } else {
+         if (f_isYear) {
+            year = atof (argv[2]);
+         } else {
+            d_clock = atof (argv[2]);
+         }
+      }
+      if (!f_isYear) {
+         totDay = (sInt4) floor (d_clock / SEC_DAY);
+         Clock_Epoch2YearDay (totDay, &day, &year);
+      }
+      if (!ISLEAPYEAR (year)) {
+         printf ("0\n");
+      } else {
+         printf ("1\n");
+      }
+
+   } else if (strcmp (argv[1], "add") == 0) {
+      if (argc != 5) {
+         printf ("Usage: %s add (<time> or 'stdin') <amount> "
+                 "<sec/min/hour/day/month/year>\n", argv[0]);
+         return -1;
+      }
+      if (!myIsReal (argv[3], &d_amount)) {
+         printf ("Usage: %s add (<time> or 'stdin') <amount> "
+                 "<sec/min/hour/day/month/year>\n", argv[0]);
+         return -1;
+      }
+      strToLower (argv[2]);
+      if (strcmp (argv[2], "stdin") == 0) {
+         if (reallocFGets (&buffer, &lenBuffer, stdin) == 0) {
+            printf ("Expecting stdin to contain one line of data\n");
+            printf ("Usage: %s format (<value> or 'stdin') "
+                    "-format <string> ?-gmt <(0 or 1)>? "
+                    "?-zone <timeZone>? ?-local <(0 or 1)>?\n", argv[0]);
+            free (buffer);
+            return -1;
+         }
+         strTrim (buffer);
+         if (!myIsReal (buffer, &d_clock)) {
+            printf ("Expecting stdin to contain one double of data\n");
+            printf ("Usage: %s format (<value> or 'stdin') "
+                    "-format <string> ?-gmt <(0 or 1)>? "
+                    "?-zone <timeZone>? ?-local <(0 or 1)>?\n", argv[0]);
+            free (buffer);
+            return -1;
+         }
+         free (buffer);
+         buffer = NULL;
+         lenBuffer = 0;
+      } else {
+         d_clock = atof (argv[2]);
+      }
+      strToLower (argv[4]);
+      if (strcmp (argv[4], "sec") == 0) {
+         d_clock = d_clock + d_amount;
+      } else if (strcmp (argv[4], "min") == 0) {
+         d_clock = d_clock + d_amount * 60.;
+      } else if (strcmp (argv[4], "hour") == 0) {
+         d_clock = d_clock + d_amount * 3600.;
+      } else if (strcmp (argv[4], "day") == 0) {
+         d_clock = d_clock + d_amount * 3600. * 24.;
+      } else {
+         totDay = (sInt4) floor (d_clock / SEC_DAY);
+         d_remain = d_clock - totDay * 3600 * 24.0;
+         Clock_Epoch2YearDay (totDay, &day, &year);
+         month = Clock_MonthNum (day, year);
+         day = day - Clock_NumDay (month, 1, year, 1) + 1;
+         if (strcmp (argv[4], "month") == 0) {
+            month = month + floor (d_amount + .5);
+            while (month > 12) {
+               year++;
+               month -= 12;
+            }
+            while (month < 1) {
+               year--;
+               month += 12;
+            }
+         } else if (strcmp (argv[4], "year") == 0) {
+            year = year + floor (d_amount + .5);
+         } else {
+            printf ("Usage: %s add (<time> or 'stdin') <amount> "
+                    "<sec/min/hour/day/month/year>\n", argv[0]);
+            return -1;
+         }
+         i = Clock_NumDay (month, 1, year, 0);
+         if (day > i)
+            day = i;
+         d_clock = 0;
+         Clock_ScanDate (&d_clock, year, month, day);
+         d_clock = d_clock + d_remain;
+      }
+      printf ("%f\n", d_clock);
+      return 0;
+
+   } else {
+      printf ("Usage: %s <clicks/format/scan/seconds/IsDaylightSaving/"
+              "IsLeap/add> etc\n", argv[0]);
+      return -1;
+   }
+   return 0;
+}
+#endif
