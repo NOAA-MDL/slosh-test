@@ -1,3 +1,16 @@
+2012-01-20  v3.97
+   * Updated number of cuts and 1d flows to 20,000 (from 13,000)
+   * Set critical threshold for smoothing to 0.1 (vs 0.5) feet
+        --> This likely impacts test results
+   * Added XFILTER smoothing routine.  Originally did smoothing in a + Laplacian
+     pattern.  Now we added the corners for the X Laplacian.
+   * Apr 5, 2011 - Adjusted high terrain to 56 feet (from 36 feet) at request of
+     Nuclear Regulatory Commission.  Done by Narayanaswamy S Muthukumar (NSM).
+     Use a '+' in column 20 to denote it is safe to treat 56 (vs 36) as high
+     terrain.
+   * Added more smoothing options (to first line of the DTA file).  Now uses the 
+     following symbols... '^', '*', '=', '+', '!', '@', '&', '#', '%'
+
 2011-02-17  v3.96 (originally - FOIA_4.00)
    * Feb 9, 2011 - SLOSH releases officially switched to MinGW 4.5.0 (from 3.4.2)
    * Updating number of cuts and 1d flows to 13,000 (from 12,000)

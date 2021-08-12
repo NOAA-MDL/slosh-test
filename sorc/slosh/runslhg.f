@@ -100,16 +100,16 @@ C
 C        GENERAL COMMENTS
 C       THIS CODES ARE USED TOGETHER WITH VSGL0T21.FOR TO GENERATE
 C       LOAD MODULE FOR EVACUATION STUDY. VS FORTRAN COMPITBLE.
-C       LET (MAIN, PLOTS, CMPUTE) SUPERSEEDS  THOSE IN VSGL0T21.FOR 
+C       LET (MAIN, PLOTS, CMPUTE) SUPERSEEDS  THOSE IN VSGL0T21.FOR
 C        MAJOR CHANGES-- SURGE HISTRIES AT 10N GRID POINTS
 C                        INPUT FORMAT FOR HOURLY PRESS. AND RADIUS
 C                        ARCHIVE MAX OF SURGES, MAX WINDS
 C --- NOTE ----
-C       IF NO ARCHIVE POINTS ARE GIVEN (KHSPT=0), NOARCH TAKES THE 
+C       IF NO ARCHIVE POINTS ARE GIVEN (KHSPT=0), NOARCH TAKES THE
 C       DEFAULT VALUE,'X'. IT IS A NON-ARCHIVE RUN; USING DEFAULT 10
 C       POINTS AND TIME HISTRIES IN 10 (15) MIN INTERVALS.
 C       IF AS ABOVE, BUT ARCHIVE ENVELOP IS DESIRED, USE ONE BLANK
-C       DATA FOR 'ARCHIVE POINTS'. IT WILL OVERWRITE THE DEFAULT VALUE 
+C       DATA FOR 'ARCHIVE POINTS'. IT WILL OVERWRITE THE DEFAULT VALUE
 C       (X) NOARCH TO ' ', IT MEANS ARCHIEV IS ACTIVE.
       INCLUDE 'parm.for'
       COMMON /GEO/  NOGEO
@@ -127,11 +127,11 @@ C       (X) NOARCH TO ' ', IT MEANS ARCHIEV IS ACTIVE.
 C
 CC      write (*,*) '   This program is compiled with the maximum'
 CC      write (*,*) '   dimensions ',M_,N_,L_
-c  
+c
 CC      WRITE(*,*)'   SLOSH STORM INPUT FILE'
-      READ (*,'(A)') FLE5 
+      READ (*,'(A)') FLE5
 CC      WRITE(*,*)'   BASIN FILE *DTA'
-      READ (*,'(A)') FLE9 
+      READ (*,'(A)') FLE9
       KEY1=1
 C        ARCHIVE SURGE ENVELOP TO A FILE
 CC      WRITE(*,'(A)')' FINAL MAX SURGE WILL BE SAVED IN THE FORM READY '
@@ -157,7 +157,7 @@ CC       WRITE(*,'(A)')  FLE30
 CC       WRITE(*,*) ' RESPECTIVELY FOR SURGE, WIND SPEED, AND WIND DIR.'
 CC       WRITE(*,*) '  IN FEET, MPH, METEOR. DIRECTION (DEG.)'
 C
- 1000 CONTINUE 
+ 1000 CONTINUE
 c
 c       CALL PLOTS1
 C
@@ -282,7 +282,7 @@ C      ITMS=12
 C      IF (NOPT.EQ.1) THEN
 C      OPEN (1,FILE=FLE1)
 C      READ(1,210,END=200) IBGS,ITMS,JHR1
-C      CLOSE (1) 
+C      CLOSE (1)
 C 210  FORMAT(2I3,4X,I2)
 C      IF(JHR1.NE.0) GO TO 220
 C      GO TO 200
@@ -441,11 +441,11 @@ C      COMMON /SLAT/   FSOUTH
       X1B(1)=G*DELT/DELA
       X1B(2)=DELT/DELA
 C
-      X1B(4)=DELT*COR 
+      X1B(4)=DELT*COR
       DO 10 L=1,90
       CORL(L)=2.*(7.292116E-5)*SIN((L-1)*1.74532925E-2)/COR
  10   CONTINUE
-C     
+C
 C        FSOHTH=-1. FOR SOUTHERN HEMISPHERE, NEGATIVE CORIOLIS PARAMETER
 C              = 1. FOR NORTHERN HEMISPHERE,
 C      X1B(4)=DELT*COR*FSOUTH
@@ -487,7 +487,7 @@ C        DATA SET USE
 C           NONE
 C
 C        VARIABLES
-C             ZLATO = LATITUDE IN DEGREES 
+C             ZLATO = LATITUDE IN DEGREES
 C               COR = CORIOLIS PARAMTER
 C                 E = EKMAN PARAMETER, DEPTH*SQRT(COR/2*C25)
 C               C25 = EDDY VISCOSITY COEFFICIENT, .25 FT**2/SEC
@@ -523,10 +523,10 @@ C
       A=N
       E=A*SQRT(COR/(2.*C25))
       COR1=COR*A/C7
-C         
+C
 C        FSOHTH=-1. FOR SOUTHERN HEMIS, SIGMA=E*(1-I), I*SIGMA=E+I*E
 C              = 1. FOR NORTHERN HEMIS, SIGMA=E*(1+I), I*SIGMA=-E+I*E
-C                   
+C
 C      SIGMAI=DCMPLX(-E*FSOUTH,E)
       SIGMAI=DCMPLX(-E,E)
 
@@ -642,7 +642,7 @@ C
 C         SET START TIME TO 0
 C         NUMBER OF UNIT TIME STEPS FOR THE 1ST HOUR
       ITIME=0
-C        REAL TIME IN SECCONDS                     
+C        REAL TIME IN SECCONDS
       TREAL=0.
       NHRAD=NDLTHR
 C
@@ -991,7 +991,7 @@ C
       X1B(2)=DELT/DELA
 c
       X1B(4)=DELT*COR
-C     
+C
 C        FSOHTH=-1. FOR SOUTHERN HEMISPHERE, NEGATIVE CORIOLIS PARAMETER
 C              = 1. FOR NORTHERN HEMISPHERE,
 c
@@ -1377,8 +1377,8 @@ C
       common /opts/   nofld,nof1d
       character*1     nofld,nof1d
       COMMON /SLAT/   FSOUTH
-      CHARACTER*1     ISOUTH 
-      COMMON /XOKE/   XOKE 
+      CHARACTER*1     ISOUTH
+      COMMON /XOKE/   XOKE
       CHARACTER*1     XOKE
       COMMON /GPRT/   STA
       COMMON /GPRT1/  DOLLAR,EBSN
@@ -1391,6 +1391,10 @@ C
       COMMON /ELLIP/  AAXIS,BAXIS,ABQAB
       COMMON /DUMB3/  IMXB,JMXB,IMXB1,JMXB1,IMXB2,JMXB2
       COMMON /EGTH/   DELS,DELT,G,COR
+      COMMON /HTERAIN/ HTER
+      CHARACTER*1     ITERRAIN
+      COMMON /SMTH/   ISMTH
+      CHARACTER*1     ISMOOTH
 C
       COMMON /FLES/ FLE5,FLE9,FLE8,FLE91,FLE99,FLE10,FLE20,FLE30,FLE1
       CHARACTER*256 FLE5,FLE9,FLE8,FLE91,FLE99,FLE10,FLE20,FLE30,FLE1
@@ -1404,29 +1408,67 @@ C      READ (*,'(A)') FLE9
 C---------------------------------------------------------------------------
 C        AT COLUMN 12, '$' INDICATES TYPE I ELLIPTIC COORDINATES,
 C                      '+' INDICATES TYPE II ELLIPTIC COORDINATES,
-C                          OTHERWISE, POLAR COORDINATES  
+C                          OTHERWISE, POLAR COORDINATES
 C        AT COLUMN 13, '$ ' INDICATES FOR CLOSED ISLAND (PERIODIC B.C.)
 C                      '2$' INDICATES FOR MSY BASIN
 C        AT COLUMN 15, '&' INDICATES NO CORNER SMOOTHING
 C                      '+' INDICATES GLOBAL SMOOTHING EVERY DELT
 C        AT COLUMN 16, '+' INDICATES OUTPUT OPTION (J-I). DEFAULT (I-J)
 c                  17, '&' SOUTHERN HEMISPHERE
+C                      '$' XOKE = 'X'
 c                  18, '+' noflooding and overtopping of barriers
-c                  19, '+' no 1d flow allowed                           
+c                  19, '+' no 1d flow allowed
+C                  20, '+' allow between 35 and 56 feet to flood.
+C                  21, '+' x-filter smoothing method. (HCRT=0.5) 
+C                      '-' x filter smoothing method. (HCRT=0.1)
+C                      '@' x filter smoothing method. (HCRT=0.2)
+C                      '#' x filter smoothing method. (HCRT=0.3)
+C                      '$' x filter smoothing method. (HCRT=0.4)
+C                      '*' xfilter exclusion of cells by Epsilon. (HCRT=0.1) 
+C                      '*'                       redefined as (HCRT=Epsilon) 
+C                      '%' xfilter exclusion of cells by Epsilon. (HCRT=0.2)
+C                      '^' xfilter exclusion of cells by Epsilon. (HCRT=0.3)
+C                      '&' xfilter exclusion of cells by Epsilon. (HCRT=0.4)
+C                      '=' xfilter exclusion of cells by Epsilon. (HCRT=0.5)
 C---------------------------------------------------------------------------
       READ (9,'(A10,1X,A1,A2,8A1)') STA,EBSN,DOLLAR,EBSN1,EBSN2,ISOUTH,
-     1         nofld,nof1d
+     1         nofld,nof1d,iterrain,ismooth
 CC      write (*,'(1x,A10)') STA
 CC      write (*,'(1x,A1,A2,A1)') EBSN,DOLLAR,EBSN1
 CC      write (*,'(1x,A1)') EBSN2
 c
-      IF (ISOUTH.EQ.'$') XOKE='X' 
+      IF (ISOUTH.EQ.'$') XOKE='X'
       FSOUTH=1.
       IF (ISOUTH.EQ.'&') FSOUTH=-1.
+      HTER=35.
+      IF (ITERRAIN.EQ.'+') HTER=56.
+      ISMTH=1
+      IF (ISMOOTH.EQ.'+') ISMTH=2
+      IF (ISMOOTH.EQ.'-') ISMTH=3
+      IF (ISMOOTH.EQ.'@') ISMTH=4
+      IF (ISMOOTH.EQ.'#') ISMTH=5
+      IF (ISMOOTH.EQ.'$') ISMTH=6
+      IF (ISMOOTH.EQ.'*') ISMTH=7
+      IF (ISMOOTH.EQ.'%') ISMTH=8
+      IF (ISMOOTH.EQ.'^') ISMTH=9
+      IF (ISMOOTH.EQ.'&') ISMTH=10
+      IF (ISMOOTH.EQ.'=') ISMTH=11
+      
+      write (*,*) 'sta,', sta
+      write (*,*) 'ebsn (type of basin)', ebsn
+      write (*,*) 'dollar (closed basin or msy)', dollar
+      write (*,*) 'ebsn1 (smoothing types)', ebsn1 
+      write (*,*) 'ebsn2 (j-i vs i-j for output)', ebsn2
+      write (*,*) 'isouth (southern hemi)', isouth
+      write (*,*) 'nofld (no flood and overtop barriers)', nofld
+      write (*,*) 'nof1d (no 1d flow)', nof1d
+      write (*,*) 'High Terr (35 - 56 feet to flood)', HTER
+      write (*,*) 'Smooth Method (smoothing type)', ISMTH
+
 c
 C
       READ (9,580) AZMTH
-C       TLAT,TLONG NOT BEING USED. USE XMOUTH,YMOUTH, INSTEAD. 
+C       TLAT,TLONG NOT BEING USED. USE XMOUTH,YMOUTH, INSTEAD.
       IF (EBSN.EQ.'$'.OR.EBSN.EQ.'+') READ (9,580) TLAT,TLONG
 C        LAT/LONG OF BASIN CENTER AND TANGENT POINT ON EARTH
       READ (9,580) ALTO,ALNO
@@ -1436,10 +1478,10 @@ C ------    FOR POLAR GRID SYSTEM, READ IN DEGREE OF SPREAD OF RAYS ---
          READ (9,580) DEGREE
          DELA=DEGREE*1.74532925E-2
        ENDIF
-C ------   READ IN DISTANCE FROM BASIN CENTER TO 1ST HYPERBOLA, 
-C        ANGLE OF 1ST ASYMPTOTE FOR ELLIPTIC GRIDS I  ------ 
+C ------   READ IN DISTANCE FROM BASIN CENTER TO 1ST HYPERBOLA,
+C        ANGLE OF 1ST ASYMPTOTE FOR ELLIPTIC GRIDS I  ------
       IF (EBSN.EQ.'$') READ (9,580) DSTNT,ASMPT
-C ------   READ IN AAXIS,BAXIS FOR ELLIPTIC GRIDS II  ---     
+C ------   READ IN AAXIS,BAXIS FOR ELLIPTIC GRIDS II  ---
       IF (EBSN.EQ.'+') READ (9,580) AAXIS,BAXIS,GSIZE
 C
       READ (9,'(5I5)') IRB,IRE,NDB,NDE,NDB1
@@ -1447,10 +1489,11 @@ C        DEFINE DELTA THETA FOR ELLIPTIC GRIDS I AND II.
       IF (EBSN.EQ.'$') THEN
         IF (NDB.NE.0) THEN
          NDBZ=NDB
-         ELSE 
+         ELSE
          NDBZ=NDE
          ENDIF
 C     SPECIAL USE OF ELLIPTIC BASIN I (CARTESIAN APPROX.)
+C  -- Arthur -- doesn't occur (3/30/2011) in any basin? ---
          IF (EBSN1.EQ.'$') NDBZ=NDB1
         DEGREE=(90.-ASMPT)/NDBZ
         DELA=DEGREE*1.74532925E-2
@@ -1654,7 +1697,7 @@ C
       WRITE(15) AIDENT
       ENDIF
 C        SUBROUTINE 'TTIMER' RESIDES IN THE ROOT OVERLAY
-C  
+C
   100 CALL TTIMER
       xtime=itime
 c
@@ -1722,10 +1765,10 @@ C
 CC      write (*,*)'   finished at time step=',itime
 CC      write (*,*)'   mhalt=' ,mhalt
       CALL FILTRP
-      CALL FHMXSV    
+      CALL FHMXSV
       CALL ARCHIV
 C
- 1112 CONTINUE  
+ 1112 CONTINUE
 c
 C      INCLUDE 'CMPGR4.FOR'
 C
@@ -1762,11 +1805,11 @@ C      CHARACTER*40    FILNAM
       CHARACTER*80    DUM
 C
       CALL INPUTN
-C          READ BASIN PROJECTION DATA    
+C          READ BASIN PROJECTION DATA
       CALL CRDRD1
       CALL STERON
 
-C           READ IN SLOSH GEOGRAPHY DATA 
+C           READ IN SLOSH GEOGRAPHY DATA
       CALL CRDRD2
 C           CHANNEL COORDINATES REQUIRED FOR SETDST TO DEFINE AREAS.
       IF (DOLLAR.EQ.'2$') CALL DEPMSY
@@ -1791,7 +1834,7 @@ C STIME interferes with C code, so switched to STIME2
       COMMON /STIME2/  ISTM,JHR,ITMADV,NHRAD,IBGNT,ITEND
       COMMON /DATUM/  SEADTM,DTMLAK
       COMMON /DATUM1/ DTMCHN
-      COMMON /XOKE/   XOKE 
+      COMMON /XOKE/   XOKE
       CHARACTER*1     XOKE
       COMMON /FLES/ FLE5,FLE9,FLE8,FLE91,FLE99,FLE10,FLE20,FLE30,FLE1
       CHARACTER*256 FLE5,FLE9,FLE8,FLE91,FLE99,FLE10,FLE20,FLE30,FLE1
@@ -1898,7 +1941,7 @@ C
 c      WRITE(*,*) X(I),Y(I),SP(I-1),DIR(I-1)/1.74532925E-2
   120 CONTINUE
       SP(100)=SP(99)
-      DIR(100)=DIR(99)   
+      DIR(100)=DIR(99)
 C
 C      CALCULATE THE MINIMUM DISTANCE TO MOUTH POINT
        RLNGTH=SQRT((X(JHR)-XMOUTH)**2+(Y(JHR)-YMOUTH)**2)
@@ -1984,7 +2027,7 @@ C        DETERMINING HEIGHT POINT JACOBIANS FOR CONTTY EQUATION IN FEET
 C      GRID2=1./(RMOUTH*RFEET1*5280.)**2
       Z1=1./(RFEET1*RFEET1)
       ELPCL(I)=(1.+ABQAB*Z1)*GRID
-      ELPDL(I)=(1.-ABQAB*Z1)*GRID 
+      ELPDL(I)=(1.-ABQAB*Z1)*GRID
       ELPCL2(I)=ELPCL(I)*ELPCL(I)
       ELPDL2(I)=ELPDL(I)*ELPDL(I)
  150  CONTINUE
@@ -2001,11 +2044,11 @@ C        APPROX. THE AREAS OF THE ENTRANCE AND EXIT SQUARES OF CHANNELS.
       Z1=Z1+ELPDL2(I)+(ELPCL2(I)-ELPDL2(I))*SINL2(J)
       Z2=Z2+ELPDL2(II)+(ELPCL2(II)-ELPDL2(II))*SINL2(JJ)
  300  CONTINUE
-      ARESQ0(NPASS)=.5*Z1*DELA*DELA      
-      ARESQL(NPASS)=.5*Z2*DELA*DELA      
- 310  CONTINUE  
+      ARESQ0(NPASS)=.5*Z1*DELA*DELA
+      ARESQL(NPASS)=.5*Z2*DELA*DELA
+ 310  CONTINUE
         ENDIF
-C 
+C
 C        PRINT OUT X-DISTANCES ALONG Q=0, IN MILES
 C      WRITE(*,190)
 C      DO 140 I=1,IMXB
@@ -2030,7 +2073,7 @@ C      WRITE(*,170)(DUMMY(J),J=1,JMXB1)
       SUBROUTINE DEPMSY
 C
       INCLUDE 'parm.for'
-C	
+C
       COMMON /DUMB3/  IMXB,JMXB,IMXB1,JMXB1,IMXB2,JMXB2
       COMMON /DATUM/  SEADTM,DTMLAK
       COMMON /GPRT1/  DOLLAR,EBSN
@@ -2308,7 +2351,7 @@ C       CLOSE (25)
  26   continue
 C
       RETURN
-      END 
+      END
       SUBROUTINE CRDRD2
       INCLUDE 'parm.for'
 C      INCLUDE 'parmmsy.for'
@@ -2406,6 +2449,14 @@ C     WRITE (*,520) NSQRS,AC,BC
       IF (AC.EQ.'R') NSQRS=9000+NSQRS
       IF (AC.EQ.'Q') NSQRS=10000+NSQRS
       IF (AC.EQ.'P') NSQRS=11000+NSQRS
+      IF (AC.EQ.'O') NSQRS=12000+NSQRS
+      IF (AC.EQ.'N') NSQRS=13000+NSQRS
+      IF (AC.EQ.'M') NSQRS=14000+NSQRS
+      IF (AC.EQ.'L') NSQRS=15000+NSQRS
+      IF (AC.EQ.'K') NSQRS=16000+NSQRS
+      IF (AC.EQ.'J') NSQRS=17000+NSQRS
+      IF (AC.EQ.'I') NSQRS=18000+NSQRS
+      IF (AC.EQ.'H') NSQRS=19000+NSQRS
 C
       IF (NSQRS.GT.L_) THEN
       WRITE(*,*)' NO. OF 1D FLOW POINTS ',NSQRS
@@ -2681,6 +2732,7 @@ C
       COMMON /FLWCPT/ NSQRS,NSQRW,NSQRWC,NPSS,NCUT
       COMMON /SWTCH/  IOPERL(5)
       COMMON /GPRT1/  DOLLAR,EBSN
+      COMMON /HTERAIN/ HTER
       CHARACTER*2     DOLLAR
       CHARACTER*1     EBSN
       DIMENSION IZ1(4),IZ2(4),JZ1(4),JZ2(4)
@@ -2698,14 +2750,15 @@ C      ZMX=AMAX1(-ZB(I-1,JMXB),-ZB(I,JMXB),-ZB(I-1,1),-ZB(I,1))
 C      IF (ZMX.LE.-289.) ITREE(I,1)='6'
 C      ENDDO
 C      ENDIF
-C      
-C      DETERMINE THE ACTIVE/NONACTIVE SQUARES FOR HEIGHT COMPUTATIONS    
+C
+C      DETERMINE THE ACTIVE/NONACTIVE SQUARES FOR HEIGHT COMPUTATIONS
        DO 400 J=1,JMXB1
        DO 400 I=1,IMXB1
-       IF (ZB(I,J).LE.-35.) GOTO 1417
+C     CHANGED BY NSM TO -HTER FROM -35 11/20/2010 : Accepted 4/4/2011
+       IF (ZB(I,J).LE.-HTER) GOTO 1417
        KSKP(I,J)='1'
        KCT=1
-C       SPECIAL TRUNCATED SQUARES IN DEEP OCEAN 
+C       SPECIAL TRUNCATED SQUARES IN DEEP OCEAN
        IF (ITREE(I,J).EQ.'6') KCT=KCT+1
        IF (ITREE(I+1,J).EQ.'6') KCT=KCT+1
        IF (ITREE(I,J+1).EQ.'6') KCT=KCT+1
@@ -2761,13 +2814,20 @@ C
       DO 1401 J=2,JMXB
       DO 1401 I=2,IMXB
       IF (ITREE(I,J).EQ.'5'.AND.ZBM(I,J).GE.-15.) ITREE(I,J)='3'
+C     ADDED BY AAT 4/8/2011 : This should cause what used to be high
+C     terrain (> 35 feet) that was marked with a '4' to have friction
+C     winds and be able to be inundated.
+      IF (HTER.GT.35.) THEN
+      IF (ITREE(I,J).EQ.'4'.AND.ZBM(I,J).LT.HTER) ITREE(I,J)='1'
+      ENDIF
  1401  CONTINUE
 C
 C        IF ZBM GREATER THAN 35 FT IN INTERIOR POINTS, MOMENTURM PTS
 C        ARE NONACTIVE.
        DO 40 J=2,J2
        DO 40 I=2,IMXB1
-       IF (ZBM(I,J).GE.35.) ITREE(I,J)='4'
+C     CHANGED BY NSM TO HTER FROM 35 11/20/2010 : Accepted 4/4/2011
+       IF (ZBM(I,J).GE.HTER) ITREE(I,J)='4'
        IF (ITREE(I,J).EQ.'5') ITREE(I,J)='2'
  40    CONTINUE
 C
@@ -2776,7 +2836,8 @@ C       STARTS IN MOMNTM (ZBM LESS THAN 35 FT).
       DO 50 J=2,JMXB
       MS(J)=1
       DO 60 I=1,IMXB
-      IF (ZBM(I,J).LT.35.) GOTO 55
+C    CHANGED BY NSM TO HTER FROM 35 11/20/2010 : Accepted 4/4/2011
+      IF (ZBM(I,J).LT.HTER) GOTO 55
  60   CONTINUE
       I=I-1
  55   MS(J)=I
@@ -2816,7 +2877,8 @@ C        DEFINE LOWER LIMIT OF I FOR MOMN. POINTS
       ME(J)=IMXB
       DO 460 II=2,IMXB1
       I=IMXB-II+1
-      IF (ZBM(I,J).GE.35.) GOTO 460
+C    CHANGED BY NSM TO HTER FROM 35 11/20/2010 : Accepted 4/4/2011
+      IF (ZBM(I,J).GE.HTER) GOTO 460
       IF (ITREE(I,J).NE.'6') GOTO 455
  460  CONTINUE
       I=I+1
@@ -2903,7 +2965,9 @@ C        AND ZBMIN FOR FLOW CUTS IN SUBROUTINE CRDRD2.
       DO 3222 J=2,JMXB1
       DO 3222 I=2,IMXB1
       IF (ITREE(I,J).EQ.'Q') THEN
-      ZBM(I,J)=36.
+C     COMMENTED BY NSM 11/20/2010 : Should it be HTER or HTER + 1?
+C      ZBM(I,J)=36.
+      ZBM(I,J)=HTER+1
       ITREE(I,J)='4'
       ENDIF
  3222 CONTINUE
@@ -2968,7 +3032,9 @@ c          noflooding option
         do 1234 i=2,imxb1
         if (zbm(i,j).gt.0.) then
            itree(i,j)='4'
-           zbm(i,j)=36.
+C         COMMENTED BY NSM 11/20/2010 : Should it be HTER or HTER+1?
+C          zbm(i,j)=36.
+           zbm(i,j)=HTER+1
            endif
  1234  continue
 	endif
@@ -3055,7 +3121,7 @@ C             IPASS = CONDITIONAL INTEGER, TO SET A SQUARE DRY
 C         ZB(  ,  ) = DEPTHS AT CENTER OF SURGE SQUARES
 C       IP(4) JP(4) = SHIFT SUBSCRIPTS TO 4 MOMENTUM POINTS
 C     UB VB(  ,   ) = COMPONENTS OF MOMENTUM FIELDS
-C              HPST = DUMMY VALUE FOR SUEGE VALUEC        
+C              HPST = DUMMY VALUE FOR SUEGE VALUEC
 C           DUX DVY = COMPONENTS OF MOMENTUM GRADIENT
 C               FCT = FACTOR TO MULTIPLY MOMENTUM GRADIENT
 C              CHNG = SURGE PLUS DEPTHS (TO TEST FOR DRY SQUARE)
@@ -3127,7 +3193,7 @@ C
       IF (IFN.LT.IB) GOTO 330
       DO 320 I=IB,IFN
 C
-      IF (KSKP(I,J).EQ.'0') GOTO 320 
+      IF (KSKP(I,J).EQ.'0') GOTO 320
 C       LEAP=1, REGILAR CASE. LEAP=2, RETURN TO THE SQUARE BEING DRIED.
 C
       GO TO (170,160),LEAP
@@ -3161,7 +3227,7 @@ C        REVISE SURROUNDING TRANSPORTS TO GIVE ZERO TOTAL DEPTH.
 C
       CHNG=HBJ+ZB(I,J)
       IF (CHNG.GE.0.) GO TO 220
-CCCCCC     MODIFICATION 10/27/99  RE-TESTED by Pro Fortran 09/20/01 
+CCCCCC     MODIFICATION 10/27/99  RE-TESTED by Pro Fortran 09/20/01
       IF (-CHNG.LT.1E-3) THEN
       HB(I,J)=-ZB(I,J)
       GOTO 320
@@ -3203,7 +3269,7 @@ C        RECOMPUTE 3 SQUARES ON J-1 LINE
       ISET=I
       LEAP=1
       IF (J.EQ.0) GO TO 330
-      IF (KSKP(I,J).EQ.'0') GOTO 330 
+      IF (KSKP(I,J).EQ.'0') GOTO 330
  310  IF (IS(J).GT.I) GO TO 330
       IFST=MAX0(I-1,IS(J))
       ISND=MIN0(I+1,IE(J))
@@ -3259,7 +3325,7 @@ C                      DEEP  /    /            *         *
 C                     WATERS /    /            *         *
 C                         /  /    /            .*********.
 C                         /  /    /                 |
-C                         /  .6    .----.    .     
+C                         /  .6    .----.    .
 C                         /  *
 C                         /  * +         +
 C                         /  *
@@ -4031,13 +4097,13 @@ C             COMPUTE WIND DISTORTION, FROM LAND EFFECTS, FOR LAKE WINDS
 C       WIND COMPONENTS (A,B), FT/SEC, IN X,Y DIRECTIONS
          A=A*X12(4)/CCN
          B=B*X12(4)/CCN
-C       STRESS =DRAG COEFF* SPEED * WIND VECTOR    
-C       STRESS REDUCTION FOR WATER LESS THAN 1 FT, AND SPIN-UP PERIOD   
+C       STRESS =DRAG COEFF* SPEED * WIND VECTOR
+C       STRESS REDUCTION FOR WATER LESS THAN 1 FT, AND SPIN-UP PERIOD
       FCTT=C19*SQRT(A*A+B*B)
       FCTT=FCTT*CSHLTR*BT
       FXX=FCTT*A
       FYY=FCTT*B
-C       
+C
       FXB=CR(ID)*FXX-CI(ID)*FYY
       FYB=CR(ID)*FYY+CI(ID)*FXX
 C        PRESSURE TERM IN THE FORCING FUNCTIONS
@@ -4153,8 +4219,13 @@ C
       DO 560 I=IST,IFN
       JUMP=1
 C        NO TERRAIN HIGHER THAN 35 FT CAN BE FLOODED.
-c
+
+C     CHANGED BY NSM 11/20/2010 TO ALLOW TERRAIN HIGHER THAN 35FT TO FLOOD
+C     DID NOT Accept.  The '4' is now correctly shifted to 56 and above
+C     and if it was a '4' for 35..56, it is now a '1'.
       IF (ITREE(I,J).EQ.'4'.OR.ITREE(I,J).EQ.'6') GO TO 560
+C      IF (ITREE(I,J).EQ.'6') GO TO 560
+
 C        ITREE IS SET TO 1 OR 3 FOR LAKE WINDS, 2 OR 5 FOR OCEAN WINDS
         IF (ITREE(I,J).EQ.'2'.OR.ITREE(I,J).EQ.'5') THEN
          NCATG=2
@@ -4306,7 +4377,7 @@ C        LOCATE GRID (I,J) ON PHYSICAT PLANE  Z=(XR,YR)=ZETA
 c
       CALL FRCPNT(XR,YR,FXBP,FYBP,NCATG,CSHLTR,NPLS)
 C
-C        CHANGE FORCING FROM (X,Y) SYSTEM BACK TO IMAGE PLANE, 
+C        CHANGE FORCING FROM (X,Y) SYSTEM BACK TO IMAGE PLANE,
 C        CONJ(DZ/DZETA)*(FXBP,FYBP), WHERE DZ/DZETA=(XR,YR)
       XR=ELPDT(I)*COST(J)
       YR=ELPCT(I)*SINT(J)
@@ -4748,7 +4819,7 @@ C
       B=RS*X12(10)+X1218*(XP*CK1-YP*SK1)+CCC*X12(24)
 C
 C        FSOHTH=-1. FOR SOUTHERN HEMISPHERE; =1. FOR NORTHERN HEMIS.
-C     
+C
 C      A=RS*X12(9) -FSOUTH*X1218*(YP*CK1+FSOUTH*XP*SK1)+CCC*X12(23)
 C      B=RS*X12(10)+FSOUTH*X1218*(XP*CK1-FSOUTH*YP*SK1)+CCC*X12(24)
 c
@@ -4909,6 +4980,7 @@ C
       COMMON /DUMB3/  IMXB,JMXB,IMXB1,JMXB1,IMXB2,JMXB2
       COMMON /DUMB8/  IP(4),JP(4),IH(4),JH(4)
       COMMON /DUM88/  IIH(4),JJH(4),IHH(4),JHH(4)
+      COMMON /HTERAIN/ HTER
       DIMENSION       HZ(M_,3)
       DIMENSION       GAMF(4)
        DATA HT/0./
@@ -4936,7 +5008,8 @@ C
  105  CONTINUE
       DO 220 J=J1,J2
       DO 190 I=I1,I2
-      IF(ZB(I,J).LE.(-35.)) GO TO 190
+C    CHANGED BY NSM TO HTER FROM 35 11/20/2010 : Accepted 4/4/2011
+      IF(ZB(I,J).LE.(-HTER)) GO TO 190
       HST=HMX(I,J)+ZB(I,J)
       IF(HST.LT.HT) GO TO 190
       HSM=0.
@@ -5272,14 +5345,14 @@ CC       WRITE(*,1998) M2G_,I2G(M),J2G(M)
  1998  FORMAT(' TOTAL HGHT. POINTS FOR SMOOTHING REACHES MAX.',I8,
      1 ' LAST I,J =',2I8)
       STOP
-      ENDIF 
-      IF (MCMX.GE.MCT_) THEN 
+      ENDIF
+      IF (MCMX.GE.MCT_) THEN
 CC      WRITE(*,1997) MCT_,I2G(M),J2G(M)
  1997 FORMAT(' TOTAL SPECIAL CORNER POINTS (HGHTS) REACHES MAX.',I8,
      1 ' LAST I,J =',2I8)
       STOP
       ENDIF
-C        
+C
       IF(MCMX.EQ.0) GO TO 400
       DO 310 M=1,MCMX
       I2G(M+MM2G)=I2GG(M)
@@ -5533,6 +5606,7 @@ C
       COMMON /DUM88/  IIH(4),JJH(4),IHH(4),JHH(4)
       COMMON /GAMAF/  GAMA,GAMA1,GAMFP(4)
       COMMON /GPRT1/  DOLLAR,EBSN
+      COMMON /HTERAIN/ HTER
       DIMENSION       GAMF(4)
       DIMENSION       IBB(6,3)
       CHARACTER*2     DOLLAR
@@ -5564,7 +5638,8 @@ C      write (*,*) "Inside filter"
       DO 200 J=JL,JM,JNCR
       DO 190 I=IL,IM,INCR
 C        SKIP COMPUTATIONS FOR TERRAIN HIGHER THAN 35 FT.
-      IF(ZB(I,J).LE.-35.) GO TO 190
+C    CHANGED BY NSM TO HTER FROM 35 11/20/2010 : Accepted 4/4/2011
+      IF(ZB(I,J).LE.-HTER) GO TO 190
       HST=HSUB(I,J)+ZB(I,J)
 C        TEST FOR LAND WETTED LESS THAN 1 FT.
       IF(HST.LT.HCRT) GO TO 190
@@ -5600,7 +5675,9 @@ C        THE NEIGHBORING SQUARE IS MERELY WET(LESS THAN 1 FT).
       JB=J+JP(KK)
       Z =ZBM(IA,JA)
       ZZ=ZBM(IB,JB)
-      ZZZ=AMIN1(Z,ZZ)+1.
+C      ZZZ=AMIN1(Z,ZZ)+1.
+C     AAT Modified on 4/5/2011: So it is 0.5 feet (ie what HCRT is)
+      ZZZ=AMIN1(Z,ZZ)+HCRT
 C        WATER ON EITHER SIDE MUST EXCEED THE BARRIER(LOWER) BY AT
 C        LEAST 1 FT.
       IF( HSUB(I,J).LT.ZZZ.OR.HSUB(II,JJ).LT.ZZZ) THEN
@@ -5638,6 +5715,7 @@ C
       COMMON /DUM88/  IIH(4),JJH(4),IHH(4),JHH(4)
       COMMON /GAMAF/  GAMA,GAMA1,GAMFP(4)
       COMMON /GPRT1/  DOLLAR,EBSN
+      COMMON /HTERAIN/ HTER
       DIMENSION       GAMF(4)
       CHARACTER*2     DOLLAR
       CHARACTER*1     EBSN
@@ -5661,7 +5739,8 @@ C     INTERIOR POINTS M=1 INCLUDING SIDE BOUNDARIES.
       DO 200 J=1,JMXB1
       DO 190 I=IL,IM,INCR
 C        SKIP COMPUTATIONS FOR TERRAIN HIGHER THAN 35 FT.
-      IF(ZB(I,J).LE.-35.) GO TO 190
+C    CHANGED BY NSM TO HTER FROM 35 11/20/2010 : Accepted 4/4/2011
+      IF(ZB(I,J).LE.-HTER) GO TO 190
       HST=HSUB(I,J)+ZB(I,J)
 C        TEST FOR LAND WETTED LESS THAN 1 FT.
       IF(HST.LT.HCRT) GO TO 190
@@ -5697,7 +5776,8 @@ C        THE NEIGHBORING SQUARE IS MERELY WET(LESS THAN 1 FT).
       JB=J+JP(KK)
       Z =ZBM(IA,JA)
       ZZ=ZBM(IB,JB)
-      ZZZ=AMIN1(Z,ZZ)+1.
+C      ZZZ=AMIN1(Z,ZZ)+1.
+      ZZZ=AMIN1(Z,ZZ)+HCRT
 C        WATER ON EITHER SIDE MUST EXCEED THE BARRIER(LOWER) BY AT
 C        LEAST 1 FT.
       IF( HSUB(I,J).LT.ZZZ.OR.HSUB(II,JJ).LT.ZZZ) THEN
@@ -5759,8 +5839,8 @@ C
       IHMX(I,J)=(HMX(I,J)-ZSUB(J))*10.+.5
  20   CONTINUE
       ENDIF
-C       
-      IF(IOPERL(1).NE.2) THEN 
+C
+      IF(IOPERL(1).NE.2) THEN
       NGRP=(JMXB1-1)/25+1
       DO 1130 NN=1,NGRP
       J1=1+(NN-1)*25
@@ -5776,3 +5856,731 @@ CC      WRITE(*,'(1H ,I2,26I5)') I,(IHMX(I,J),J=J1,J2)
 C
        RETURN
        END
+
+      SUBROUTINE XFILTER
+C        SEPTEMBER 1980    JYE CHEN    TDL   IBM 360/195
+C        PURPOSE
+C           TO SMOOTH THE SURGE HEIGHTS ONCE AN HOUR TO ELIMINATE
+C           2-INTERVAL NOISES IN THE FIELDS.
+C
+C        DATA SET USE
+C           NONE
+C
+C        VARIABLES
+C       HSUB(  ,  )  =  SCRATCH SPACES
+C       IP(4) JP(4)  =  SHIFTS OF I J FROM HEIGHT PT TO 4 MOMNTN CORNERS
+C          IBB(6,M)  =  RANGES AND INCREMENTS FOR 3 DO-LOOPS OF I,J
+C                     M = 1 INTERIOR,M = 2 HORZNTL BNDY,M = 3 VERTICAL BNDY
+C                     RANGES ON THREE BASIN SEGMENTS ARE:
+C
+C                              222222222........2222222
+C                              311111111........1111113
+C                              311111111........1111113
+C                              .                      .    J
+C                              .                      .    J
+C                              311111111........1111113    J
+C                              311111111........1111113    J
+C                              222222222........2222222    ---->I
+C
+C          J2(J) JC  =  SHIFT J-SUBSCRIPT TO PRESENT TIME OF SURGE FIELD
+C        HB(  ,   )  =  SURGE FIELD
+C         ZB(  ,  )  =  DEPTH FIELD
+C     IIH(4) JJH(4)  =  I/J-SHIFT SUBSCRIPTS FOR SURGE POINTS
+C       IP(4) JP(4)  =  I/J-SHIFT SUBSCRPTS FOR MOMNTM PTS, IN 'BLCKDT'
+C
+C           THE (I,J) SHIFTS TO MOMENTUM POINTS, VIA IP(4) AND JP(4),
+C           ON CORNER POINTS K = 1 TO 4 ARE:
+C
+C                        I+0,J+1      I+1,J+1
+C                           K = 4.-----.K = 3
+C                              I     I
+C                              I I*J I
+C                              I     I
+C                           K = 1.-----.K = 2
+C                        I+0,J+0      I+1,J+0
+C
+C        ZBM(  ,  )  =  MAX BARRIER HEIGHTS AT MOMENTUM POINTS
+C        GENERAL COMMENTS
+C           THIS SUBROUTINE RESIDES IN OVERLAY 'CMPUTE'.
+C           A 5-POINT SMOOTHING OPERATOR IS USED, NEIGHBORING GRIDS
+C           WEIGHED CONDITIONALLY IF THEY ARE DRY OR BLOCKED
+C           BY BARRIERS. SHIFTS OF (I,J) TO ADJACENT SQUARES ARE SET
+C           VIA IIH(4) AND JJH(4). IIH/0,1,0,-1/,JJH/-1,0,1,0/
+C
+C                    I-1     I      I+1
+C                        .-----.             +HMX,HB,ZB HEIGHT PTS
+C                  I+IIH I I+0 I             .ZBM BARRIER PTS
+C             J+1    +   I 3+  I
+C                  J+JJH I J+1 I             EXAMPLE 0.INTERIOR POINTS
+C                  .-----.-----.-----.        I  1  I        I  0  I
+C                  I I-1 I     I I+1 I        I     I        I     I
+C             J    I 4+  I  +  I 2+  I  (1/8) I1 4 1I + (1/8)IA 0 BI
+C                  I J+0 I(I,J)I J+0 I        I     I        I     I
+C                  .-----.-----.-----.        I  1  I        I  0  I
+C                        I I+0 I
+C             J-1        I 1+  I
+C                        I J-1 I             A = GAMA1,B = GAMA
+C                        .-----.
+C                    I-1     I      I+1
+C
+C                        .-----.
+C                        I     I
+C             J+1        I 3+  I       EXAMPLE 1. SUQARE 2 EXCLUDED
+C                        I     I
+C                  .-----.-----.          I  1  I        I  0  I
+C                  I     I     I          I     I        I     I
+C             J    I 4+  I  +  I    (1/8) I1 5 0I + (1/8)IA B 0I
+C                  I     I(I,J)I          I     I        I     I
+C                  .-----.-----.          I  1  I        I  0  I
+C                        I     I
+C             J-1        I 1+  I
+C                        I     I
+C                        .-----.
+C
+C                                       EXAMPLE 2. SQUARES 2 AND 3
+C                                                  ARE EXCLUDED
+C                  .-----.-----.          I  0  I        I  0  I
+C                  I     I     I          I     I        I     I
+C             J    I 4+  I  +  I    (1/8) I1 6 0I + (1/8)IA B 0I
+C                  I     I(I,J)I          I     I        I     I
+C                  .-----.-----.          I  1  I        I  0  I
+C                        I     I
+C             J-1        I 1+  I
+C                        I     I
+C                        .-----.
+C
+C ======================================================================
+C
+C Development History
+C -------------------
+C
+C  Author                    Date             Purpose
+C  ------                    -----            ---------
+C  Jye Chen/TDL              September 1980   Wrote the SLOSH filter code
+C  A. Taylor and C. Forbes   April     2011   Modified the SLOSH filter code
+C                                             to include the cross Laplacian
+C                                             filter
+C  C. Forbes                 June      2011   Incorporated masks according
+C                                             to Killworth (1991) and
+C                                             Deleersnijder (1995),
+C                                             implemented masks for coast-
+C                                             lines, barriers, boundaries,
+C                                             and included averaging.
+C                                             Recoded the DO loop and GO TO
+C                                             logic to make code more efficient.
+C  A. Taylor                 August    2011   Allowed user to choose different
+C                                             HCRT values. (0.5 or 0.1)
+C
+C References
+C ----------
+C
+C Killworth, P.D., Stainforth, D., Webb, D.J., Paerson, S.M., 1991.
+C    The development of a free-surface Bryan-Cox-Semtner ocean model.
+C    Journal of Physical Oceanography, 21, 1333-1348.
+C
+C Deleersnijder, E., Campin, J.M., 1995. On the computation of the
+C    barotropic mode of a free-surface world ocean model.
+C    Annales Geophysicae, 13, 675-688.
+C
+C ======================================================================
+      INCLUDE 'parm.for'
+
+C     IMPLICIT REAL(A-H, O-Z), INTEGER(I-N)
+
+      PARAMETER (NP = 4)
+
+      COMMON /FFTH/    ITIME, MHALT
+      COMMON /DUMB3/   IMXB, JMXB, IMXB1, JMXB1, IMXB2, JMXB2
+      COMMON /EGTH/    DELS, DELT, G, COR
+      COMMON /DUMB8/   IP(NP), JP(NP), IH(NP), JH(NP)
+      COMMON /DUM88/   IIH(NP), JJH(NP), IHH(NP), JHH(NP)
+      COMMON /GAMAF/   GAMA, GAMA1, GAMFP(NP)
+      COMMON /GPRT1/   DOLLAR, EBSN
+      COMMON /HTERAIN/ HTER
+      COMMON /SMTH/    ISMTH
+C      COMMON /MASS/    AATMAX, AATMIN, AATSUM, AATCNT
+
+      REAL             GAMF(NP)
+      REAL             GAMFX(NP)
+      INTEGER          IBB(NP+2, NP-1)
+      INTEGER          IIX(NP), JJX(NP)
+      INTEGER          IP1(NP), JP1(NP), IP2(NP), JP2(NP)
+      INTEGER          MASKII(NP), MASKIX(NP), MBARRX(NP), MBARRI(NP)
+      INTEGER          MBOUNI(NP), MBOUNX(NP)
+      REAL             EXCLUDE
+
+      CHARACTER*2      DOLLAR
+      CHARACTER*1      EBSN
+
+C     DATA HCRT /0.1/  ! Water surface height difference that determines
+C     DATA HCRT /0.5/  ! Water surface height difference that determines
+C     DATA HCRT /1.0/  ! whether water spills over a barrier
+
+      DATA IBB(1,1), IBB(1,2), IBB(1,3) /2, 1, 2/,
+     1     IBB(3,1),           IBB(3,3) /1,    1/,
+     2     IBB(4,1), IBB(4,2), IBB(4,3) /2, 1, 1/,
+     3     IBB(6,1), IBB(6,2)           /1, 1   /
+
+      DATA IIX /-1,  1, 1, -1/
+      DATA JJX /-1, -1, 1,  1/
+      DATA IP1 /-1,  1, 2,  0/
+      DATA JP1 / 0, -1, 1,  2/
+      DATA IP2 / 0,  2, 1, -1/
+      DATA JP2 /-1,  0, 2,  1/
+
+      IF (ISMTH.EQ.2) THEN 
+        HCRT = 0.5
+        EXCLUDE = HCRT
+      ELSE IF (ISMTH.EQ.3) THEN 
+        HCRT = 0.1
+        EXCLUDE = HCRT
+      ELSE IF (ISMTH.EQ.4) THEN 
+        HCRT = 0.2
+        EXCLUDE = HCRT
+      ELSE IF (ISMTH.EQ.5) THEN 
+        HCRT = 0.3
+        EXCLUDE = HCRT
+      ELSE IF (ISMTH.EQ.6) THEN 
+        HCRT = 0.4
+        EXCLUDE = HCRT
+      ELSE IF (ISMTH.EQ.7) THEN 
+C        HCRT = 0.1
+        HCRT = 1.E-5
+        EXCLUDE = 1.E-5
+      ELSE IF (ISMTH.EQ.8) THEN 
+        HCRT = 0.2
+        EXCLUDE = 1.E-5
+      ELSE IF (ISMTH.EQ.9) THEN 
+        HCRT = 0.3
+        EXCLUDE = 1.E-5
+      ELSE IF (ISMTH.EQ.10) THEN 
+        HCRT = 0.4
+        EXCLUDE = 1.E-5
+      ELSE IF (ISMTH.EQ.11) THEN 
+        HCRT = 0.5
+        EXCLUDE = 1.E-5
+      ENDIF 
+      
+      IBB(2,1) = JMXB2
+      IBB(2,3) = JMXB2
+      IBB(3,2) = JMXB2
+      IBB(2,2) = JMXB1
+      IBB(5,1) = IMXB2
+      IBB(6,3) = IMXB2
+      IBB(5,2) = IMXB1
+      IBB(5,3) = IMXB1
+
+C     --------------------------
+C     Check on mass conservation
+C     --------------------------
+      HSUMHB = 0.
+      DO J = 1,JMXB1
+         DO I = 1,IMXB1
+            HSUB(I,J) = HB(I,J)
+            HSUMHB = HSUMHB + HB(I,J)
+         END DO
+      END DO
+
+C     --------------
+C     Filter weights
+C     --------------
+      ALFA = 1./8.    ! Weight of the combination Laplacian filter
+      BETA = 1.       ! Weight of the 'x' Laplacian filter
+
+C     ----------------------------------------
+C     Start Main Loop for all (i,j) grid cells
+C     M = 1    interior cells
+C     M = 2,3  boundary cells  {AT??}
+C     ----------------------------------------
+      DO 100 M = 1, 3
+         JL   = IBB(1,M)
+         JM   = IBB(2,M)
+         JNCR = IBB(3,M)
+         IL   = IBB(4,M)
+         IM   = IBB(5,M)
+         INCR = IBB(6,M)
+
+         DO 90 J = JL, JM, JNCR
+            DO 80 I = IL, IM, INCR
+C              ------------------------------------------
+C              Skip computations for terrain > 35 ft.
+C              Changed from a hard-wired constant to HTER
+C              by NSM on 11/20/2010, accepted 4/4/2011
+C              ------------------------------------------
+               IF (ZB(I,J) .LE. -HTER) GO TO 80
+
+C              --------------------------------
+C              Test for land wetted, but < EXCLUDE
+C              --------------------------------
+               HST = HSUB(I,J) + ZB(I,J)
+               IF (HST .LT. EXCLUDE) GO TO 80
+
+C              ---------------------------
+C              Initialize filter variables
+C              ---------------------------
+               HSM2  = 0.              ! Sum of all + cells for + filter
+               XSM2  = 0.              ! Sum of all x cells for x filter
+               MASKC = 1               ! Mask for center cell
+C               HDIF = 0.
+C               XDIF = 0.
+C               GAM0 = ELPDL2(I) + (ELPCL2(I) - ELPDL2(I)) * SINL2(J)
+
+C              ----------------------------------------------------------
+C              Start smoothing loop around the center cell
+C              counterclockwise from:
+C              south    , east     , north     and west      for + filter
+C              and from:
+C              southwest, southeast, northeast and northwest for x filter
+C              ----------------------------------------------------------
+
+               DO 30 K = 1, 4
+C                 |---------|---------|---------|
+C                 |         |         |         |
+C                 |    IX   |   II    |    IX   |
+C                 |    JX   |   JJ    |    JX   |
+C                 |  K = 4  | K = 3   |  K = 3  |
+C                 |---------|---------|---------|
+C                 |         |         |         |
+C                 |    II   |    I    |    II   |
+C                 |    JJ   |    J    |    JJ   |
+C                 |  K = 4  |         |  K = 2  |
+C                 |---------|---------|---------|
+C                 |         |         |         |
+C                 |    IX   |   II    |    IX   |
+C                 |    JX   |   JJ    |    JX   |
+C                 |  K = 1  | K = 1   |  K = 2  |
+C                 |---------|---------|---------|
+
+C                 -------------------------
+C                 Initialize mask variables
+C                 -------------------------
+                  MASKII(K) = 0 ! Mask for II cells according to height   (+ filter) (0 no flow, 1 flow)
+                  MBARRI(K) = 0 ! Mask for II cells according to barrier  (+ filter) (1 no flow, 0 flow)
+                  MBOUNI(K) = 0 ! Mask for II cells according to boundary (+ filter) (1 no flow, 0 flow)
+                  MASKIX(K) = 0 ! Mask for IX cells according to height   (x filter) (0 no flow, 1 flow)
+                  MBARRX(K) = 0 ! Mask for IX cells according to barrier  (x filter) (1 no flow, 0 flow)
+                  MBOUNX(K) = 0 ! Mask for IX cells according to boundary (x filter) (1 no flow, 0 flow)
+
+C                 --------------------------
+C                 Start '+' Laplacian filter
+C                 --------------------------
+                  II = I + IIH(K)
+                  JJ = J + JJH(K)
+                  IX = I + IIX(K)
+                  JX = J + JJX(K)
+
+C                 ----------------------------------------------
+C                 If any variable from filter hits the boundary,
+C                 do not do anything
+C                 ----------------------------------------------
+                  IF (II .EQ. 0 .OR. JJ .EQ. 0 .OR.
+     &                IX .EQ. 0 .OR. JX .EQ. 0 .OR.
+     &                I  .EQ. 0 .OR. J  .EQ. 0     ) GO TO 30
+
+CC                  IF (M .NE. 1) THEN
+CC                     IF (II .EQ. 0 .OR. JJ .EQ. 0) THEN
+CC                        MASKII(K) = 0
+CC                        MBARRI(K) = 0
+CC                        MBOUNI(K) = 1
+CC                        GO TO 10
+CC                     END IF
+CC                  END IF
+
+C                 --------------------------------------------------------
+C                 If the cell from + filter hits the IMXB or JMXB boundary
+C                 or the height < critical height (HCRT) set masks values
+C                 accordingly
+C                 --------------------------------------------------------
+                  IF (II .EQ. IMXB .OR. JJ .EQ. JMXB .OR.
+     &               HSUB(II,JJ) + ZB(II,JJ) .LT. HCRT) THEN
+CCC                     MASKII(K) = 0
+CCC                     MBARRI(K) = 0
+                     MBOUNI(K) = 1
+                  ELSE
+C                    --------------------------------------------
+C                    Water on either side must exceed the (lower)
+C                    barrier by at least HCRT
+C                    --------------------------------------------
+                     KK  = MOD(K,4) + 1
+                     IA  = I + IP(K)
+                     IB  = I + IP(KK)
+                     JA  = J + JP(K)
+                     JB  = J + JP(KK)
+                     Z   = ZBM(IA,JA)
+                     ZZ  = ZBM(IB,JB)
+                     ZZZ = AMIN1(Z,ZZ) + HCRT
+                     IF (HSUB(I,J) .LT. ZZZ .AND. HSUB(II,JJ) .LT. ZZZ)
+C   ??                    IF (HSUB(I,J) .LT. ZZZ .OR. HSUB(II,JJ) .LT. ZZZ)
+     &               THEN
+CCC                        MASKII(K) = 0
+                        MBARRI(K) = 1
+                     ELSE
+                        MASKII(K) = 1
+CCC                        MBARRI(K) = 0
+                     END IF
+                  END IF
+
+ 10               CONTINUE
+
+C                 --------------------------
+C                 Start 'x' Laplacian filter
+C                 --------------------------
+                  KK   = MOD(K,     4) + 1
+                  KM1  = MOD(K + 2, 4) + 1
+                  IA   = I + IP(K)
+                  IB   = I + IP(KK)
+                  JA   = J + JP(K)
+                  JB   = J + JP(KK)
+                  IA2  = I + IP2(K)
+                  JA2  = J + JP2(K)
+                  IA1  = I + IP1(K)
+                  JA1  = J + JP1(K)
+                  IAM1 = I + IP(KM1)
+                  JAM1 = J + JP(KM1)
+
+C                 ------------------------------------------------------
+C                 If any variable from the 'x' filter hits the boundary,
+C                 do not do anything
+C                 ------------------------------------------------------
+CC                  IF (M .NE. 1) THEN
+CC                     IF (IX .EQ. 0 .OR. JX .EQ. 0) THEN
+CC                        MASKIX(K) = 0
+CC                        MBARRX(K) = 0
+CC                        MBOUNX(K) = 1
+CC                        GO TO 20
+CC                     END IF
+CC                  END IF
+
+C                 --------------------------------------------------------
+C                 If the cell from x filter hits the IMXB or JMXB boundary
+C                 or the height < critical height (HCRT) set masks values
+C                 accordingly
+C                 --------------------------------------------------------
+                  IF (IX .EQ. IMXB .OR. JX .EQ. JMXB .OR.
+     &               HSUB(IX,JX) + ZB(IX,JX) .LT. HCRT) THEN
+CCC                     MASKIX(K) = 0
+CCC                     MBARRX(K) = 0
+                     MBOUNX(K) = 1
+                  ELSE
+C                    -------------------------------------------------
+C                    Water on either side must exceed the (lower)
+C                    barrier by at least HCRT.
+C                    Water should be able to flow from IJ to II
+C                    and from II to IX, clockwise or counter-clockwise
+C                    -------------------------------------------------
+                     Z   = ZBM(IA,JA)
+
+                     ZZ  = ZBM(IB,JB)
+                     ZZZ = AMIN1(Z,ZZ) + HCRT
+
+                     YY  = ZBM(IA2,JA2)
+                     YYY = AMIN1(Z,YY) + HCRT
+
+                     XX  = ZBM(IA1,JA1)
+                     XXX = AMIN1(Z,XX) + HCRT
+
+                     WW  = ZBM(IAM1,JAM1)
+                     WWW = AMIN1(Z,WW) + HCRT
+
+                     IF (((HSUB(I ,J ) .GE. ZZZ .AND.
+     &                     HSUB(II,JJ) .GE. YYY) .OR.
+     &                    (HSUB(IX,JX) .GE. YYY .AND.
+     &                     HSUB(II,JJ) .GE. ZZZ))
+     &                    .OR.
+     &                   ((HSUB(I  ,J  ) .GE. WWW .AND.
+     &                     HSUB(IA1,JA1) .GE. XXX) .OR.
+     &                    (HSUB(IX ,JX ) .GE. XXX .AND.
+     &                     HSUB(IA1,JA1) .GE. WWW))    )
+     &               THEN
+CCC                        XSM = XSM + HSUB(IX,JX)
+CCC                        XZZ = HSUB(IX,JX)
+                        MASKIX(K) = 1
+CCC                        MBARRX(K) = 0
+                     ELSE
+CCC                        XSM = XSM + HSUB(I,J)
+CCC                        XZZ = HSUB(I,J)
+CCC                        MASKIX(K) = 0
+                        MBARRX(K) = 1
+                     END IF
+                  END IF
+
+  20              CONTINUE
+
+  30           CONTINUE
+
+C              --------------------------------------------------------
+C              Start combination of '+' and 'x' Laplacian filters:
+C              H = H + (alpha * (plusFilter - beta * crossFilter)) * dt
+C              --------------------------------------------------------
+               DO 40 KM = 1, 4
+                  KKM  = MOD(KM    , 4) + 1
+                  KM1M = MOD(KM + 2, 4) + 1
+
+                  IX = I + IIX(KM)
+                  JX = J + JJX(KM)
+                  II = I + IIH(KM)
+                  JJ = J + JJH(KM)
+CC                  IF (M .EQ. 1) GOTO 158
+CC                  IF (II.EQ.0.OR.JJ.EQ.0) THEN
+CC                    GAMF(K)=0.
+CC                    GO TO 160
+CC                  ENDIF
+CC 158              CONTINUE
+CC                  IF (EBSN.EQ.'$'.OR.EBSN.EQ.'+') THEN
+CC                     GAMFK=ELPDL2(II)+(ELPCL2(II)-ELPDL2(II))*SINL2(JJ)
+CC                     GAMFKX=ELPDL2(IX)+(ELPCL2(IX)-ELPDL2(IX))*SINL2(JX)
+C      GAMF(K)=.5*(1.+GAMFK/GAM0)-1.
+CC                     Z=GAMFK/GAM0
+CC                     GAMF(K)=2.*Z/(1.+Z)-1.
+CC                     ZX=GAMFKX/GAM0
+CC                     GAMFX(K)=2.*ZX/(1.+ZX)-1.
+CC                  ELSE
+CC                     GAMF(K)=GAMFP(K)
+CC                     GAMFX(K)=GAMFP(K)
+CC                  ENDIF
+                  
+                  IX2 = I + IIX(KKM)
+                  JX2 = J + JJX(KKM)
+                  II2 = I + IIH(KKM)
+                  JJ2 = J + JJH(KKM)
+
+                  IX3 = I + IIX(KM1M)
+                  JX3 = J + JJX(KM1M)
+                  II3 = I + IIH(KM1M)
+                  JJ3 = J + JJH(KM1M)
+
+                  MSUMII = MASKIX(KM ) + MASKIX(KKM)  + MASKC
+                  MSUMIX = MASKIX(KM ) + MASKIX(KM1M) + MASKC
+
+C                 ---------------------------------------------
+C                 If any cell of the filter is at the boundary,
+C                 do not do any combination or averaging
+C                 ---------------------------------------------
+                  IF (II  .EQ. 0 .OR. JJ  .EQ. 0 .OR.
+     &                IX  .EQ. 0 .OR. JX  .EQ. 0 .OR.
+     &                I   .EQ. 0 .OR. J   .EQ. 0 .OR.
+     &                IX2 .EQ. 0 .OR. JX2 .EQ. 0 .OR.
+     &                IX3 .EQ. 0 .OR. JX3 .EQ. 0 .OR.
+     &                II2 .EQ. 0 .OR. JJ2 .EQ. 0 .OR.
+     &                II3 .EQ. 0 .OR. JJ3 .EQ. 0     ) GO TO 40
+
+
+C                 ----------------------------------------------------
+C                 If a cell in the '+' the filter is dry (e.g., II is
+C                 coastline and IJ, IX, and IX2 are water cells), then
+C                 average the two closest cells (IX and IX2) and
+C                 the center cell IJ, multiplying by their masks and
+C                 weighting them with the addition of all masks,
+C                 so that if any of the 3 are dry, they do not get
+C                 averaged.
+C
+C                 |---------|--------|---------|
+C                 |         |        |         |
+C                 |---------|--------|---------|
+C                 |         |   IJ   |         |
+C                 |---------|--------|---------|
+C                 |    IX   |   II   |  IX2    |
+C                 |    JX   |   JJ   |  JX2    |
+C                 |---------|--------|---------|
+C
+C                 ----------------------------------------------------
+
+                  IF (MASKII(KM) .EQ. 0 .AND. MSUMII     .NE. 0 .AND.
+     &                MBARRI(KM) .EQ. 0 .AND. MBOUNX(KM) .EQ. 0 .AND.
+     &                MBOUNI(KM) .EQ. 0) THEN
+      write (*,*) "TROUBLE: HSUB is supposed to be read only here"
+      write (*,*) "because it is needed for calc in other cells."
+                     HSUB(II,JJ) = (MASKIX(KM )*HSUB(IX  ,JX) +
+     &                              MASKIX(KKM)*HSUB(IX2,JX2) +
+     &                              MASKC      *HSUB(I  ,J) ) /
+     &                             (MASKIX(KM ) + MASKIX(KKM) + MASKC)
+                  END IF
+
+C                 ----------------------------------------------------
+C                 If a cell in the 'x' the filter is dry (e.g., IX is
+C                 coastline and IJ, II, and II3 are water cells), then
+C                 average the two closest cells (II3 and II) and
+C                 the center cell IJ, multiplying by their masks and
+C                 weighting them with the addition of all masks,
+C                 so that if any of the 3 are dry, they do not get
+C                 averaged.
+C
+C                 |---------|--------|---------|
+C                 |         |        |         |
+C                 |         |        |         |
+C                 |---------|--------|---------|
+C                 |   II3   |    I   |         |
+C                 |   JJ3   |    J   |         |
+C                 |---------|--------|---------|
+C                 |    IX   |   II   |         |
+C                 |    JX   |   JJ   |         |
+C                 |---------|--------|---------|
+C
+C                 ----------------------------------------------------
+
+                  IF (MASKIX(KM) .EQ. 0 .AND. MSUMIX     .NE. 0 .AND.
+     &                MBARRX(KM) .EQ. 0 .AND. MBOUNX(KM) .EQ. 0 .AND.
+     &                MBOUNI(KM) .EQ. 0. )
+     &            THEN
+      write (*,*) "TROUBLE: HSUB is supposed to be read only here"
+      write (*,*) "because it is needed for calc in other cells."
+                     HSUB(IX,JX) = (MASKII(KM  )*HSUB(II ,JJ ) +
+     &                              MASKIX(KM1M)*HSUB(II3,JJ3) +
+     &                              MASKC       *HSUB(I  ,J  ) ) /
+     &                             (MASKIX(KM ) + MASKIX(KM1M) + MASKC)
+                  END IF
+
+C                 ------------------------------------------------------
+C                 Calculate the two terms of the combination '+' and 'x'
+C                 filter:
+C                    HSM2 = + filter: SUM (II,JJ) from K = 1, 4
+C                    XSM2 = x filter: SUM (IX,JX) from K = 1, 4
+C
+C                 |---------|---------|---------|
+C                 |         |         |         |
+C                 |    IX   |   II    |    IX   |
+C                 |    JX   |   JJ    |    JX   |
+C                 |  K = 4  | K = 3   |  K = 3  |
+C                 |---------|---------|---------|
+C                 |         |         |         |
+C                 |    II   |    I    |    II   |
+C                 |    JJ   |    J    |    JJ   |
+C                 |  K = 4  |         |  K = 2  |
+C                 |---------|---------|---------|
+C                 |         |         |         |
+C                 |    IX   |   II    |    IX   |
+C                 |    JX   |   JJ    |    JX   |
+C                 |  K = 1  | K = 1   |  K = 2  |
+C                 |---------|---------|---------|
+C
+C                 ------------------------------------------------------
+C ??? MASKC is always 1.
+
+                  HSM2 = HSM2 +
+     &                   MASKC * MASKII(KM) * HSUB(II,JJ) -
+     &                   MASKC * MASKII(KM) * HSUB( I, J)
+
+C                 ------------------------------------------------------
+C    A   B   C    Capital letters are interior, lower are exterior.
+C    a   D   e    Killsworth (91) recommended that: 
+C    f   g   h    (1) If a cell 'a' is exterior for adjacent calculations to 
+C                     cell 'D' it be replaced with the average of any 
+C                     interior cells that it 'a' was adjacent to (ie 'D' and 
+C                     diagonals to 'D' that touch 'a' (i.e. 'A'))  
+C                 (2) If a cell 'f' is exterior and diagonal to 'D' it is 
+C                     ignored. 
+C      
+C    A   B   C    Capital letters are interior, lower are exterior.
+C    a   D   e    adj= ALFA * (HSM2 - BETA*(XSM2))  (assume Beta = 1)
+C    f   g   h    adj=ALFA ((B-D)+(a-D)+(g-D)+(e-D) 
+C                           -1/2[(f-D)+(h-D)+(C-D)+(A-D)]
+C                 Now (f-D), and (h-D) can be ignored since they are diagonals
+C                 (g-D) can be replaced with (D-D) = 0
+C                 => adj=ALFA ((B-D)+ (a-D) + (e-D) -1/2 [(C-D) + (A-D)]
+C                 (a-D) becomes ((A + D)/2 - D) = (A - D)/2
+C                 (e-D) becomes ((C + D)/2 - D) = (C - D)/2
+C                 => adj=ALFA ((B-D)+ (A-D)/2 + (C-D)/2 - (C-D)/2 - (A-D)/2
+C                 => adj=ALFA (B-D)
+C
+C                 In looking at this, the A and C terms are dropped from the 
+C                 XSM component.  However if 'e' had been 'E', we would have
+C                 kept the C term in the XSM.  So a diagonal cell is included
+C                 in XSM if it is interior (connected to point in question)
+C                 and the adjacent cells to it are interior.
+C
+C                 One permutation that Killsworth didn't prepare for is:
+C    A   B   C    Capital letters are interior, lower are exterior.
+C    E   D   F    adj= ALFA * (HSM2 - BETA*(XSM2))  (assume Beta = 1)
+C    G   a   H    adj=ALFA ((B-D)+(E-D)+(F-D)+(a-D)
+C                           -1/2[(A-D)+(C-D)+(G-D)+(H-D)]
+C                 (a-D) becomes ((G + D + H)/3 - D) = (G - D)/3 + (H - D)/3
+C                 => adj=ALFA ((B-D)+(E-D)+(F-D)+(G-D)/3+(H-D)/3
+C                           -1/2[(A-D)+(C-D)+(G-D)+(H-D)]  
+C                 In this case 0 .ne. (G-D)/3 -(G-D)/2 +(H-D)/3 -(H-D)/2
+C                 I would argue that they should cancel, so XSM doesn't need
+C                 to take this into consideration.
+C                 ------------------------------------------------------
+
+CCC                  XSM2 = XSM2 + 0.5 *
+CCC     &                  ((MASKIX(KM) * MASKII(KM) * MASKC * MASKIX(KKM))
+CCC     &                 * HSUB(IX,JX) -
+CCC     &                   (MASKIX(KM) * MASKII(KM) * MASKC * MASKIX(KKM))
+CCC     &                 * HSUB( I, J))
+
+                  XSM2 = XSM2 + 0.5 * 
+     &                   MASKC * MASKIX(KM)*MASKII(KM)*MASKII(KM1M)*   
+     &                   (HSUB(IX,JX) - HSUB(I, J))
+
+cc                  if (MASKII(KM).eq.0) then
+cc                    XSM2 = XSM2 + 1/6 * 
+cc     &                     MASKC * MASKIX(KM)*MASKIX(KKM)*   
+cc     &                     (HSUB(IX,JX) - HSUB(I, J))
+cc                  endif
+cc                  if (MASKII(KM1M).eq.0) then
+cc                    XSM2 = XSM2 + 1/6 * 
+cc     &                     MASKC * MASKIX(KM)*MASKIX(KM1M)*   
+cc     &                     (HSUB(IX,JX) - HSUB(I, J))
+cc                  endif
+
+ccc               if ((i.eq.148).and.(j.eq.69)) then
+ccc                  if (MASKIX(KM)*MASKII(KM)*MASKII(KM1M).eq.1) then
+ccc                     write (*,*) "148,69,x",KM,HSUB(IX,JX),ZB(IX,JX)
+ccc                     write (*,*) XSM2, HSM2, HSUB(I,J)
+ccc                  end if 
+ccc                  if (MASKII(KM).eq.1) then
+ccc                     write (*,*) "148,69,p",KM,HSUB(II,JJ),ZB(II,JJ)
+ccc                     write (*,*) XSM2, HSM2, HSUB(I,J)
+ccc                  end if 
+ccc               end if
+
+ 40            CONTINUE
+
+C              --------------------------------------------------------
+C              AT: Original plus filter was:
+C                HTEMP=.5*HSUB(I,J)+(HSM+HDIF)/8.
+C                     =HSUB(I,J)+ 1/8*(HSM+HDIF - 4*HSUB(I,J))
+C                     =HSUB(I,J)+ ALFA*(HSM+HDIF - 4*HSUB(I,J)) 
+C
+C              Introducing cross lapacian resulted in:
+C                HTEMP=HSUB(I,J)+ ALFA*((HSM+HDIF-4*HSUB(I,J)) -
+C                                       1/2*((XSM+XDIF)-4*HSUB(I,J)))
+C
+C              Now HSM2 and XSM2 are calculated in such a way that 
+C                HSM2 is the sum of HSM - 4*HSUB
+C                XSM2 is the sum of 0.5 * (XSM - 4*HSUB)  
+C              So...
+C           
+C              Calculate the combination '+' and 'x' Laplacian filter:
+C              H = H + (alpha * (plusFilter - beta * crossFilter)) * dt
+C              --------------------------------------------------------
+               HTEMP = HSUB(I,J) + ALFA * (HSM2 - BETA*(XSM2))
+
+C              ---------------------------------------
+C              Assign the value to the height variable
+C              ---------------------------------------
+               HB(I,J) = AMAX1(-ZB(I,J), HTEMP)
+
+  80        CONTINUE
+  90     CONTINUE
+ 100  CONTINUE
+
+cc      HSUMHB2 = 0.
+cc      DO J = 1,JMXB1
+cc         DO I = 1,IMXB1
+cc            HSUMHB2 = HSUMHB2 + HB(I,J)
+cc         END DO
+cc      END DO
+cc      AAT = HSUMHB - HSUMHB2
+cc      if (AATMAX.lt.AAT) then
+cc        AATMAX=AAT
+cc      end if
+cc      if (AATMIN.gt.AAT) then
+cc        AATMIN=AAT
+cc      end if
+cc      AATSUM = AATSUM + abs(AAT)
+cc      AATCNT = AATCNT + 1
+cc      write (*,*) "mass?", AATCNT, AATMAX, AATMIN, AATSUM, AAT, HSUMHB, 
+cc     &                     IMXB1 * JMXB1 
+
+      RETURN
+      END

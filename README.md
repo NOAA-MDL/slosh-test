@@ -65,13 +65,13 @@ The intent of this file is to help the user start using the SLOSH model.
 1. Get the required basins for the tests:
 ```bash
    cd ~/save/slosh/parm
-   getBasin.sh v3.96
+   getBasin.sh v3.97
 ```
 
 2. Get the required storms for the tests:
 ```bash
    cd ~/save/slosh/dev
-   getStorm.sh v3.96
+   getStorm.sh v3.97
 ```
 
 3. Run the tests:
@@ -92,8 +92,13 @@ you can do so yourself via:
 If there are differences, you can use 'envutil' to look more carefully to
 determine if it is just round-off error due to compiler versions:
 ```bash
-   ../util/envutil -D ./work/hugo.env ./sample/hugo.env
-   ../util/envutil -D ./work/andrew.env ./sample/andrew.env
+   ../util/envutil -D work/hugo.env sample/hugo.env
+   ../util/envutil -D work/andrew.env sample/andrew.env
+
+   # To filter for interesting differences, try:
+   ../util/envutil -D work/andrew.env sample/andrew.env |
+      awk '$3 != 999 && $5 != 999 && ($3 - $5 > 1 || $3 - $5 < -1) {
+           sub("\r", "", $0); print $0, "delta:", $3 - $5}'
 ```
 
 5. Compare the rex files (a time history at each grid cell):

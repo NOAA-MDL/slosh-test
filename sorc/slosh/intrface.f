@@ -347,10 +347,21 @@ C STIME interferes with C code, so switched to STIME2
       COMMON /STRMSB/ C1,C2,C21,C22,AX,AY,PTENCY,RTENCY
       COMMON /POLAR/  DEGREE,RMOUTH,AZMTH,DELA
       COMMON /DUMB3/  IMXB,JMXB,IMXB1,JMXB1,IMXB2,JMXB2
+      COMMON /SMTH/   ISMTH
 
 C CODE TO IMPLEMENT ONE TIME STEP..
   100 INCSM=20
-      IF (EBSN1.EQ.'+') INCSM=1
+      IF (EBSN1.EQ.'+'.OR.EBSN1.EQ.'=') INCSM=1
+      IF (EBSN1.EQ.'!'.OR.EBSN1.EQ.'#') INCSM=5
+      IF (EBSN1.EQ.'@'.OR.EBSN1.EQ.'%') INCSM=10
+      IF (EBSN1.EQ.'&') INCSM=20
+      IF (EBSN1.EQ.'^'.OR.EBSN1.EQ.'*') INCSM=30
+      ISMPT2G=1
+      IF (EBSN1.EQ.'+') ISMPT2G=0
+      IF (EBSN1.EQ.'&') ISMPT2G=0    
+      IF (EBSN1.EQ.'#') ISMPT2G=0
+      IF (EBSN1.EQ.'%') ISMPT2G=0
+      IF (EBSN1.EQ.'*') ISMPT2G=0
       CALL TTIMER
       xtime=itime
 c
@@ -361,7 +372,8 @@ c
 C       NO CORNER SMOOTHING for PNB BASIN
 c
 
-      IF (EBSN1.EQ.'&'.or.EBSN1.EQ.'+') GOTO 113
+C      IF (EBSN1.EQ.'&'.or.EBSN1.EQ.'+') GOTO 113
+      IF (ISMPT2G.EQ.0) GOTO 113
       IF (ITIME.GT.5.AND.INCSM.NE.1)  CALL SMPT2G
  113  CONTINUE
 c
@@ -407,11 +419,19 @@ C       IF (KEY1.EQ.0) GOTO 1112
 C
 c      IF(ITIME+1.EQ.NHRAD.or.EBSN1.EQ.'+') THEN
       IF(mod(ITIME+1,INCSM).EQ.0.or.EBSN1.EQ.'+') THEN
-       IF (DOLLAR.EQ.'$') THEN
-      CALL FLTER2
-      ELSE
-      CALL FILTER
-      ENDIF
+       IF(ISMTH.EQ.1) THEN
+        IF (DOLLAR.EQ.'$') THEN
+         CALL FLTER2
+        ELSE
+         CALL FILTER
+        ENDIF
+       ELSE
+        IF (DOLLAR.EQ.'$') THEN
+         CALL FLTER2
+        ELSE
+         CALL XFILTER
+        ENDIF
+       ENDIF      
       ENDIF
 c
 c  momentum equation
