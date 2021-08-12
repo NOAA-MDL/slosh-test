@@ -1,3 +1,13 @@
+2010-10-19  v3.95
+   * HCHS changed time step (20s to 10s) which impacted 1989-Hugo (in HCHS)
+   * HMI3 replaced HMIA, so 1992-Andrew now uses HMI3
+   * Set default REX version to 2.0 (vs 1.0)
+   * Updated initialized dry dimension to 1000 (vs 500)
+   * Updated grid dimension to 600x600 (vs 400x400)
+   * Set critical threshold for smoothing to 0.5 (vs 1.0) feet
+   * Adjusted trk-file format so that ocean type of 150-250 indicates pure
+     anomaly, while 350-450 indicates anomaly + gridded tide.
+
 2009-10-08  v3.94
    * Start of GitHub repository
 

@@ -1,7 +1,7 @@
 #ifndef SLOSH2_H
 #define SLOSH2_H
-#define PROGRAM_VERSION "3.94"
-#define PROGRAM_DATE "06/02/2009"
+#define PROGRAM_VERSION "3.95"
+#define PROGRAM_DATE "06/27/2010"
 #ifndef PROGRAM_COMMENT
 #define PROGRAM_COMMENT ""
 #endif
@@ -14,8 +14,8 @@
 /* 
 #define DOUBLE_FORTRAN
 */
-#define BAS_X 400
-#define BAS_Y 400
+/* #define BAS_X 600 (see halotype.h) */
+/* #define BAS_Y 600 (see halotype.h) */
 
 /*
 typedef struct {

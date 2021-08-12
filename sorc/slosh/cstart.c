@@ -14,7 +14,7 @@
 #include "memwatch.h"
 #endif
 
-#define REX_VERSION 1
+#define REX_VERSION 2
 
 /* MAX_PATH is 256 + 1 (null chacater) */
 #define MAX_PATH 257

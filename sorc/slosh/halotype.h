@@ -56,6 +56,9 @@
   #define HALO_API extern
 #endif
 
+/* SLOSH Basin dimensions */
+#define BAS_X 600
+#define BAS_Y 600
 
 /*
  * A data structure containing [0..255] for RGB values, as opposed to XColor

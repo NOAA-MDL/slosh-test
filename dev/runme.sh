@@ -25,7 +25,7 @@ fi
 #--------------------------------------
 mkdir parm
 cp ../parm/dta/hchsdta parm
-cp ../parm/dta/hmiadta parm
+cp ../parm/dta/hmi3dta parm
 cp ../parm/bnt/hbasins.dta parm
 
 # Create a working directory for answers
@@ -46,7 +46,7 @@ echo "[*] Creating 100x 1-hour track input file for Andrew-1992"
 ../exec/stm2trk storms/andrew.stm work/andrew.trk 61 70 77
 
 echo "[*] Running the SLOSH model"
-../exec/sloshDos -basin hmia -bsnDir parm -trk work/andrew.trk -rex work/andrew.rex \
+../exec/sloshDos -basin hmi3 -bsnDir parm -trk work/andrew.trk -rex work/andrew.rex \
       -env work/andrew.env
 
 #--------------------------------------
@@ -55,8 +55,8 @@ echo "[*] Running the SLOSH model"
 echo -e "\n------------------------------------------------------"
 echo "[*] Removing temporary file (hchs.llx)"
 rm hchs.llx
-echo "[*] Removing temporary file (hmia.llx)"
-rm hmia.llx
+echo "[*] Removing temporary file (hmi3.llx)"
+rm hmi3.llx
 
 echo "[*] Removing temporary copy of parm folder"
 rm -rf parm

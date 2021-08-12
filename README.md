@@ -65,13 +65,13 @@ The intent of this file is to help the user start using the SLOSH model.
 1. Get the required basins for the tests:
 ```bash
    cd ~/save/slosh/parm
-   getBasin.sh v3.94
+   getBasin.sh v3.95
 ```
 
 2. Get the required storms for the tests:
 ```bash
    cd ~/save/slosh/dev
-   getStorm.sh v3.94
+   getStorm.sh v3.95
 ```
 
 3. Run the tests:
@@ -79,6 +79,9 @@ The intent of this file is to help the user start using the SLOSH model.
    cd ~/save/slosh/dev
    runme.sh go
 ```
+
+While runme.sh calls check.sh to compare the outputs with the expected results,
+you can do so yourself via:
 
 4. Compare the envelopes (max value in each grid cell for entire run):
 ```bash
@@ -103,7 +106,7 @@ If there are differences, you can use 'rexout' to look more carefully.
 ```bash
    # Create a 'pnt' file:
    ../util/rexPnt.sh hchs   # Creates hchs.pnt for 1989-Hugo
-   ../util/rexPnt.sh hmia   # Creates hmia.pnt for 1992-Andrew
+   ../util/rexPnt.sh hmi3   # Creates hmi3.pnt for 1992-Andrew
 
    # Dump the rex files to CSV files:
    ../util/rexout -pnt hchs.pnt -rex ./work/hugo.rex -style 0 > hugoW.csv

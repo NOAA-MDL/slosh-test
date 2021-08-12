@@ -1,4 +1,4 @@
-      parameter (N_=400,ND_=500)
+      parameter (N_=400,ND_=1000)
       COMMON /SUBDCE/ ZSUBCE,JSUB,JSUB1,ZSUB(N_)
       COMMON /LAKE/   JLDTMG,LDTMG(N_)
       COMMON /LDRY/   NODRY,IDRY(ND_),JDRY(ND_)

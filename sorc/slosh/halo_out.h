@@ -8,13 +8,13 @@
 
 int Halo_UID (const char *name);
 
-int Halo_DeltaBasinFill (int UID, basin_type *bt, float zb[400][400],
-                         float hb[400][400], float minv, float maxv,
+int Halo_DeltaBasinFill (int UID, basin_type *bt, float zb[BAS_X][BAS_Y],
+                         float hb[BAS_X][BAS_Y], float minv, float maxv,
                          int pen2, double ratio, char force, char f_grid,
                          char f_fill, char f_range, int grid_pen, int trans_pen,
                          int f_rude);
-HALO_API int DLLEXPORT Halo_DeltaBasinFillDouble (int UID, basin_type *bt, double zb[400][400],
-                         double hb[400][400], double minv, double maxv,
+HALO_API int DLLEXPORT Halo_DeltaBasinFillDouble (int UID, basin_type *bt, double zb[BAS_X][BAS_Y],
+                         double hb[BAS_X][BAS_Y], double minv, double maxv,
                          int pen2, double ratio, char force, char f_grid,
                          char f_fill, char f_range, int grid_pen, int trans_pen,
                          int f_rude);

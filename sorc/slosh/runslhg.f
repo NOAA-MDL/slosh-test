@@ -59,18 +59,18 @@ C
       DATA ZSUBCE/-1./,JSUB,JSUB1/38,50/
       DATA LDTMG/5*33,8*35,5*34,
      1 30,29,29,28,27,26,26,24,22,20,21,22,22,21,
-     2 68*1,300*1/
+     2 68*1,500*1/
       DATA NODRY/74/
       DATA IDRY/21,22,22,23,23,23,23,24,24,24,24,25,25,25,25,26,26,26,
      1          27,27,27,28,28,28,29,29,29,29,30,30,30,30,30,30,31,31,
      2          31,31,28,28,28,28,28,29,29,29,29,30,30,30,30,30,31,31,
      3          31,32,32,32,32,32,32,32,33,33,33,33,33,34,34,34,34,34,
-     4          34,34,426*1/
+     4          34,34,926*1/
       DATA JDRY/28,28,29,27,28,29,30,27,28,29,30,26,27,28,29,26,27,28,
      1          24,25,26,23,24,25,22,23,24,25,20,21,22,23,24,25,19,20,
      2          25,21,26,27,28,29,30,27,28,29,30,26,27,28,29,30,26,27,
      3          28,23,24,25,26,27,28,29,23,26,27,28,29,20,21,22,23,27,
-     4          28,29,426*1/
+     4          28,29,926*1/
 C
        END
       SUBROUTINE MAINE()
@@ -1812,10 +1812,21 @@ C        RADII OF MAX WINDS IN ST MILES, ALL 1 HOURS APART
  110  CONTINUE
       READ (5,'(3I3)') IBGNT,ITEND,JHR
       READ (5,'(A80)') LFTIME
-      read (5,'(2f5.1,A1,F5.1)') seadtm,dtmlak,XOKE,DTMCHN 
+      READ (5,'(2f5.1,A1,F5.1)') SEADTM,DTMLAK,XOKE,DTMCHN
       CLOSE (5)
-c      write (*,*) '  sea datum, and lake datum ='
-c      read (*,*) seadtm,dtmlak 
+C
+C ht1 < 99.9 implies init water was for tide + anomaly (so tide)
+C ht1 = 99.9 implies init water was missing (so surge)
+C 150 < ht1 < 250 implies init water was for anomaly (so surge) (with anomaly = ht1 - 200)
+C 350 < ht1 < 450 implies we added a tide field (SLOSH + tide) (so tide) (with anomaly = ht1 - 400)
+C
+      IF ((SEADTM.GE.150).AND.(SEADTM.LE.250)) THEN
+      SEADTM = INT((SEADTM - 200)*10 + .5)/10.
+      ELSE IF ((SEADTM.GE.350).AND.(SEADTM.LE.450)) THEN
+      SEADTM = INT((SEADTM - 400)*10 + .5)/10.
+      ENDIF
+c      write (*,*) '  sea datum, and lake datum =', seadtm, dtmlak
+c      read (*,*) seadtm,dtmlak
       RETURN
       END
 
@@ -2575,7 +2586,7 @@ CC      IF (J.EQ.JMXB) WRITE(*,710) (ZB(I,J),I=IST,IFN)
  500  CONTINUE
 c------------ FOR BIX BASIN ONLY
       IF (DOLLAR.EQ.'1$') THEN
-      READ (9,'(i3)') NODRY
+      READ (9,'(i4)') NODRY
       IF(NODRY.GT.ND_) THEN
         WRITE(*,*) "Too many Dry cells"
       ENDIF
@@ -5132,7 +5143,9 @@ C        VARIABLES
 C           HSUB( , ) = TEMPORARY STORAGE SPACE FOR HEIGHT FIELD
 C
       INCLUDE 'parm.for'
-      PARAMETER (MCT_=3000)
+
+C     MCT_ set to 8000  06/09/10
+      PARAMETER (MCT_=8000)
 C      PARAMETER (MCT_=1500)
 C
       COMMON /FLWCPT/ NSQRS,NSQRW,NSQRWC,NPSS,NCUT
@@ -5522,7 +5535,7 @@ C
       DIMENSION       IBB(6,3)
       CHARACTER*2     DOLLAR
       CHARACTER*1     EBSN
-      DATA HCRT/1./
+      DATA HCRT/0.5/
       DATA IBB(1,1),IBB(1,2),IBB(1,3)/2,1,2/,
      1     IBB(3,1),         IBB(3,3)/1,  1/,
      2     IBB(4,1),IBB(4,2),IBB(4,3)/2,1,1/,
@@ -5626,7 +5639,7 @@ C
       DIMENSION       GAMF(4)
       CHARACTER*2     DOLLAR
       CHARACTER*1     EBSN
-      DATA HCRT/1./
+      DATA HCRT/0.5/
 C
       DO 100 J=1,JMXB
       DO 100 I=1,IMXB

@@ -47,12 +47,14 @@ typedef enum { TFLAG_MadeOnIntel, TFLAG_NotMadeOnIntel } TFLAG_SYSTEM;
  */
 
 #ifdef _UNIX_
+  #define HP
 #else
   #ifdef _LINUX_
     #define _sysINTEL
+    #define F2C
   #else
-    #define _sysDOS
     #define _sysINTEL
+    #define F2C
   #endif
 #endif
 
@@ -171,11 +173,6 @@ size_t tWrite (void *src, size_t elem_size, size_t num_elem, TIO_type *tio);
 int tSet (TFLAG_SYSTEM sys);
 
 /* -------------FORTRAN called routines...-------------- */
-#ifdef _sysDOS
-  #define F2C
-#else
-  #define HP
-#endif
 
 #ifdef F2C
   void topen_ (int *fid, char *name, int *flag, int *sys);
