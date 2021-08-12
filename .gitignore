@@ -1,6 +1,8 @@
 # Ignore the executables
 exec
 sorc/slosh/sloshDos.exe
+sorc/stm2trk/stm2trk.exe
+sorc/slosh/*.o
 util/*.exe
 # Ignore the basin files
 parm/bnt

@@ -1,3 +1,7 @@
+2011-02-17  v3.96 (originally - FOIA_4.00)
+   * Feb 9, 2011 - SLOSH releases officially switched to MinGW 4.5.0 (from 3.4.2)
+   * Updating number of cuts and 1d flows to 13,000 (from 12,000)
+
 2010-10-19  v3.95
    * HCHS changed time step (20s to 10s) which impacted 1989-Hugo (in HCHS)
    * HMI3 replaced HMIA, so 1992-Andrew now uses HMI3

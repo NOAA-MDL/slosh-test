@@ -26,7 +26,7 @@ The intent of this file is to help the user start using the SLOSH model.
    token=$(cat ~/.ssh/gitHub_pat)
    git clone https://${token}@github.com/NOAA-MDL/slosh.git
 
-   # Alternatively, if you have ssh keys.  Note: the 'get' scripts
+   # Alternatively, if you have ssh keys.  (Note: the 'get' scripts
    #     (e.g., 'parm/getBasin.sh') assume you have a PAT.)
    git clone git@github.com:NOAA-MDL/slosh.git
 
@@ -65,13 +65,13 @@ The intent of this file is to help the user start using the SLOSH model.
 1. Get the required basins for the tests:
 ```bash
    cd ~/save/slosh/parm
-   getBasin.sh v3.95
+   getBasin.sh v3.96
 ```
 
 2. Get the required storms for the tests:
 ```bash
    cd ~/save/slosh/dev
-   getStorm.sh v3.95
+   getStorm.sh v3.96
 ```
 
 3. Run the tests:
@@ -116,6 +116,17 @@ If there are differences, you can use 'rexout' to look more carefully.
    vimdiff hugoW.csv hugoS.csv
 
    # Repeat for Andrew.
+```
+
+-------------------------------------------------------------------------------
+## CLEAN UP
+
+To remove all temporary files (e.g., object files, downloaded basins, answers
+to tests, etc):
+
+```bash
+   cd ~/save/slosh
+   ./util/cleanUp.sh go
 ```
 
 -------------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 #ifndef SLOSH2_H
 #define SLOSH2_H
-#define PROGRAM_VERSION "3.95"
-#define PROGRAM_DATE "06/27/2010"
+#define PROGRAM_VERSION "4.0"
+#define PROGRAM_DATE "02/09/2011"
 #ifndef PROGRAM_COMMENT
 #define PROGRAM_COMMENT ""
 #endif

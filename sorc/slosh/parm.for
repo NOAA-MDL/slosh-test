@@ -1,4 +1,4 @@
-      PARAMETER (M_=600,N_=600,L_=12000,NCT_=3000,LC_=L_)
+      PARAMETER (M_=600,N_=600,L_=13000,NCT_=3000,LC_=L_)
 C Remember to change COMMON /BCPTS/ to M_*2 + N_*2
       PARAMETER (NBK_=5000,ND_=1000)
       PARAMETER (M2G_=8000)
