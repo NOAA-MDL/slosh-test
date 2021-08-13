@@ -1,6 +1,6 @@
 #!/bin/bash
 #------------------------------------------------------------------------------
-# runme.sh                                              Last Change: 2021-06-17
+# runme.sh                                              Last Change: 2021-07-21
 #                                                        Arthur.Taylor@noaa.gov
 #                                                              NWS/OSTI/MDL/DSD
 #------------------------------------------------------------------------------
@@ -24,7 +24,7 @@ fi
 mkdir -p work
 
 #--------------------------------------
-# Determine the system 
+# Determine the system
 #--------------------------------------
 if [[ $(uname -o) == "Cygwin" ]] ; then
 #   SYS=Cygwin
@@ -32,11 +32,12 @@ if [[ $(uname -o) == "Cygwin" ]] ; then
 else
 #   SYS=Linux
    ulimit -s 84500
+#   ulimit -s 180000
    SLOSH=../exec/sloshLinux
 fi
 
 #--------------------------------------
-# Run the tests 
+# Run the tests
 #--------------------------------------
 T+=(1989-Hugo:HCH2:59:70:76)
 T+=(1992-Andrew:HMI3:61:70:77)
@@ -64,22 +65,28 @@ for tst in ${T[@]} ; do
    # Run the model
    #--------------------------------------
    echo "[*] Running the SLOSH model for ${tstRay[0]} in $bsn"
-   # For v4.11, -verbose 1 is too quiet, 2 is too noisy.
+   # For v4.11 and v4.12, -verbose 1 is too quiet, 2 is too noisy.
+   set -x
    $SLOSH -basin $bsn -rootDir ../parm -trk work/$name.trk \
          -rex work/$name.rex -env work/$name.env -verbose 1
+   set +x
 
    #--------------------------------------
    # Check the results
    #--------------------------------------
    echo "[?] Checking results for ${tstRay[0]}" ; f_bad=0
-   cmp -s -- work/$name.env sample/$name.env ; if [[ $? != 0 ]] ; then
+   ans=sample/$name.env
+   cmp -s -- work/$name.env $ans ; if [[ $? != 0 ]] ; then
       echo -e "  \x1B[1;31m[X]\x1B[0m Envelope file 'work/$name.env' differs"
       f_bad=1
    fi
-   cmp -s -- work/$name.rex sample/$name.rex ; if [[ $? != 0 ]] ; then
+
+   ans=sample/$name.rex
+   cmp -s -- work/$name.rex $ans ; if [[ $? != 0 ]] ; then
       echo -e "  \x1B[1;31m[X]\x1B[0m Rex file 'work/$name.rex' differs"
       f_bad=1
    fi
+
    if [[ $f_bad == 0 ]] ; then
       echo -e "  \x1B[1;32m[*]\x1B[0m ${tstRay[0]} is good!"
    fi

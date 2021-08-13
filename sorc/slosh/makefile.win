@@ -2,14 +2,13 @@
 SHELL = /usr/bin/bash
 
 ############################
-# This makefile is intended to create the DOS executable.
+# This makefile is intended to create the Windows executable.
 #
 # USAGE:
-#    make B=gcc342 | gcc450 | gcc453 (cygwin MPI) | gcc461 (B is for build)
+#    make B=gcc342 | gcc450 | gcc461 (B is for build)
 #
 # Other options...
-#    make MEM=true, DEBUG=true, DOUBLE=true, MPI=true, EXPR=true
-#    MPI currently only works for cygwin (gcc453)...
+#    make MEM=true, DEBUG=true, DOUBLE=true, EXPR=true
 #    EXPR=true means enable experimental options.
 #       EXPR should be false for FOIA CD so it has well tested options.
 ############################
@@ -70,11 +69,7 @@ STRIP = strip
 ############################
 # Set up Targets
 ############################
-ifeq ($(MPI),true)
-  NAME = sloshCygwinMPI
-else
-  NAME = sloshDos
-endif
+NAME = sloshGui
 ifeq ($(DOUBLE),true)
   PRJ_NAME = $(NAME)_$(B)Dbl
 else
@@ -87,8 +82,12 @@ SUFFIX = .exe
 # Set up Compiler flags...
 #   CFLAGS (via STD_DEF and STD_INC) and FFLAGS
 ############################
+      # _WINDOWS_ ==> Means use Windows GUI support.
+STD_DEF = -D_WINDOWS_
+      # _WINDOWS_ ==> Means use Tcl API connections.
+STD_DEF += -DHAVE_TCL
       # _GCC_ ==> Means use GCC wrappings for connecting to fortran.
-STD_DEF = -D_GCC_
+STD_DEF += -D_GCC_
       # CC_VER ==> embeds the compiler version into exectuable.
 CC_VER := $(shell $(BINDIR)/$(CC) --version | $(HEAD) -n1 | $(CUT) -d' ' -f2,3 --output-delimiter='-')
 STD_DEF += -DCC_VER="\"$(CC_VER)\""
@@ -121,6 +120,8 @@ ifeq ($(EXPR),true)
   STD_DEF += -D_EXPR_
 endif
 
+# Add Tcl/Tk headers.
+STD_INC += -I../../gui/include/tcl8.5.3_win
 STD_INC += -I.
 
 CFLAGS = -O3 -Wall -Wextra -pedantic -ansi
@@ -151,6 +152,14 @@ endif
 ifeq ($(MPI),true)
   STD_LIB += -Wl,-Bdynamic -lmpi -lesmtp
 endif
+
+# Add TK/TCL/halo85 libraries to Lib Path.
+STD_LIB += -L../../gui/exec -Wl,-Bdynamic -ltk85
+STD_LIB += -L../../gui/exec -Wl,-Bdynamic -ltcl85
+STD_LIB += -L../../gui/exec -Wl,-Bdynamic -lhalo85
+
+# Provide console diagnostics
+LD_FLAGS += -mconsole
 STD_LIB += -L/usr/lib -lm
 
 ############################
@@ -176,8 +185,12 @@ FSOURCE = intrface.f \
           runslhg.f \
           spinup.f
 
+GUISOURCE = haloclock2.c \
+            tclslosh.c
+
 OBJECTS = $(SOURCE:.c=.o) \
           $(FSOURCE:.f=.o) \
+          $(GUISOURCE:.c=.o) \
           $(MEMWATCH)
 
 HEADERS = amyutil.h \
@@ -200,7 +213,11 @@ HEADERS = amyutil.h \
           type.h \
           usrparse.h
 
-C_MAIN = cstart.c
+GUIHEADERS = haloclock2.h \
+             halo_out.h \
+             tclslosh.h
+
+C_MAIN = tclstart.c
 
 ############################
 # TARGETS
@@ -209,18 +226,17 @@ all: $(TARGETS)
 	@echo ""
 
 help:
-	@echo "make B=(gcc342 | gcc450 | gcc453 (cygwin) | gcc461)"
-	@echo "     other options: MEM=true, DEBUG=true, DOUBLE=true, MPI=true, EXPR=true"
-	@echo "Note: MPI currently only works for cygwin (gcc453)"
+	@echo "make B=(gcc342 | gcc450 | gcc461)"
+	@echo "     other options: MEM=true, DEBUG=true, DOUBLE=true, EXPR=true"
 
-$(PRJ_NAME): $(OBJECTS) $(C_MAIN) $(HEADERS)
+$(PRJ_NAME): $(OBJECTS) $(C_MAIN) $(HEADERS) $(LIB_DEP)
 	$(CC) $(C_MAIN) $(CFLAGS) $(LD_FLAGS) $(OBJECTS) $(STD_LIB) -o $(PRJ_NAME)
 	$(STRIP) -s $(PRJ_NAME)$(SUFFIX)
 
 install: $(TARGETS)
-	$(MKDIR) -p ../../exec
-#	$(CP) $(PRJ_NAME)$(SUFFIX) ../../exec
-	$(CP) $(PRJ_NAME)$(SUFFIX) ../../exec/$(NAME)$(SUFFIX)
+	$(MKDIR) -p ../../gui/exec
+#	$(CP) $(PRJ_NAME)$(SUFFIX) ../../gui/exec
+	$(CP) $(PRJ_NAME)$(SUFFIX) ../../gui/exec/$(NAME)$(SUFFIX)
 
 clean:
 	$(RM) -f *.o *.bak *.BAK

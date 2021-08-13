@@ -7,6 +7,8 @@
 #include "tio3.h"
 #include "clock.h"
 #include "time.h"
+#include "myutil.h"
+#include "usrparse.h"
 
 #ifdef MEMWATCH
 #include "memwatch.h"
@@ -368,7 +370,7 @@ int InitWater_TideModeOverride (float *ht1, int f_tide, float *ht2)
          *ht2 = 0;
       }
       tideMode = -1;
-   } else if ((f_tide == 2) || (f_tide == 21) || (f_tide == 22)) {
+   } else if ((f_tide == 2) || (f_tide == 21) || (f_tide == 22) || (f_tide == 24)) {
       /* grid tide v1 + surge mode. */
       /* tideMode can be 1, 2, 3... Currently only v1 */
       if ((tideMode == 10) || (tideMode == 11)) {
@@ -583,7 +585,7 @@ void SetTideUsableFlag (int imxb, int jmxb, TideGridType *tgrid, int f_tide,
    /* whichCell = (j * (imxb -1) + i */
    whichCell = 0;
 
-   if ((f_tide != 21) && (f_tide != 22)) {
+   if ((f_tide != 21) && (f_tide != 22) && (f_tide !=24)) {
       return;
    }
    for (j = 0; j < jmxb - 1; j++) {
@@ -592,7 +594,7 @@ void SetTideUsableFlag (int imxb, int jmxb, TideGridType *tgrid, int f_tide,
               < -1 * tideThresh feet. */
          if (DUMB5.ZB[j][i] <= tideThresh) {
             tgrid->cells[whichCell].f_usable = 0;
-         } else if (f_tide == 22) {
+         } else if (f_tide == 22 || f_tide == 24) {
             /* Treat all subgrid cells as "not usable from a tide perspective. */
             subI = i+1;
             subJ = j+1;
@@ -670,7 +672,7 @@ void SetTideUsableFlag (int imxb, int jmxb, TideGridType *tgrid, int f_tide,
  ****************************************************************************/
 static int CalcTideGrid2 (int imxb, int jmxb, slosh_type *st,
                           TideGridType *tgrid, double modelClock,
-                          int f_tide, int tideThresh, int f_first)
+                          int f_tide, int f_first)
 {
    int whichCell;             /* Index of grid cell. */
    int i, j;                  /* Counter through grid cells. */
@@ -756,7 +758,7 @@ if (k >= 37) {
          }
       }
 
-   } else if ((f_tide == 2) || (f_tide == 21) || (f_tide == 22) || (f_tide == -2)) {
+   } else if ((f_tide == 2) || (f_tide == 21) || (f_tide == 22) || (f_tide == -2) || (f_tide == 24)) {
       /* for f_tide = 3,4 (mode 2), Subtract old tide and add new tide */
       for (j = 0; j < jmxb - 1; j++) {
          for (i = 0; i < imxb - 1; i++) {
@@ -860,7 +862,7 @@ if (k >= 37) {
       /* Test if we have already computed tides at this cell at current time.
        * For mode 3 (f_tide > 4) we haven't computed any tides at the current
        * time (except if f_first), so we automatically do so. */
-      if (((f_tide == 2) || (f_tide == 21) || (f_tide == 22) || (f_tide == -2)) && (st->tide[j][i] <= 99)) {
+      if (((f_tide == 2) || (f_tide == 21) || (f_tide == 22) || (f_tide == -2) || (f_tide == 24)) && (st->tide[j][i] <= 99)) {
          BCPTS.TIDESH[n] = st->tide[j][i];
       } else {
          whichCell = j * (imxb -1) + i;
@@ -905,7 +907,7 @@ static int SpinUpTideGrid (int imxb, int jmxb,
    int stmn,stdy,sthr,stmi;
    double stsec;
 
-   if ((f_tide != 3) && (f_tide != 2) && (f_tide != 21) && (f_tide != 22)) {
+   if ((f_tide != 3) && (f_tide != 2) && (f_tide != 21) && (f_tide != 22) && (f_tide != 24)) {
       fprintf (stderr, "Calling spin up, but f_tide is not V3 or V2, V2.1, V2.2?\n");
       return -1;
    }
@@ -1047,7 +1049,7 @@ void RunLoopStep (slosh_type * st, int imxb, int jmxb,
                   int *itime, int *mhalt,
                   short csflag, short f_smooth,
                   short f_wantRex, double *modelClock, double rextime,
-                  int f_first, TideGridType *tgrid, int f_tide, int tideThresh, int f_stat)
+                  int f_first, TideGridType *tgrid, int f_tide, int f_stat)
 {
 #ifdef DOUBLE_FORTRAN
    static double del_t = 0;
@@ -1080,7 +1082,7 @@ void RunLoopStep (slosh_type * st, int imxb, int jmxb,
     * we end up with tide + tide + tide ... + surge. */
    /* Don't need to worry about f_tide == 2 (just stores tide) */
    /* Don't need to worry about f_tide == 3 or 5 (doesn't use st->hb) */
-   f_pass = ((f_passdata == 1) || (f_tide == 1));
+   f_pass = ((f_passdata == 1) || (f_tide == 1) || (f_tide == -1));
 
 /*  Fortran call
  **************************/
@@ -1101,9 +1103,9 @@ void RunLoopStep (slosh_type * st, int imxb, int jmxb,
    if ((f_tide == 1) || (f_tide == -1)) {
     /* This loops over the grid doing the tide calculation. */
       CalcTideGrid (imxb, jmxb, st, tgrid, *modelClock, f_tide);
-   } else if ((f_tide == 2) || (f_tide == 21) || (f_tide == 22) || (f_tide == 3)) {
+   } else if ((f_tide == 2) || (f_tide == 21) || (f_tide == 22) || (f_tide == 24) || (f_tide == 3)) {
       int f_first = 0;
-      CalcTideGrid2 (imxb, jmxb, st, tgrid, *modelClock, f_tide, tideThresh, f_first);
+      CalcTideGrid2 (imxb, jmxb, st, tgrid, *modelClock, f_tide, f_first);
    }
 
    /* Uncomment the following to better understand the timing of the
@@ -1329,7 +1331,7 @@ int RunInit (slosh_type * st, char trkName[MY_MAX_PATH], char dtaName[MY_MAX_PAT
       }
    }
 /* Output: tgrid*/
-   if ((f_tide == 2) || (f_tide == 21) || (f_tide == 22)) {
+   if ((f_tide == 2) || (f_tide == 21) || (f_tide == 22) || (f_tide == 24)) {
       int f_first = 1;
 
       SetTideUsableFlag (imxb, jmxb, tgrid, f_tide, tideThresh);
@@ -1343,7 +1345,7 @@ int RunInit (slosh_type * st, char trkName[MY_MAX_PATH], char dtaName[MY_MAX_PAT
        * best approximation of the tide. */
       /* Need to add the tide field at time=clock to the initial water
        * level in grid that SLOSH sees */
-      CalcTideGrid2 (imxb, jmxb, st, tgrid, *modelClock, f_tide, tideThresh, f_first);
+      CalcTideGrid2 (imxb, jmxb, st, tgrid, *modelClock, f_tide, f_first);
    } if (f_tide == 3) {
       /* Spin up the transport values. */
       SpinUpTideGrid (imxb, jmxb, tgrid, *modelClock, f_tide, spinUp, f_saveSpinUp,
@@ -1463,12 +1465,81 @@ int PerformRun (char *bsnAbrev, char dtaName[MY_MAX_PATH], char trkName[MY_MAX_P
    char *adjName;        /* Name of Datum Adjust. File (eg. MTL->NAVD88)*/
    char *bhcName;        /* Name of Binary Harmonic Constituent file */
    char *ft03Name;
+   char *buffer = NULL;
+   size_t buffLen = 0;
+   size_t lineArgc = 0;
+   char **lineArgv = NULL;
+   unsigned int i;
    TideGridType tgrid;
    char rexComment[201];
    char envComment[161];
    char extendName[MY_MAX_PATH + 10];
-   char subfolder[8];
+   char subfolder[10];
    FILE *fp;
+   int f_foundVDEF = 0;
+
+   /* Handle f_tide == 99 (-VDEF) */
+   if (f_tide == 99) {
+      buffer = (char *) malloc ((strlen (tideDir) + 17) * sizeof (char));
+      sprintf (buffer, "%s/tide_flavor.txt", tideDir);
+      if ((fp = fopen (buffer, "rb")) == NULL) {
+         fprintf (stderr, "Couldn't open '%s'.\n", buffer);
+         return -1;
+      }
+      free (buffer);
+      buffer = NULL;
+      while (reallocFGets (&buffer, &buffLen, fp) != 0) {
+         if (buffer[0] == '#') {
+            continue;
+         }
+         /* Split based on ':' */
+         mySplit (buffer, ':', &lineArgc, &lineArgv, 1);
+         if (lineArgc != 2) {
+            fprintf (stderr, "Problems with tide_flavor.txt file.\n");
+            for (i = 0; i < lineArgc; i++) {
+               free (lineArgv[i]);
+            }
+            free (lineArgv);
+            free (buffer);
+            fclose (fp);
+            return -1;
+         }
+         if ((bsnAbrev[0] == ' ') &&
+             (strcmp (bsnAbrev + 1, lineArgv[0]) == 0)) {
+            f_foundVDEF = 1;
+            break;
+         } else if (strcmp (bsnAbrev, lineArgv[0]) == 0) {
+            f_foundVDEF = 1;
+            break;
+         }
+      }
+      /* Check that we found the basin in the tide_flavor file. */
+      if (f_foundVDEF != 1) {
+         fprintf (stderr, "Unable to find basin '%s' in the"
+                  " %s/tide_flavor.txt file.\n", bsnAbrev, tideDir);
+         fprintf (stderr, "Please add an entry.\n");
+         return -1;
+      } 
+      /* Parse the line and see if we have any issues.  */
+      if (ParseTide (lineArgv[1], &(f_tide), &(tideThresh)) != 0) {
+         fprintf (stderr, "Issues with %s line of %s/tide_flavor.txt file.\n",
+                  lineArgv[0], tideDir);
+         return -1;
+      }
+      /* If f_tide is still 99, then ParseTide failed and forgot to tell us
+       * that it failed? */
+      if (f_tide == 99) {
+         fprintf (stderr, "Issues with %s line of %s/tide_flavor.txt file.\n",
+                  lineArgv[0], tideDir);
+         return -1;
+      }
+      for (i = 0; i < lineArgc; i++) {
+         free (lineArgv[i]);
+      }
+      free (lineArgv);
+      free (buffer);
+      fclose (fp);
+   }
 
    /* f40Name isn't used anymore (commented out of the Fortran:Inital routine) */
    sprintf (f40Name, "%s/ft40", tideDir);
@@ -1477,6 +1548,7 @@ int PerformRun (char *bsnAbrev, char dtaName[MY_MAX_PATH], char trkName[MY_MAX_P
    if (f_tide != 0) {
       ft03Name = (char *) malloc ((strlen (tideDir) + 10) * sizeof (char));
       sprintf (ft03Name, "%s/ft03.dta", tideDir);
+
       if (bsnStatus == 0) {
          subfolder[0] = '\0';
       } else if (bsnStatus == 1) {
@@ -1519,11 +1591,13 @@ int PerformRun (char *bsnAbrev, char dtaName[MY_MAX_PATH], char trkName[MY_MAX_P
             }
          }
       }
+      fclose (fp);
 
       if (verbose >= 2) {
          printf("You are asking to use %s harm const. file\n", bhcName);
          printf("You are asking to use %s datum adjustment file\n", adjName);
       }
+
    } else {
       adjName = NULL;
       bhcName = NULL;
@@ -1612,7 +1686,7 @@ int PerformRun (char *bsnAbrev, char dtaName[MY_MAX_PATH], char trkName[MY_MAX_P
       }
       RunLoopStep (&st, imxb, jmxb, &itime, &mhalt, csflag, f_smooth,
                    f_wantRex, &modelClock, rexClock, f_first, &tgrid,
-                   f_tide, tideThresh, f_stat);
+                   f_tide, f_stat);
       if (verbose >= 2) {
          printf ("3f :: %f\n", clock () / (double)(CLOCKS_PER_SEC));
          fflush (stdout);

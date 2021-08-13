@@ -1,7 +1,7 @@
 #ifndef SLOSH2_H
 #define SLOSH2_H
-#define PROGRAM_VERSION "4.11"
-#define PROGRAM_DATE "05/24/2013"
+#define PROGRAM_VERSION "4.12"
+#define PROGRAM_DATE "09/03/2014"
 #ifndef PROGRAM_COMMENT
 #define PROGRAM_COMMENT ""
 #endif
@@ -64,7 +64,7 @@ void RunLoopStep (slosh_type * st, int imxb, int jmxb,
                   int *itime, int *mhalt,
                   short csflag, short f_smooth, 
                   short f_wantRex, double *modelClock, double rextime,
-                  int f_first, TideGridType *tgrid, int f_tide, int tideThresh, int f_stat);
+                  int f_first, TideGridType *tgrid, int f_tide, int f_stat);
 
 int CleanUp (slosh_type *st, int imxb, int jmxb, int f_saveEnv, int f_tide,
              char *envName, char envComment[161], float ht1, float ht2,

@@ -1,3 +1,35 @@
+2014-09-03  v4.12
+   * Sep 3, 2014 - Updating the BAS_Y dimension to 1,399 (from 1,400).
+
+   * Sep 2, 2014 - Updated code to handle the new DTA file formats
+       (GRS80, Depths below 9999, large index)
+
+   * Sep 2, 2014 - Updated grid dimension to 999x1400 (from 999x999)
+
+   * Aug 13, 2014 - Correcting the 'V1 tide only' bug.
+
+   * Mar 12, 2014 - Updated the number of cuts and 1d flows to 39,999 (from 37,000)
+
+   * Mar 11, 2014 - adding new tide version V2.4.x option to SLOSH
+
+   * Mar 5, 2014 - Updated grid dimension to 999x999 (from 800x800)
+
+   * Mar 5, 2014 - Updated the number of cuts and 1d flows to 37,000 (from 27,000)
+
+   * Aug 19, 2013 - Adding ability to handle 6,999 barriers (from 5,999)
+
+   * Jun 13, 2013 - Handed code to P-Surge revision r1555
+
+   * Jun 13, 2013 - Cleaning up the arguments passed to run_C_LoopStep.
+
+   * Jun 13, 2013 - Moved to EC2012 (from EC2001) for binary harmonic constituent files
+
+   * Jun 5, 2013 - Updated the number of cuts and 1d flows to 27,000 (from 20,000)
+
+   * May 31, 2013 - Memory leak - 'retired/' is 8 char, but it needs 1 for the \0
+
+   * May 30, 2013 - Preventing fall through in the case of the -TideDatabase option.
+
 2013-05-24  v4.11
    * May 15, 2013 - Switch to using double precision gcc 4.50 as default
      compiler
@@ -17,7 +49,7 @@
    * Jan 23, 2013 - Correcting the way dry cells are indicated when computing
      with tide version 1 (had set to 99.9 rather than -ZB)
 
-   * Updated grid dimension to 800x800 (vs 600x600)
+   * Updated grid dimension to 800x800 (from 600x600)
 
    * Jan 18, 2013 - Updating the order of [BAS_Y][BAS_X] because C and FORTRAN
      swap the order of 2-d arrays.

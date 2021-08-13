@@ -1,6 +1,6 @@
 #!/bin/bash
 #------------------------------------------------------------------------------
-# getStorm.sh                                           Last Change: 2021-08-13
+# getGuiLib.sh                                          Last Change: 2021-08-13
 #                                                        Arthur.Taylor@noaa.gov
 #                                                              NWS/OSTI/MDL/DSD
 #------------------------------------------------------------------------------
@@ -10,33 +10,14 @@
 LATEST=v4.12
 #-----------------
 V=v4.12; D="2014-09-03"; vers+=($V); ds+=($D)
-# T412="${V}_$D"
-F_v412+=(T411:1989-Hugo T411:1992-Andrew)
+T412="${V}_$D"
+F_v412+=(T412:SLOSH-GuiLib)
 #-----------------
-V=v4.11; D="2013-05-24"; vers+=($V); ds+=($D)
-T411="${V}_$D"
-F_v411+=(T411:1989-Hugo T411:1992-Andrew)
-#-----------------
-V=v3.97; D="2012-01-20"; vers+=($V); ds+=($D)
-T397="${V}_$D"
-F_v397+=(T397:1989-Hugo T397:1992-Andrew)
-#-----------------
-V=v3.96; D="2011-02-17"; vers+=($V); ds+=($D)
-# T396="${V}_$D"
-F_v396+=(T395:1989-Hugo T395:1992-Andrew)
-#-----------------
-V=v3.95; D="2010-10-19"; vers+=($V); ds+=($D)
-T395="${V}_$D"
-F_v395+=(T395:1989-Hugo T395:1992-Andrew)
-#-----------------
-V=v3.94; D="2009-10-08"; vers+=($V); ds+=($D)
-T394="${V}_$D"
-F_v394+=(T394:1989-Hugo T394:1992-Andrew)
 
 #---------------------------------------
 if [[ $# -ne 2 ]] || [[ $1 == "help" ]] ; then
    base=$(basename -- $0)
-   echo "Download and install the test storms."
+   echo "Download and install the libraries and data used to run the SLOSH GUI"
    echo ""
    echo "Usage: $base <PAT> <VERSION> where:"
    echo "  <PAT> is:"
@@ -44,12 +25,12 @@ if [[ $# -ne 2 ]] || [[ $1 == "help" ]] ; then
    echo "    'token'    => A gitHub Personal Access Token"
    echo "  <VERSION> is:"
    for i in "${!vers[@]}" ; do
-      echo "    '${vers[i]}'    => Download storms for ${vers[i]} (${ds[i]})"
+      echo "    '${vers[i]}'    => Download SLOSH GUI Lib for ${vers[i]} (${ds[i]})"
    done
    echo ""
    echo "Example:"
    echo "  \$ token=\$(cat ~/.ssh/gitHub_pat)"
-   echo "  \$ $base \$token $LATEST => Download and install storms for $LATEST"
+   echo "  \$ $base \$token $LATEST => Download and install SLOSH GUI Lib for $LATEST"
    exit 0
 fi
 
@@ -70,8 +51,10 @@ fi
 srcDir=$(cd "$(dirname "$0")" && pwd)
 tarDir=$srcDir/../tar ; mkdir -p $tarDir
 tarDir=$(cd "$(dirname "$0")/../tar" && pwd)  # Get rid of .. in path.
-ansDir=$srcDir/sample ; mkdir -p $ansDir
-stmDir=$srcDir/storms ; mkdir -p $stmDir
+binDir=$srcDir/exec    ; mkdir -p $binDir
+geoDir=$srcDir/geodata ; mkdir -p $geoDir
+incDir=$srcDir/include ; mkdir -p $incDir
+libDir=$srcDir/lib     ; mkdir -p $libDir
 
 var=F_$VER[@]
 for f in ${!var} ; do
@@ -122,14 +105,13 @@ for v in data:
       # echo "[*] Expanding.. $tarDir/$FILE"
       echo "[*] Expanding.."
       tar -xzf $tarDir/$FILE
-      aRay=(${fRay[1]//-/ })
-      name=${aRay[1],,}
-      if [[ -e ${fRay[1]}/$name.trk ]] ; then
-         cp ${fRay[1]}/$name.trk $stmDir
-      fi
-      cp ${fRay[1]}/$name.stm $stmDir
-      cp ${fRay[1]}/$name.rex $ansDir
-      cp ${fRay[1]}/$name.env $ansDir
+      echo "[*] Installing dynamic libraries"
+      cp -rp ${fRay[1]}/exec/* $binDir
+      echo "[*] Installing geo-data"
+      cp -rp ${fRay[1]}/geodata/* $geoDir
+      echo "[*] Installing Tcl include files and script libraries"
+      cp -rp ${fRay[1]}/include/* $incDir
+      cp -rp ${fRay[1]}/lib/* $libDir
       rm -rf ${fRay[1]}
    fi
 done

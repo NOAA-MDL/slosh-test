@@ -1,16 +1,30 @@
 # Ignore the executables
-exec
-sorc/slosh/sloshDos*
-sorc/slosh/sloshLinux*
-sorc/slosh/*.o
-sorc/stm2trk/stm2trk.exe
-util/*.exe
+/exec
+/sorc/slosh/*.o
+/sorc/slosh/sloshDos*
+/sorc/slosh/sloshGui*
+/sorc/slosh/sloshLinux*
+/sorc/stm2trk/*.o
+/sorc/stm2trk/stm2trk.exe
+/util/*.exe
 # Ignore the basin files
-parm/bnt
-parm/dta
-parm/tar
+/parm/bnt
+/parm/dta
+/parm/tidefile.ec2014/*.bhc
+/parm/tidefile.ec2014/*.adj
+/parm/tidefile.ec2014/*.txt
+/parm/tidefile.ec2014/etss/*.bhc
+/parm/tidefile.ec2014/etss/*.adj
 # Ignore the test files
-dev/sample
-dev/storms
-dev/work
-dev/tar
+/dev/sample
+/dev/storms
+/dev/work
+# Ignore the GUI files
+/gui/exec
+/gui/geodata
+/gui/include
+/gui/lib
+/gui/work
+/gui/basin?*
+# Ignore the downloads
+/tar

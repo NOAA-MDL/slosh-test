@@ -1,6 +1,6 @@
 #!/bin/bash
 #------------------------------------------------------------------------------
-# rexPnt.sh                                             Last Change: 2021-06-10
+# rexPnt.sh                                             Last Change: 2021-07-21
 #                                                        Arthur.Taylor@noaa.gov
 #                                                              NWS/OSTI/MDL/DSD
 #------------------------------------------------------------------------------
@@ -24,13 +24,15 @@ bntDir=$srcDir/../parm/bnt
 
 if [[ ${#bsn} == 4 ]] ; then
    nsb="${bsn:1}${bsn:0:1}"
+   C=${bsn:0:1}
 else
    nsb=$bsn
+   C=""
 fi
 
-line=$(grep -i $nsb $bntDir/*basins.dta)
+line=$(grep -i $nsb $bntDir/${C}basins.dta)
 if [[ "$line" == "" ]] ; then
-   echo "Couldn't find basin '$bsn' in $bntDir/*basins.dta"
+   echo "Couldn't find basin '$bsn' in $bntDir/${C}basins.dta"
    exit
 fi
 NX=$(printf "%.0f" ${line:88:3})

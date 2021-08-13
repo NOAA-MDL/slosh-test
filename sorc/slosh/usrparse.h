@@ -36,6 +36,8 @@ typedef struct {
 
 } userType;
 
+int ParseTide (const char *next, int *f_tide, int *tideThresh);
+
 void UserInit (userType *usr);
 
 void UserFree (userType *usr);

@@ -1,4 +1,4 @@
-> *README.md*           SLOSH Model Help Pages          Last Change: 2021-08-12
+> *README.md*           SLOSH Model Help Pages          Last Change: 2021-08-13
 
 The intent of this file is to help the user start using the SLOSH model.
 
@@ -60,24 +60,40 @@ SLOSH's official compiler has evolved over time as follows:
 ```
 
 **LINUX**
-
 ```bash
    export PATH=/home/$USER/gcc/gcc-4.5.0/bin:$PATH
    export LD_LIBRARY_PATH=/home/$USER/gcc/gcc-4.5.0/lib:/home/$USER/gcc/lib64
 ```
 
-3. Build, install, and clean up - SLOSH model
+3. If you want the **SLOSH-GUI** (vs just the command line) then:
 ```bash
-   cd sorc/slosh
-      # sed -i 's/g77/gfortran/g' makefile.dos
-      # sed -i 's/g2c/gfortran/g' makefile.dos
-   make -f makefile.dos
-   mkdir ../../exec
+   cd ~/save/slosh/gui
+   getGuiLib.sh v4.12
+```
+
+4. Build, install, and clean up - SLOSH model
+
+**MS-WINDOWS**
+```bash
+   cd ~/save/slosh/sorc/slosh
    make -f makefile.dos install
+
+   # If you also want the GUI, then
+   make -f makefile.win clean
+   make -f makefile.win install
+
+   # Clean up.
    make -f makefile.dos clean
 ```
 
-4. Build, install, and clean up - stm2trk.<br>
+**LINUX**
+```bash
+   cd ~/save/slosh/sorc/slosh
+   make -f makefile.linux install
+   make -f makefile.linux clean
+```
+
+5. Build, install, and clean up - stm2trk.<br>
 *stm2trk is a utility program used to convert from 13 6-hr storm (stm) files
  to 100 1-hr track (trk) files used as input by the SLOSH parametric wind*
 ```bash
@@ -88,21 +104,29 @@ SLOSH's official compiler has evolved over time as follows:
 ```
 
 -------------------------------------------------------------------------------
-## TEST THE SLOSH MODEL
+## Get Public SLOSH basins
 
-1. Get the required basins for the tests:
+These basins are provided primarily to validate the SLOSH model or a derivative
+model such as (P-Surge, P-ETSS, or ETSS).
 ```bash
    cd ~/save/slosh/parm
-   getBasin.sh v4.11
+
+   # Don't Panic.  In the following call, there will be a few 'Notes' and
+   # 'Cautions' because some basins do not have all of the tide files (i.e.,
+   # Binary Harmonic Constants, Datum Adjustments, or Tide-Flavor).
+   getBasin.sh v4.12
 ```
 
-2. Get the required storms for the tests:
+-------------------------------------------------------------------------------
+## TEST THE SLOSH MODEL
+
+1. Get the required storms for the tests:
 ```bash
    cd ~/save/slosh/dev
-   getStorm.sh v4.11
+   getStorm.sh v4.12
 ```
 
-3. Run the tests:
+2. Run the tests:
 ```bash
    cd ~/save/slosh/dev
    runme.sh go
@@ -111,7 +135,7 @@ SLOSH's official compiler has evolved over time as follows:
 While runme.sh compares the outputs with the expected results, you can do so
 yourself via:
 
-4. Compare the envelopes (max value in each grid cell for entire run):
+3. Compare the envelopes (max value in each grid cell for entire run):
 ```bash
    diff ./work/hugo.env ./sample/hugo.env
    diff ./work/andrew.env ./sample/andrew.env
@@ -129,7 +153,7 @@ determine if it is just round-off error due to compiler versions:
            sub("\r", "", $0); print $0, "delta:", $3 - $5}'
 ```
 
-5. Compare the rex files (a time history at each grid cell):
+4. Compare the rex files (a time history at each grid cell):
 ```bash
    diff ./work/hugo.rex ./sample/hugo.rex
    diff ./work/andrew.rex ./sample/andrew.rex
@@ -138,17 +162,45 @@ determine if it is just round-off error due to compiler versions:
 If there are differences, you can use 'rexout' to look more carefully.
 ```bash
    # Create a 'pnt' file:
-   ../util/rexPnt.sh hchs   # Creates hchs.pnt for 1989-Hugo
+   ../util/rexPnt.sh hch2   # Creates hch2.pnt for 1989-Hugo
    ../util/rexPnt.sh hmi3   # Creates hmi3.pnt for 1992-Andrew
 
    # Dump the rex files to CSV files:
-   ../util/rexout -pnt hchs.pnt -rex ./work/hugo.rex -style 0 > hugoW.csv
-   ../util/rexout -pnt hchs.pnt -rex ./sample/hugo.rex -style 0 > hugoS.csv
+   ../util/rexout -pnt hch2.pnt -rex ./work/hugo.rex -style 0 > hugoW.csv
+   ../util/rexout -pnt hch2.pnt -rex ./sample/hugo.rex -style 0 > hugoS.csv
 
    # Compare the CSV files via:
    vimdiff hugoW.csv hugoS.csv
 
    # Repeat for Andrew.
+```
+
+-------------------------------------------------------------------------------
+## TEST THE GUI
+
+If you decided you wanted the **SLOSH-GUI**, then you can start it via:
+```bash
+   cd ~/save/slosh/gui
+   run.sh
+```
+
+Now you can run Hugo in HCH2:
+```bash
+   # Step 1: Select a basin
+   > File->Select Basin
+     >> hch2dta
+   # Step 2: Select a storm
+      >> ~/save2/slosh/dev/storms/hugo.trk
+   # Step 3: Press the green "G" button (middle control pannel)
+```
+
+Repeat with Andrew in HMI3.  After running them, you can check the answers via:
+```bash
+   cd ~/save/slosh/gui/work
+   diff andrew.hm3 ../../dev/sample/andrew.env
+   diff andrew.rex ../../dev/sample/andrew.rex
+   diff hugo.ch2 ../../dev/sample/hugo.env
+   diff hugo.rex ../../dev/sample/hugo.rex
 ```
 
 -------------------------------------------------------------------------------

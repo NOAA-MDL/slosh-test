@@ -1,4 +1,7 @@
-      PARAMETER (M_=800,N_=800,L_=20000,NCT_=3000,LC_=L_)
+C L_ limited to 27,000 due to dta issues and all capital letters.
+C    using lower case (z to n) to get to 39,999
+C Possible to include lower case letters to get to 53,000
+      PARAMETER (M_=999,N_=1399,L_=39999,NCT_=3000,LC_=L_)
 C Remember to change COMMON /BCPTS/ to M_*2 + N_*2
       PARAMETER (NBK_=11000,ND_=6000)
       PARAMETER (M2G_=30000)

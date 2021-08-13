@@ -11,6 +11,46 @@
 
 /*****************************************************************************
 *****************************************************************************/
+int ParseTide (const char *next, int *f_tide, int *tideThresh)
+{
+   *tideThresh = 0;
+   if (strcmp (next, "0") == 0) {
+      *f_tide = 0;
+   } else if (strcmp (next, "T1") == 0) {
+      *f_tide = -1;
+   } else if (strcmp (next, "V1") == 0) {
+      *f_tide = 1;
+   } else if (strcmp (next, "V2") == 0) {
+      *f_tide = 2;
+   } else if (strcmp (next, "V3") == 0) {
+      *f_tide = 3;
+   } else if (strcmp (next, "VDEF") == 0) {
+      *f_tide = 99;
+   } else if (strncmp (next, "V2.1", 4) == 0) {
+      if (strlen (next) != 4) {
+         *tideThresh = atoi (next + 5);
+      }
+      *f_tide = 21;
+   } else if (strncmp (next, "V2.2", 4) == 0) {
+      if (strlen (next) != 4) {
+         *tideThresh = atoi (next + 5);
+      }
+      *f_tide = 22;
+   } else if (strncmp (next, "V2.4", 4) == 0) {
+      if (strlen (next) != 4) {
+         *tideThresh = atoi (next + 5);
+      }
+      *f_tide = 24;
+   } else {
+      fprintf (stderr, "invalid -f_tide option '%s'\n", next);
+      fprintf (stderr, "Try 0, T1, V1, V2, V2.1.X, V2.2.X, V3, VDEF\n");
+      return -1;
+   }
+   return 0;
+}
+
+/*****************************************************************************
+*****************************************************************************/
 void UserInit (userType *usr)
 {
    usr->cmd = 0;
@@ -115,9 +155,11 @@ void Usage (const char *argv0)
       "tide options:\n"
          "\t\t[0] = surge only, T1 = tideV1 only,\n"
          "\t\tV1 = tideV1+surge, V2 = tideV2+surge, V3 = tideV3+surge,\n"
+         "\t\tVDEF = tide+surge and the tide version getting from tide_flavor.txt,\n"
          "\t\tV2.1.{ht} = tideV2+surge(for depths < -${ht} ft) and > -290 ft\n"
          "\t\t  For <= -290 feet use tide + staticHt.\n"
-         "\t\tV2.2.{ht} = similar to V2.1 except exclude subgrid cells.",
+         "\t\tV2.2.{ht} = similar to V2.1 except exclude subgrid cells\n"
+         "\t\tV2.4.{ht} = similar to V2.2.{ht} except remove the -290 feet limit.",
       "tidal database to use:\n"
          "\t\t[2012] = use ec2012, 2001 = use ec2001",
       "statistical method:\n"
@@ -259,35 +301,7 @@ static int ParseUserChoice (userType *usr, char *cur, char *next)
          return 2;
       case F_TIDE:
 #ifdef _EXPR_
-         if (strcmp (next, "0") == 0) {
-            usr->f_tide = 0;
-         } else if (strcmp (next, "T1") == 0) {
-            usr->f_tide = -1;
-         } else if (strcmp (next, "V1") == 0) {
-            usr->f_tide = 1;
-         } else if (strcmp (next, "V2") == 0) {
-            usr->f_tide = 2;
-         } else if (strcmp (next, "V3") == 0) {
-            usr->f_tide = 3;
-         } else if (strncmp (next, "V2.1", 4) == 0) {
-            if (strlen (next) == 4) {
-               usr->tideThresh = 0;
-            } else {
-               usr->tideThresh = atoi (next + 5);
-            }
-            printf ("Tide V2.1 with Thresh = %d\n", usr->tideThresh);
-            usr->f_tide = 21;
-         } else if (strncmp (next, "V2.2", 4) == 0) {
-            if (strlen (next) == 4) {
-               usr->tideThresh = 0;
-            } else {
-               usr->tideThresh = atoi (next + 5);
-            }
-            printf ("Tide V2.2 with Thresh = %d\n", usr->tideThresh);
-            usr->f_tide = 22;
-         } else {
-            fprintf (stderr, "-f_tide has been changed from 0, 2, 1, 3, 5 "
-                     "to hopefully clearer values of 0, T1, V1, V2, V3\n");
+         if (ParseTide (next, &(usr->f_tide), &(usr->tideThresh)) != 0) {
             return -1;
          }
 #else
@@ -297,6 +311,7 @@ static int ParseUserChoice (userType *usr, char *cur, char *next)
          return 2;
       case TIDEDATABASE:
          usr->tidedatabase = atoi (next);
+         return 2;
       case F_STAT:
 #ifdef _EXPR_
          usr->f_stat = atoi (next);

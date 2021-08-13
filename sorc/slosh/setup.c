@@ -23,7 +23,7 @@ int SetBsnLatLon (const char *bntDir, char bsnAbrev[5], int *imxb, int *jmxb)
    FILE *fp;
    char f_found;
    char *buffer = NULL;
-   size_t lenPtr = 0;
+   size_t buffLen = 0;
    char lineRoot[4];
 
    strToLower (bsnAbrev);
@@ -44,7 +44,7 @@ int SetBsnLatLon (const char *bntDir, char bsnAbrev[5], int *imxb, int *jmxb)
 
    /* Search (e,h,'')basins.dta file for this basin definition. */
    f_found = 0;
-   while (reallocFGets (&buffer, &lenPtr, fp) != 0) {
+   while (reallocFGets (&buffer, &buffLen, fp) != 0) {
       strncpy (lineRoot, buffer, 3);
       lineRoot[3] = '\0';
       strToLower (lineRoot);

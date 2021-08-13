@@ -1,4 +1,4 @@
-> *LICENSE.md*          SLOSH Model Help Pages          Last Change: 2021-06-14
+> *LICENSE.md*          SLOSH Model Help Pages          Last Change: 2021-07-27
 
 -------------------------------------------------------------------------------
 ## SLOSH LICENSE
@@ -18,7 +18,7 @@
 > permission from NOAA.  NOAA requests, however, that the **Recipient**
 > acknowledge NOAA’s contribution of SLOSH in the technical documentation of
 > any work incorporating or derived from SLOSH.  Also, the **Recipient** is
-> encouraged to provide NOAA with any improvements it makes to the SLOSH software.  
+> encouraged to provide NOAA with any improvements it makes to the SLOSH software.
 
 > The name of NOAA or the Department of Commerce in any advertisement, product,
 > or service which is related to the SLOSH software may not be used without the
@@ -35,12 +35,12 @@
 1. NOAA/NWS/MDL -- LICENSE
 
 > Software code created by U.S. Government employees is not subject to
-> copyright in the United States (17 U.S.C. §105).  
+> copyright in the United States (17 U.S.C. §105).
 
 > The United States / Department of Commerce **reserve all rights** to seek and
 > obtain copyright protection in countries **other than** the United States for
 > Software authored in its entirety by the Department of Commerce.  To this end
-> [i.e., keeping this in mind], the Department of Commerce hereby grants to 
+> [i.e., keeping this in mind], the Department of Commerce hereby grants to
 > [the] Recipient a royalty-free, nonexclusive license to use, copy, and create
 > derivative works of the Software **outside** of the United States.
 
