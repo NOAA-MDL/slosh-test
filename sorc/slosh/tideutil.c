@@ -4,28 +4,28 @@
  * DESCRIPTION
  *    Contains tide utility functions only (no main function):
  *       ReadFormatft03 - Helper function to LoadYearlyConstit.
- *       LoadYearlyConstit - Load location independent tidal constituents (xode 
+ *       LoadYearlyConstit - Load location independent tidal constituents (xode
  *          and vpu) from ft03.dta  into one structure (tgrid).
- *       InitTideGrid - Initializes constant variables such as angle, and sets 
+ *       InitTideGrid - Initializes constant variables such as angle, and sets
  *          up initial values for memory allocations, etc in tgrid structure.
- *       ReadHarmonicGrid - Loads location dependent tidal constituents (amp 
- *          and phas) along with location (lon and lat) into a substructure of 
+ *       ReadHarmonicGrid - Loads location dependent tidal constituents (amp
+ *          and phas) along with location (lon and lat) into a substructure of
  *          tgrid (cells).
- *       ReadHarmonicHeader - Reads the header from the binary file.   
- *       ReadHamonicBody - Reads location dependent tidal constituents (amp and 
+ *       ReadHarmonicHeader - Reads the header from the binary file.
+ *       ReadHamonicBody - Reads location dependent tidal constituents (amp and
  *          phas) from a binary file.
- *       ReadAdjDatum - reads in the adjustment file for adjusting MTL to 
- *          NAVD88 for inundating cells.     
- *       FreeTideGrid - frees memory allocated for tgrid    
- *       
+ *       ReadAdjDatum - reads in the adjustment file for adjusting MTL to
+ *          NAVD88 for inundating cells.
+ *       FreeTideGrid - frees memory allocated for tgrid
+ *
  * HISTORY
  *    4/12/2011 Written by Amy Haase and Arthur Taylor - MDL
  *    4/13/2011 Commented by Amy Haase
- *    8/10/2011 Optimized code by converting variable to radians (reduces 
+ *    8/10/2011 Optimized code by converting variable to radians (reduces
  *                number of mathematical operation for each cell)
  *    4/25/2012 Added function for reading in datum adj. files MTL ->NAVD88
  *    5/16/2012 Removed CalcTide func (replaced by CalcTideGrid in cstart.c)
- *              and cleaned up code. Amy                  
+ *              and cleaned up code. Amy
  *
  * NOTES
  *    See grdtidenv2.c for main function which calls these functions.
@@ -70,7 +70,7 @@
  *
  * HISTORY
  *   11/17/2010 Legacy code from tide3.c written by Arthur Taylor
- *   12/20/2011 Added comments. Amy Haase (MDL) 
+ *   12/20/2011 Added comments. Amy Haase (MDL)
  *
  * NOTES
  *   Keep this function around until it can be replaced with tide_fac.f
@@ -145,7 +145,7 @@ static void ReadFormatft03 (char ptr[LINE_LEN], int beg, int end, int *iyr1,
  * LoadYearlyConstit() is called by InitTideGrid().
  *
  *****************************************************************************/
-static int LoadYearlyConstit (TideGridType *tgrid, const char *ft03, 
+static int LoadYearlyConstit (TideGridType *tgrid, const char *ft03,
                               int year)
 {
    typedef struct {
@@ -264,7 +264,7 @@ static int LoadYearlyConstit (TideGridType *tgrid, const char *ft03,
  *
  * PURPOSE
  *   "Constructor" for our tideGrid object.  Initializes constant variables
- *   such as angle, and sets up initial values for memory allocations, etc. 
+ *   such as angle, and sets up initial values for memory allocations, etc.
  *
  * ARGUMENTS
  *   tgrid = Structure for Tidal Constituents. (Output)
@@ -337,7 +337,7 @@ int InitTideGrid (TideGridType *tgrid, const char *ft03Name, int year)
  *      tgrid = Structure for storing tidal constituents. (Input/Output)
  *   tideName = Variable to store file name (*.bhc) containing amp and
  *              phas. (Input). Originaly came from elev_hc.out before binary
- *              files were created. 
+ *              files were created.
  *
  * RETURNS: int
  * -1 on error
@@ -377,7 +377,7 @@ int ReadHarmonicGrid (TideGridType *tgrid, const char *tideName)
    char buffer[LINE_LEN];   /* Read current line. */
    int index;               /* Where to store current location in cell array. */
    int i;                   /* Loops thru. tidal constit. in elev_hc.out. */
-   int j;                   /* Counter to search for where to place current 
+   int j;                   /* Counter to search for where to place current
                              * constit read from file.*/
    size_t spBuffLen = 0;    /* Length of spBuff. */
    char *spBuff = NULL;     /* Copy of buffer with ',' replaced with '\c'. */
@@ -400,12 +400,18 @@ int ReadHarmonicGrid (TideGridType *tgrid, const char *tideName)
       for (i = 0; i < NUMT; i++) {
          if (fgets (buffer, LINE_LEN, fp) == NULL) {
             fprintf (stderr, "Couldn't read line of length %d\n", LINE_LEN);
-            goto error;
+            if (spBuff != NULL) { free (spBuff); }
+            if (col != NULL) { free (col); }
+            fclose (fp);
+            return -1;
          }
-         if (amySplit(buffer, ',', &spBuffLen, &spBuff, &numCol, &col, 1) != 
+         if (amySplit(buffer, ',', &spBuffLen, &spBuff, &numCol, &col, 1) !=
              0) {
             fprintf (stderr, "Had problems splitting %s\n", buffer);
-            goto error;
+            if (spBuff != NULL) { free (spBuff); }
+            if (col != NULL) { free (col); }
+            fclose (fp);
+            return -1;
          }
          /* Search our table for a constituent with name from the current
           * line in the file.  */
@@ -421,7 +427,10 @@ int ReadHarmonicGrid (TideGridType *tgrid, const char *tideName)
          }
          if (j == NUMT) {
             fprintf (stderr, "Couldn't find constituent name '%s'\n", col[0]);
-            goto error;
+            if (spBuff != NULL) { free (spBuff); }
+            if (col != NULL) { free (col); }
+            fclose (fp);
+            return -1;
          }
       }
    }
@@ -434,16 +443,6 @@ int ReadHarmonicGrid (TideGridType *tgrid, const char *tideName)
    }
    fclose (fp);
    return 0;
-
- error:
-   if (spBuff != NULL) {
-      free (spBuff);
-   }
-   if (col != NULL) {
-      free (col);
-   }
-   fclose (fp);
-   return -1;
 }
 
 /*****************************************************************************
@@ -451,8 +450,8 @@ int ReadHarmonicGrid (TideGridType *tgrid, const char *tideName)
  *
  * PURPOSE
  *      This reads the header from the binary file which contains:
- *   FileID (HarmConstit), Version Number (1), Basin Abbrev., imxb, jmxb, 
- *   and Constituent Names.         
+ *   FileID (HarmConstit), Version Number (1), Basin Abbrev., imxb, jmxb,
+ *   and Constituent Names.
  *
  * ARGUMENTS
  *  fp = Open binary file to write to. (Input)
@@ -464,7 +463,7 @@ int ReadHarmonicGrid (TideGridType *tgrid, const char *tideName)
  *
  * HISTORY
  *   3/30/2011 Arthur Taylor and Amy Haase (MDL/EB): First Draft.
- *     
+ *
  * NOTES
  *   fread (src, sizeof(type), numberOfElem, stream)
  ****************************************************************************/
@@ -533,12 +532,12 @@ int ReadHarmonicHeader (FILE *fp, hdrType *hdr)
  *  file from the ascii file (outputted from extract2.f). This will decrease
  *  time it takes to run the program to generate tides.
  *    Assumes that tgrid has already been sent through InitTideGrid()
- *    Assumes that tgrid will be sent through FreeTideGrid()     
+ *    Assumes that tgrid will be sent through FreeTideGrid()
  *
  * ARGUMENTS
  *     fp = Open binary file to read from. (Input)
  *    hdr = Size of grid provided by user. (Input)
- *  tgrid = A filled tide grid structure. (Output) 
+ *  tgrid = A filled tide grid structure. (Output)
  *
  * RETURNS: int
  *  0 on success
@@ -546,26 +545,26 @@ int ReadHarmonicHeader (FILE *fp, hdrType *hdr)
  *
  * HISTORY
  *   3/30/2011 Arthur Taylor and Amy Haase (MDL/EB): First Draft.
- *     
+ *
  * NOTES:
- * This is the long version for my edification. The short version would go 
+ * This is the long version for my edification. The short version would go
  * something like this:
- * 
+ *
  *   struct{
  *      long int lon;
  *      long int lat;
  *      constitType constit[37];
  *   } recType
- *      
+ *
  *   struct{
  *      long int amp;
  *      long int phas;
  *   } constitType;
- *      
+ *
  *   recType rec[ imxb * jmxb]
  *   fread (&rec, 4, (2 + 37 * 2) * imbx * jmxb, fp);
- *  
- * Never quit learning!                   
+ *
+ * Never quit learning!
  ****************************************************************************/
 int ReadHarmonicBody (FILE *fp, const hdrType *hdr, TideGridType *tgrid)
 {
@@ -595,7 +594,7 @@ int ReadHarmonicBody (FILE *fp, const hdrType *hdr, TideGridType *tgrid)
          printf ("Unable to read lat (4 bytes) from file\n");
       }
       tgrid->cells[i].lat = i_temp / 1000000.; /* Check math on this. */
-      
+
       tgrid->cells[i].navd88_mtl = 0; /*Initialize adjustment value to zero */
       tgrid->cells[i].f_usable = 1;   /*Initialize usable flag to one */
 
@@ -620,27 +619,27 @@ int ReadHarmonicBody (FILE *fp, const hdrType *hdr, TideGridType *tgrid)
          tgrid->cells[i].vpu_phas[j] = (tgrid->vpu[j] - i_temp / 1000000.)
                                        * M_PI_180;
          tgrid->cells[i].SIN_vpu_phas[j] = sin (tgrid->cells[i].vpu_phas[j]);
-         tgrid->cells[i].COS_vpu_phas[j] = cos (tgrid->cells[i].vpu_phas[j]);                                       
+         tgrid->cells[i].COS_vpu_phas[j] = cos (tgrid->cells[i].vpu_phas[j]);
       }
    }
    return 0;
 }
 /*****************************************************************************
  * ReadAdjDatum --- Amy Haase and Arthur Taylor / MDL
- *  
+ *
  * PURPOSE:
  *    This reads in the files needed for adjusting the tidal datum (MTL, MLLW,
- *    etc) to an orthogonal datum (NAVD88).  
+ *    etc) to an orthogonal datum (NAVD88).
  * ARGUMENTS
  *     fp = Open datum adjustment file to read from. (Input)
  *    hdr = Size of grid provided by user. (Input)
- *  tgrid = A filled tide grid structure. (Output) 
+ *  tgrid = A filled tide grid structure. (Output)
  *
  * RETURNS:
  * -1 on error
  *  0 on success
  *
- * HISTORY  
+ * HISTORY
  *   4/10/2012 Written by Amy Haase and Arthur Taylor - MDL
  *
  * NOTES
@@ -673,7 +672,9 @@ int ReadAdjDatum (FILE *fp, const hdrType *hdr, TideGridType *tgrid)
 
       if (amySplit(buffer, ',', &spBuffLen, &spBuff, &numCol, &col, 1) != 0) {
          fprintf (stderr, "Had problems splitting %s\n", buffer);
-         goto error;
+         if (spBuff != NULL) { free (spBuff); }
+         if (col != NULL) { free (col); }
+         return -1;
       }
 
    /* Put in test that lat/lon is sane. */
@@ -704,7 +705,7 @@ int ReadAdjDatum (FILE *fp, const hdrType *hdr, TideGridType *tgrid)
    /* Sanity check for reading in vaules. Tested 4/19/2012. */
       /*   printf("%d:%f\n", cellIndex,tgrid->cells[cellIndex].navd88_mtl); */
    }
-   
+
    if (spBuff != NULL) {
       free (spBuff);
    }
@@ -712,32 +713,23 @@ int ReadAdjDatum (FILE *fp, const hdrType *hdr, TideGridType *tgrid)
       free (col);
    }
    return 0;
-
- error:
-   if (spBuff != NULL) {
-      free (spBuff);
-   }
-   if (col != NULL) {
-      free (col);
-   }
-   return -1;
 }
 
 /*****************************************************************************
- * "Destructor" of our tideGrid object 
+ * "Destructor" of our tideGrid object
  *
  * PURPOSE
- *    Frees memory allocated for tgird, used in calculating tides. 
+ *    Frees memory allocated for tgird, used in calculating tides.
  *
  * ARGUMENTS
- *    tgrid - Tide grid structure (Input). 
+ *    tgrid - Tide grid structure (Input).
  *
  * RETURNS:
- *    void 
+ *    void
  *
  * HISTORY
  *    12/17/2010 Amy Haase and Arthur Taylor (MDL/EB).
- *    04/13/2011  Comments added by Amy Haase.  
+ *    04/13/2011  Comments added by Amy Haase.
  *
  * NOTES
  *****************************************************************************/

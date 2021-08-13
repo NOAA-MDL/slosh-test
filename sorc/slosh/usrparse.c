@@ -61,6 +61,7 @@ void UserInit (userType *usr)
    usr->bntDir = NULL;
    usr->rexDir = NULL;
    usr->envDir = NULL;
+   usr->envDir2 = NULL;
    usr->f_appendBsn = 1;
    usr->tideDir = NULL;
    usr->trkFile = NULL;
@@ -70,12 +71,15 @@ void UserInit (userType *usr)
    usr->doneFile = NULL;
    usr->lstType = 0;
    usr->rexSaveMin = 10;
+   usr->envSave2Min = 0;
    usr->f_tide = 0;   /* Default to no tides. */
-   usr->tidedatabase = 2012; /* Default to ec2012 database. */
+   usr->tidedatabase = 2014; /* Default to ec2014 database. */
    usr->f_stat = 0;   /* Default to instantaneous saves. */
    usr->asOf = 0;     /* Default to no as of time. */
    usr->spinUp = 0;
    usr->f_saveSpinUp = 0;
+   usr->f_restart = 0;
+   usr->f_wave = 0;
 }
 
 /*****************************************************************************
@@ -96,6 +100,9 @@ void UserFree (userType *usr)
    }
    if (usr->envDir != NULL) {
       free (usr->envDir);
+   }
+   if (usr->envDir2 != NULL) {
+      free (usr->envDir2);
    }
    if (usr->rexDir != NULL) {
       free (usr->rexDir);
@@ -126,7 +133,8 @@ void UserFree (userType *usr)
 static char *UsrOpt[] = { "-help", "-V", "-verbose", "-basin",
    "-rootDir", "-trk", "-rexDir", "-rex", "-envDir", "-env", "-f_appendBsn",
    "-lst", "-lstType", "-doneFile", "-rexSave", "-f_tide", "-TideDatabase",
-   "-f_stat", "-spinUp", "-f_saveSpinUp", "-asOf", NULL
+   "-f_stat", "-spinUp", "-f_saveSpinUp", "-asOf", "-envDir2", "-envSave2",
+   "-restart", "-wave", NULL
 };
 
 void Usage (const char *argv0)
@@ -168,6 +176,13 @@ void Usage (const char *argv0)
       "number of hours of tidal spin up [0]",
       "Do we want to save the spin up to the rexfile ([0]=no, 1=yes)",
       "Date/Time (UTC) of when the model is no longer a hindcast.",
+      "A second envDir for envelope saves (for 1hr vs 6hr output)",
+      "How often in minutes to save to the envDir2 files [0]\n"
+	"\t\te.g. rexSave=60 min, envSave2=360 min\n"
+        "\t\tenvSave2 should be a multiple of rexSave due to f_passdata\n"
+        "\t\tin RunLoopStep.n",
+      "Do we want restart files [0]=no, 1=yes",
+      "What type of waves [0]=none, 1=version-1, ...",
       NULL
    };
    unsigned int i, j;
@@ -202,7 +217,8 @@ static int ParseUserChoice (userType *usr, char *cur, char *next)
 {
    enum { HELP, VERSION, VERBOSE, BASIN, ROOTDIR, TRKFILE, REXDIR, REXFILE,
       ENVDIR, ENVFILE, F_APPENDBSN, LSTFILE, LSTTYPE, DONEFILE, REXSAVEMIN,
-      F_TIDE, TIDEDATABASE, F_STAT, SPINUP, F_SAVESPINUP, ASOF
+      F_TIDE, TIDEDATABASE, F_STAT, SPINUP, F_SAVESPINUP, ASOF, ENVDIR2,
+      ENVSAVE2, RESTART, WAVE
    };
    int index;           /* "cur"'s index into Opt, which matches enum val. */
 
@@ -269,6 +285,13 @@ static int ParseUserChoice (userType *usr, char *cur, char *next)
          usr->envDir = (char *) malloc ((strlen (next) + 1) * sizeof (char));
          strcpy (usr->envDir, next);
          return 2;
+      case ENVDIR2:
+         if (usr->envDir2 != NULL) {
+            free (usr->envDir2);
+         }
+         usr->envDir2 = (char *) malloc ((strlen (next) + 1) * sizeof (char));
+         strcpy (usr->envDir2, next);
+         return 2;
       case ENVFILE:
          if (usr->envFile != NULL) {
             free (usr->envFile);
@@ -295,6 +318,9 @@ static int ParseUserChoice (userType *usr, char *cur, char *next)
          return 2;
       case REXSAVEMIN:
          usr->rexSaveMin = atoi (next);
+         return 2;
+      case ENVSAVE2:
+         usr->envSave2Min = atoi (next);
          return 2;
       case VERBOSE:
          usr->verbose = atoi (next);
@@ -329,8 +355,14 @@ static int ParseUserChoice (userType *usr, char *cur, char *next)
       case F_SAVESPINUP:
          usr->f_saveSpinUp = atoi (next);
          return 2;
+      case RESTART:
+         usr->f_restart = atoi (next);
+         return 2;
+      case WAVE:
+         usr->f_wave = atoi (next);
+         return 2;
       case ASOF:
-         if (Clock_Scan (&(usr->asOf), next, 1) != 0) {
+         if (Clock_Scan (&(usr->asOf), next, 0) != 0) {
             return 2;
          }
          return 2;

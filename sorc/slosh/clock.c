@@ -301,7 +301,7 @@ static void Clock_FormatParse (char buffer[100], sInt4 sec, float floatSec,
          sprintf (buffer, "%2d", month);
          return;
       case 'Y':
-         sprintf (buffer, "%04ld", year);
+         sprintf (buffer, "%04ld", (long int) year);
          return;
       case 'H':
          sprintf (buffer, "%02d", (int) ((sec % 86400L) / 3600));
@@ -1347,7 +1347,7 @@ void Clock_PrintDateNumber (double clock, char buffer[15])
 
    Clock_PrintDate (clock, &year, &month, &day, &hour, &min, &d_sec);
    sec = d_sec;
-   sprintf (buffer, "%04ld%02d%02d%02d%02d%02d", year, month, day, hour, min,
+   sprintf (buffer, "%04ld%02d%02d%02d%02d%02d", (long int) year, month, day, hour, min,
             sec);
 }
 
@@ -1520,14 +1520,18 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
       if (wordType == WT_COLON) {
          if (f_time) {
             printf ("Detected multiple time pieces\n");
-            goto errorReturn;
+            free (Stack);
+            free (Rel);
+            return -1;
          }
          curTime = Clock_ScanColon (word);
          f_time = 1;
       } else if (wordType == WT_SLASH) {
          if ((f_slashWord) || (f_dateWord)) {
             printf ("Detected multiple date pieces\n");
-            goto errorReturn;
+            free (Stack);
+            free (Rel);
+            return -1;
          }
          Clock_ScanSlash (word, &month, &day, &year, &f_year);
          f_slashWord = 1;
@@ -1540,21 +1544,27 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
       } else if (strcmp (word, "AM") == 0) {
          if (f_ampm != -1) {
             printf ("Detected multiple am/pm\n");
-            goto errorReturn;
+            free (Stack);
+            free (Rel);
+            return -1;
          }
          f_ampm = 1;
          wordType = WT_AMPM;
       } else if (strcmp (word, "PM") == 0) {
          if (f_ampm != -1) {
             printf ("Detected multiple am/pm\n");
-            goto errorReturn;
+            free (Stack);
+            free (Rel);
+            return -1;
          }
          f_ampm = 2;
          wordType = WT_AMPM;
       } else if (Clock_ScanZone (word, &TimeZone, &f_dayLight) == 0) {
          if (f_timeZone) {
             printf ("Detected multiple time zones.\n");
-            goto errorReturn;
+            free (Stack);
+            free (Rel);
+            return -1;
          }
          if (f_dayLight == 0) {
             f_gmt = 2;
@@ -1566,7 +1576,9 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
       } else if ((index = Clock_ScanMonth (word)) != -1) {
          if ((f_slashWord) || (f_monthWord)) {
             printf ("Detected multiple months or already defined month.\n");
-            goto errorReturn;
+            free (Stack);
+            free (Rel);
+            return -1;
          }
          month = index;
          /* Get the next word? First preserve the pointer */
@@ -1577,7 +1589,9 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
             /* Next word not integer, so previous word is integral day. */
             if (lastWordType != WT_INTEGER) {
                printf ("Problems with month word and finding the day.\n");
-               goto errorReturn;
+               free (Stack);
+               free (Rel);
+               return -1;
             }
             lenStack--;
             day = Stack[lenStack].val;
@@ -1594,7 +1608,9 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
                ans = Clock_GetWord (&ptr, &ptr2, word, &wordType);
                if ((ans != 0) || (wordType != WT_INTEGER)) {
                   printf ("Couldn't find the year after the day.\n");
-                  goto errorReturn;
+                  free (Stack);
+                  free (Rel);
+                  return -1;
                }
                year = atoi (word);
                f_year = 1;
@@ -1603,7 +1619,9 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
                f_year = 1;
                if (lastWordType != WT_INTEGER) {
                   printf ("Problems with month word and finding the day.\n");
-                  goto errorReturn;
+                  free (Stack);
+                  free (Rel);
+                  return -1;
                }
                lenStack--;
                day = Stack[lenStack].val;
@@ -1617,7 +1635,9 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
          if ((f_slashWord) || (f_dayWord)) {
             printf ("Detected multiple day of week or already defined "
                     "day.\n");
-            goto errorReturn;
+            free (Stack);
+            free (Rel);
+            return -1;
          }
          wordType = WT_DAY;
          f_dayWord = 1;
@@ -1629,11 +1649,15 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
          if (Clock_GetWord (&ptr, &ptr2, word, &wordType) != 0) {
             printf ("Couldn't get the next word after Pre-Relative time "
                     "word\n");
-            goto errorReturn;
+            free (Stack);
+            free (Rel);
+            return -1;
          }
          if (GetIndexFromStr (word, RelUnit, &ans) == -1) {
             printf ("Couldn't get the Relative unit\n");
-            goto errorReturn;
+            free (Stack);
+            free (Rel);
+            return -1;
          }
          if (index != 1) {
             lenRel++;
@@ -1653,7 +1677,9 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
          if ((lastWordType != WT_PRE_RELATIVE) ||
              (lastWordType != WT_RELATIVE_UNIT)) {
             printf ("Ago did not follow relative words\n");
-            goto errorReturn;
+            free (Stack);
+            free (Rel);
+            return -1;
          }
          Rel[lenRel - 1].f_negate = 1;
          wordType = WT_POST_RELATIVE;
@@ -1684,7 +1710,9 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
          wordType = WT_ADJDAY;
       } else {
          printf ("unknown: %s\n", word);
-         goto errorReturn;
+         free (Stack);
+         free (Rel);
+         return -1;
       }
       ptr = ptr2;
       lastWordType = wordType;
@@ -1693,17 +1721,23 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
    /* Deal with time left on the integer stack. */
    if (lenStack > 1) {
       printf ("Too many integers on the stack?\n");
-      goto errorReturn;
+      free (Stack);
+      free (Rel);
+      return -1;
    }
    if (lenStack == 1) {
       if (Stack[0].val < 0) {
          printf ("Unable to deduce a negative time?\n");
-         goto errorReturn;
+         free (Stack);
+         free (Rel);
+         return -1;
       }
       if (f_time) {
          if (f_dateWord || f_slashWord) {
             printf ("Already have date and time...\n");
-            goto errorReturn;
+            free (Stack);
+            free (Rel);
+            return -1;
          }
          if ((Stack[0].len == 6) || (Stack[0].len == 8)) {
             year = Stack[0].val / 10000;
@@ -1717,7 +1751,9 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
             }
          } else {
             printf ("Unable to deduce the integer value\n");
-            goto errorReturn;
+            free (Stack);
+            free (Rel);
+            return -1;
          }
       } else {
          if (Stack[0].len < 3) {
@@ -1739,7 +1775,9 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
             }
          } else {
             printf ("Unable to deduce the time\n");
-            goto errorReturn;
+            free (Stack);
+            free (Rel);
+            return -1;
          }
       }
       lenStack = 0;
@@ -1747,7 +1785,9 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
    if (!f_time) {
       if (f_ampm != -1) {
          printf ("Problems setting the time to 0\n");
-         goto errorReturn;
+         free (Stack);
+         free (Rel);
+         return -1;
       }
       curTime = 0;
    }
@@ -1890,11 +1930,6 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
    free (Stack);
    free (Rel);
    return 0;
-
- errorReturn:
-   free (Stack);
-   free (Rel);
-   return -1;
 }
 
 #ifdef CLOCK_PROGRAM

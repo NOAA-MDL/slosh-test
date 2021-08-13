@@ -1,0 +1,109 @@
+      SUBROUTINE WIND (IU,IV,IP,DELSNM,N0,WSPEED,WDIRCT)
+C     This procedure is to calculate SLOSH's wind field on a lat/lon
+C     grid.  Results are returned in MPH.
+C     This procedure is taken from Jye Chen's wind2.for (first 3pages).
+C     Inputed by Arthur Taylor 6/9/1997
+C     IU (O) MPH WIND IN U DIRECTION AT LOCATION I,J (MAX:200X200)
+C     IV (O) MPH WIND IN V DIRECTION AT LOCATION I,J
+C     IP (O)     PRESSURE AT LOCATION I,J
+C     DELSNM (I) DELTA IN NAUTICAL MILES ON GRID (USUAL:5)
+C     N0 (I) NUMBER OF GRID ELEMENTS IN 2D ARRAY (MAX:199)(USUAL:95)
+C     WSPEED (I) THE STORM'S SPEED (MPH)
+C     WDIRCT (I) THE STORM'S DIRECTION (0 FOR NORTH)
+C     STORM CENTER IS AT CENTER OF GRID.
+C     May not actually need to call force1
+
+C     /FRST/ USED HERE TO GET ACCESS TO VELOCITY
+C   ASSUMPTION: X1, X12 ARE ALREADY INITIALIZED
+C     COMMON /FRST/ X1(50),X12(50)
+      COMMON /STRMSB/ C1,C2,C21,C22,AX,AY,PTENCY,RTENCY
+      COMMON /DUMMY4/ S(800),C(800),P(800),DELP(800)
+C CANT FIND COMMON /LK0/
+C     COMMON /LK0/ LAKO
+C   FOLLOWING COMMONS ARE FOR INSTANTANEOUS CALLS TO FORCE1
+      COMMON /WTEMP/  YDELP,ZDELP,PNN,YC24,ZC24
+      COMMON /DUMY44/ SW(800),CW(800),W1218(2),WMAX(2)
+      COMMON /ZLATO/  ZLATO
+      PARAMETER (NT_=999)
+      COMMON /STRMPS/ X(NT_),Y(NT_),PT(NT_),R(NT_),DIR(NT_),SP(NT_)
+C STIME interferes with C code, so switched to STIME2
+      COMMON /STIME2/  ISTM,JHR,ITMADV,NHRAD,IBGNT,ITEND
+
+      COMMON /BSN/    PHI,ALTO,ALNO,PHI1,ALT1,ALN1,ALT1C
+
+      REAL X12(50)
+      REAL IU(200,200),IV(200,200),IP(200,200)
+      REAL DELSNM
+C     CHARACTER*1 LAKO
+      DATA RHOWG/29.89/,PI/3.14159265358979323846/
+C  RAD/1.74552925E-2/
+      DATA NCATG/2/
+
+C     IF (LAKO.EQ.'Y'.OR.LAKO.EQ.'y') NCATG=1
+
+      VMAX=WMAX(NCATG)
+      CALL FORCE1(YDELP,YC24,VMAX,ZLATO,NCATG,0)
+C     Get Storm Speed, Direction as variables: c21, DIRin MPH, 0 for N
+      X12(7)=WSPEED
+C     DIR=90.-DIRin
+C     DIR=C22
+      DIRECT=90.-WDIRCT
+      X12(20)=COS(DIRECT*PI/180.0)
+      X12(21)=SIN(DIRECT*PI/180.0)
+      X12(9)=X12(7)*X12(20)
+      X12(10)=X12(7)*X12(21)
+      X12(23)=X12(7)*COS(DIRECT*PI/180.0+7.*PI/6.-.5*PI)
+      X12(24)=X12(7)*SIN(DIRECT*PI/180.0+7.*PI/6.-.5*PI)
+      X12(4)=YC24
+      X12(15)=X12(4)*X12(4)
+      X1218=2.*VMAX
+C     SET THE INTERVAL SPACING IN NAUTICAL MILES
+C     DELSNM=5.  PASSED BY CALLING PROCEDURE
+      DELS=DELSNM*1.1508
+C     SET THE DIMMENSION, AND THE CENTER OF THE STORM.
+C     N0=95 PASSED BY CALLING PROCEDURE
+      N00=(N0-1)/2
+
+      DO 240 J=1,N0
+        XP=(J-N00-1)*DELS
+        DO 230 I=1,N0
+          YP=(N00+1-I)*DELS
+          RSQ=XP*XP+YP*YP
+          RS=SQRT(RSQ)
+
+          R1=RS+1.
+          K=R1
+          R2=K
+C     GET THE DECIMAL PART OF RS.
+          DR=R1-R2
+          K=MIN0(K,790)
+          CK1=C(K)+DR*(C(K+1)-C(K))
+          SK1=S(K)+DR*(S(K+1)-S(K))
+          CCN=X12(15)+RSQ
+          CC=1./CCN
+          X28=X1218
+          A=RS*X12(9) -X28*(YP*CK1+XP*SK1)
+          B=RS*X12(10)+X28*(XP*CK1-YP*SK1)
+          IF (NCATG.EQ.1) THEN
+            RHOL=ABS(XP*X12(20)+YP*X12(21))
+            CCC=CCN*RHOL/(X12(15)+RHOL*RHOL)
+            A=A+CCC*X12(23)
+            B=B+CCC*X12(24)
+          ENDIF
+          A=A*X12(4)*CC
+          B=B*X12(4)*CC
+C CONVERT FROM MPH TO M/S
+C         IU(I,J)=(A*.44704)*10.+.5
+C         IV(I,J)=(B*.44704)*10.+.5
+
+C LEAVE IN MPH
+          IU(I,J)=A
+          IV(I,J)=B
+
+          PK1=DELP(K)+DR*(DELP(K+1)-DELP(K))
+          IP(I,J)=120.-PK1*RHOWG*10.+.5
+ 230    CONTINUE
+ 240  CONTINUE
+C RETURN VALUES TO C FOR PLOTTING.
+      RETURN
+      END

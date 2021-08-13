@@ -415,7 +415,7 @@ double myRound (double data, uChar place)
 void strTrim (char *str)
 {
    char *ptr;           /* Pointer to where first non-white space is. */
-   char *ptr2           /* Pointer to where last non-white space is. */
+   char *ptr2;          /* Pointer to where last non-white space is. */
 
    /* str shouldn't be null, but if it is, we want to handle it. */
    myAssert (str != NULL);
@@ -468,7 +468,7 @@ void strTrim (char *str)
  */
 void strTrimRight (char *str, char c)
 {
-   size_t i;            /* loop counter for traversing str. */
+   int i;            /* loop counter for traversing str. */
 
    /* str shouldn't be null, but if it is, we want to handle it. */
    myAssert (str != NULL);

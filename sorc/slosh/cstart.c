@@ -37,7 +37,8 @@ int DoOneStorm (userType *usr)
    char trkName[MY_MAX_PATH] = "basin.trk";
    /* envName is fixed to MY_MAX_PATH because it is sent to FORTRAN. */
    char envName[MY_MAX_PATH] = "";
-   /* rexName is not fixed because it is not sent to FORTRAN. */
+   /* envName2, rexName are not fixed because they are not sent to FORTRAN. */
+   char envName2[MY_MAX_PATH] = "";
    char *rexName;
    char bsnAbrev[5] = "";
    int bsnStatus;
@@ -47,7 +48,7 @@ int DoOneStorm (userType *usr)
    }
 
    /* Setup the local copy of the dta file, and trk file */
-   if (setFileNames (usr, bsnAbrev, dtaName, trkName, envName, &rexName,
+   if (setFileNames (usr, bsnAbrev, dtaName, trkName, envName, envName2, &rexName,
                      &imxb, &jmxb, &bsnStatus)) {
       printf ("Had problems setting up the basin or track file\n");
       printf ("Check: '%s' '%s' '%s' or '%s'\n", usr->bsnDir, usr->bntDir,
@@ -61,12 +62,14 @@ int DoOneStorm (userType *usr)
       printf ("dta: %s\n", dtaName);
       printf ("trk: %s\n", trkName);
       printf ("env: %s\n", envName);
+      printf ("env: %s\n", envName2);
       printf ("rex: %s\n", rexName);
       fflush (stdout);
    }
-   PerformRun (bsnAbrev, dtaName, trkName, envName, rexName, usr->tideDir,
-               imxb, jmxb, bsnStatus, usr->rexSaveMin, usr->verbose,
-               usr->f_tide, usr->tideThresh, usr->f_stat, usr->spinUp, usr->f_saveSpinUp, usr->asOf);
+   PerformRun (bsnAbrev, dtaName, trkName, envName, envName2, rexName, usr->tideDir,
+               imxb, jmxb, bsnStatus, usr->rexSaveMin, usr->envSave2Min, usr->verbose,
+               usr->f_tide, usr->tideThresh, usr->f_stat, usr->spinUp, usr->f_saveSpinUp,
+               usr->asOf, usr->f_restart, usr->f_wave);
 /*
    PerformRun (usr, bsnAbrev, dtaName, trkName, envName, rexName,
                imxb, jmxb, grid);
@@ -98,7 +101,8 @@ int DoStormListV0 (userType *usr)
    char trkName[MY_MAX_PATH] = "basin.trk";
    /* envName is fixed to MY_MAX_PATH because it is sent to FORTRAN. */
    char envName[MY_MAX_PATH] = "";
-   /* rexName is not fixed because it is not sent to FORTRAN. */
+   /* envName2, rexName are not fixed because they are not sent to FORTRAN. */
+   char envName2[MY_MAX_PATH] = "";
    char *rexName;
    char bsnAbrev[5] = "";
    FILE *fp;
@@ -185,8 +189,8 @@ int DoStormListV0 (userType *usr)
          }
       }
 
-      if (setFileNames (usr, bsnAbrev, dtaName, trkName, envName, &rexName,
-                        &imxb, &jmxb, &bsnStatus)) {
+      if (setFileNames (usr, bsnAbrev, dtaName, trkName, envName, envName2,
+                        &rexName, &imxb, &jmxb, &bsnStatus)) {
          printf ("Had problems setting up the basin or track file\n");
          printf ("Check: '%s' '%s' '%s' or '%s'\n", usr->bsnDir, usr->bntDir,
                  usr->basin, usr->trkFile);
@@ -206,12 +210,14 @@ int DoStormListV0 (userType *usr)
          printf ("dta: %s\n", dtaName);
          printf ("trk: %s\n", trkName);
          printf ("env: %s\n", envName);
+         printf ("env2: %s\n", envName2);
          printf ("rex: %s\n", rexName);
          fflush (stdout);
       }
-      PerformRun (bsnAbrev, dtaName, trkName, envName, rexName, usr->tideDir,
-                  imxb, jmxb, bsnStatus, usr->rexSaveMin, usr->verbose,
-                  usr->f_tide, usr->tideThresh, usr->f_stat, usr->spinUp, usr->f_saveSpinUp, usr->asOf);
+      PerformRun (bsnAbrev, dtaName, trkName, envName, envName2, rexName, usr->tideDir,
+                  imxb, jmxb, bsnStatus, usr->rexSaveMin, usr->envSave2Min, usr->verbose,
+                  usr->f_tide, usr->tideThresh, usr->f_stat, usr->spinUp, usr->f_saveSpinUp,
+                  usr->asOf, usr->f_restart, usr->f_wave);
 
       if (rexName != NULL) {
          free (rexName);
@@ -259,7 +265,8 @@ int DoStormListV1 (userType *usr)
    char trkName[MY_MAX_PATH] = "basin.trk";
    /* envName is fixed to MY_MAX_PATH because it is sent to FORTRAN. */
    char envName[MY_MAX_PATH] = "";
-   /* rexName is not fixed because it is not sent to FORTRAN. */
+   /* envName2, rexName are not fixed because they are not sent to FORTRAN. */
+   char envName2[MY_MAX_PATH] = "";
    char *rexName;
    char bsnAbrev[5] = "";
    int bsnStatus;
@@ -355,13 +362,14 @@ int DoStormListV1 (userType *usr)
          usr->trkFile = realloc (usr->trkFile, strlen (trkList[cur]) + 1);
          strcpy (usr->trkFile, trkList[cur]);
 
-         if (setFileNames (usr, bsnAbrev, dtaName, trkName, envName, &rexName, &imxb, &jmxb, &bsnStatus)) {
+         if (setFileNames (usr, bsnAbrev, dtaName, trkName, envName, envName2,
+             &rexName, &imxb, &jmxb, &bsnStatus)) {
              printf ("Had problems setting up the basin or track file\n");
              printf ("Check: '%s' '%s' '%s' or '%s'\n", usr->bsnDir, usr->bntDir, usr->basin, usr->trkFile);
              return -1;
          }
 
-         PerformRun (bsnAbrev, dtaName, trkName, envName, rexName, usr->tideDir, imxb, jmxb, bsnStatus, usr->rexSaveMin, usr->verbose, usr->f_tide, usr->tideThresh, usr->f_stat, usr->spinUp, usr->f_saveSpinUp, usr->asOf);
+         PerformRun (bsnAbrev, dtaName, trkName, envName, envName2, rexName, usr->tideDir, imxb, jmxb, bsnStatus, usr->rexSaveMin, usr->envSave2Min, usr->verbose, usr->f_tide, usr->tideThresh, usr->f_stat, usr->spinUp, usr->f_saveSpinUp, usr->asOf, usr->f_restart, usr->f_wave);
 /*
    PerformRun (usr, bsnAbrev, dtaName, trkName, envName, rexName,
                imxb, jmxb, grid);
@@ -403,24 +411,24 @@ int main (int argc, char **argv)
       return 0;
    }
    if (usr.cmd == 1) {
-      printf ("\n%s\nVersion: %s\nDate: %s\nAuthors: "
-              "Chester Jelesnanski, Albion Taylor, Jye Chen,\n"
-              "Wilson Shaffer, Arthur Taylor\n%s\n", argv[0],
-              PROGRAM_VERSION, PROGRAM_DATE, PROGRAM_COMMENT);
-      printf ("Compiled by %s\n", CC_VER);
-      printf ("Compiled date %s\n\n", __DATE__);
+      printf ("\nVersion: %s\nDate: %s\nAuthors: "
+              "Chester Jelesnanski, Albion Taylor, Jye Chen, Wilson Shaffer,\n"
+              "   Arthur Taylor, Cristina Forbes, Amy Haase, Brian Zachry, Jindong Wang,\n"
+              "   Huiqing Liu, Dongming Yang, Tatiana Gonzalez\n\n", 
+              PROGRAM_VERSION, PROGRAM_DATE);
+      printf ("Compiled by: %s\n", CC_VER);
+      printf ("         on: %s\n", __DATE__);
       #ifdef DOUBLE_FORTRAN
-        printf ("Compiled with double precision\n");
+        printf ("       with: double precision\n");
       #else
-        printf ("Compiled with single precision\n");
+        printf ("       with: single precision\n");
       #endif
       #ifdef _MPI_
-        printf ("Compiled with MPI enabled.\n");
+        printf ("       with: MPI enabled\n");
       #else
-        printf ("Compiled without MPI.\n");
+        printf ("    without: MPI\n");
       #endif
-      printf ("sizeof(long int)=%d, sizeof(sInt4)=%d\n\n",
-              (int) sizeof(long int), (int) sizeof(sInt4));
+      printf ("\n");
       UserFree (&usr);
       return 0;
    }
@@ -453,7 +461,7 @@ int main (int argc, char **argv)
       MPI_Init (&argc, &argv);
       MPI_Comm_size (MPI_COMM_WORLD, &size);
       MPI_Comm_rank (MPI_COMM_WORLD, &rank);
-      if (size == 1) {
+      if (size <= 1) {
          ans = DoStormListV1 (&usr);
       } else {
          if (rank == 0) {

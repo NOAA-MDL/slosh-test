@@ -7,7 +7,23 @@
 #-----------------
 # Version configs
 #-----------------
-LATEST=v4.12
+LATEST=v4.20
+#-----------------
+V=v4.20; D="2019-11-13"; vers+=($V); ds+=($D)
+T420="${V}_$D"
+F_v420+=(T412:a0102.pn2  T420:a0401.pv2  T420:a0503.ny3  T420:a0603.de3  T420:a0904.cp5)
+F_v420+=(T420:a1003.hor3 T420:a1104.ht3  T420:a1203.il3  T420:a1303.hch2 T420:a1404.esv4)
+F_v420+=(T420:f0103.ejx3 T420:f1003.etp3 T420:f1102.cd2  T420:f1203.ap3  T420:f1303.hpa2)
+F_v420+=(T420:f1404.epn3)
+F_v420+=(T420:g0103.emo2 T420:g0309.ms7  T420:g0402.lf2  T420:g0505.ebp3 T420:g0604.egl3)
+F_v420+=(T420:g0702.ps2  T420:g0803.cr3  T420:g0903.ebr3)
+#...Comment following for ETSS:
+F_v420+=(T412:f0403.eok3 T420:f0602.hsff T420:f0603.hsfe T420:f0604.hsfd)
+#...Comment following for P-Surge:
+F_v420+=(T420:f0202.co2  T420:f0303.pb3  T420:f0503.hmi3 T420:f0704.eke2 T420:f0903.efm2)
+F_v420+=(T420:x0103.exm  T420:x0205.eglc T420:x0303.nep  T420:x0401.egoa T420:x0602.ebbc)
+#...Comment following for P-Surge and ETSS:
+F_v420+=(T412:g0310.hms8 T412:i0101.bha  T412:i0202.hsju T412:i0301.evi2 T412:i0601.hnl)
 #-----------------
 V=v4.12; D="2014-09-03"; vers+=($V); ds+=($D)
 T412="${V}_$D"
@@ -88,7 +104,7 @@ for f in ${!var} ; do
    #-------------------
    fRay=(${f//:/ })
    FILE=${fRay[1]}.tar.gz
-   echo "[*] Downloading $tarDir/$FILE"
+   echo -n "[*] Downloading ../tar/$FILE"
    if [[ ${fRay[0]} == "FILE" ]] ; then
       #---------------------------------------
       # Copy the file if its on local machine
@@ -128,7 +144,8 @@ for v in data:
    #-----------------
    if [[ -e $tarDir/$FILE ]] ; then
       # echo "[*] Expanding.. $tarDir/$FILE"
-      echo "[*] Expanding.."
+      echo -n " ... Expanding ... "
       expandBasin.sh $tarDir/$FILE
+      echo "Done"
    fi
 done

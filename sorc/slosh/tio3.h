@@ -49,13 +49,8 @@ typedef enum { TFLAG_MadeOnIntel, TFLAG_NotMadeOnIntel } TFLAG_SYSTEM;
 #ifdef _UNIX_
   #define HP
 #else
-  #ifdef _LINUX_
-    #define _sysINTEL
-    #define F2C
-  #else
-    #define _sysINTEL
-    #define F2C
-  #endif
+  #define _sysINTEL
+  #define F2C
 #endif
 
 /* Also have an _ERROR_CHECK_ flag? */

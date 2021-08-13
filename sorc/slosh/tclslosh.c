@@ -150,6 +150,8 @@ int RunLoopStepCmd (ClientData clientData, Tcl_Interp * interp, int argc,
    int f_first;
    double rextime;
    int f_stat;
+   int envSave2Min = 0;  /* How often to save to the second directory of envelop saves (P-Surge). */
+   short restart = 0;
 
    if (argc != 18) {
       sprintf (interp->result,
@@ -181,19 +183,26 @@ int RunLoopStepCmd (ClientData clientData, Tcl_Interp * interp, int argc,
    f_first = atoi (argv[16]);
    f_stat = atoi (argv[17]);
 
-   RunLoopStep (&(gt->st), gt->bt->i, gt->bt->j, &itime,
+   RunLoopStep (gt->bsnAbrev, &(gt->st), gt->bt->i, gt->bt->j, &itime,
                 &mhalt, csflag, f_smooth, f_wantRex,
-                &(gt->modelClock), rextime, f_first, &(gt->tgrid), f_tide, f_stat);
+                &(gt->modelClock), rextime, f_first, &(gt->tgrid), f_tide, f_stat, envSave2Min, gt->tideClock, restart);
+
+/* Huiqing.Liu/MDL For reference time to adding and subtracting tide default 6 mins*/
+   if ((gt->modelClock >= gt->tideClock)) {
+/*    tideClock += 10 * 60; */
+      gt->tideClock += 6 * 60;
+   }
 
    /* Compute the grid for the GUI. */
 /*
    if (f_graphics == 2) {
+      int i, j;
       for (i = 0; i < gt->bt->i; i++) {
          for (j = 0; j < gt->bt->j; j++) {
             if ((gt->st.hb[j][i] + gt->st.zb[j][i]) == 0.0) {
                gt->bt->grid[i][j].depth = 99.9;
             } else {
-               gt->bt->grid[i][j].depth = st->hb[j][i];
+               gt->bt->grid[i][j].depth = gt->st.hb[j][i];
             }
          }
       }
@@ -206,7 +215,6 @@ int RunLoopStepCmd (ClientData clientData, Tcl_Interp * interp, int argc,
       } else {
          ratio = (pen2 - pen1) / (double) (maxv - minv);
       }
-
 #ifdef DOUBLE_FORTRAN
       Halo_DeltaBasinFillDouble (UID, gt->bt, gt->st.zb, gt->st.hb, minv, maxv,
                            pen2, ratio, 0, f_grid, f_fill, f_range, grid_pen,
@@ -236,7 +244,6 @@ static int CleanUpCmd (ClientData clientData, Tcl_Interp * interp, int argc,
    int f_saveEnv = 1;
    int f_tide;
    float ht1, ht2;
-   int i, j;
    char rexComment[201];
    char envComment[161];
 
@@ -256,6 +263,8 @@ static int CleanUpCmd (ClientData clientData, Tcl_Interp * interp, int argc,
       return TCL_ERROR;
    }
    /* Compute the grid for the GUI. */
+/*
+   int i, j;
    for (i = 0; i < gt->bt->i; i++) {
       for (j = 0; j < gt->bt->j; j++) {
          if ((gt->st.hb[j][i] + gt->st.zb[j][i]) == 0.0) {
@@ -265,66 +274,8 @@ static int CleanUpCmd (ClientData clientData, Tcl_Interp * interp, int argc,
          }
       }
    }
-
+*/
    return TCL_OK;
-}
-
-double ColorTime214 (int timespan, sInt4 timeOffset)
-{
-   double ad_time = 0, a_o, tOffset;
-   if (timespan == 0)
-      return ad_time;
-   ad_time = difftime (time (NULL), 0);
-   a_o = ad_time - timeOffset;
-   tOffset = timeOffset;
-
-   tOffset = tOffset / 3600.;
-   a_o = a_o / 3600.;
-   tOffset = tOffset / 24.;
-   a_o = a_o / 24.;
-   if (timespan == 1) {
-   } else if (timespan == 2) {
-      /* tOffset = tOffset / 7.; *//* convert to week */
-      a_o = a_o / 7.;
-   } else if (timespan == 3) {
-      /* tOffset = tOffset / 31.; *//* convert to month */
-      a_o = a_o / 31.;
-   } else if (timespan == 4) {
-      /* tOffset = tOffset / 365.; *//* convert to year */
-      a_o = a_o / 365.;
-   }
-   /* By not converting tOffset to timespan, it stays a unique number. */
-   /* So I think we might get some passwords good for an extra day or so,
-    * but not for whole weeks. */
-   ad_time = floor (pow (tOffset, 1.1)) + floor (a_o);
-   return ad_time;
-}
-
-int ColorMatch214 (const char *name, const char *id, int adjust, int timespan,
-                   sInt4 timeOffset)
-{
-   double sum, sum2;
-   int let, i;
-
-   sum = adjust + ColorTime214 (timespan, timeOffset);
-   sum = floor (pow (sum, 1.5));
-   for (i = 0; i < strlen (name); i++) {
-      sum += (name[i] - 32 % (126 - 32) + 1) * (126 - 32) * (i + 1);
-   }
-   sum2 = 0;
-   for (i = 0; i < strlen (id); i++) {
-      if ((id[i] >= 'a') && (id[i] <= 'z')) {
-         let = id[i] - 'a';
-      } else {
-         let = 26 + id[i] - '2';
-      }
-      sum2 += let * pow (34, i);
-   }
-   if (sum == 0) {
-      return (sum != sum);
-   } else {
-      return (sum == sum2);
-   }
 }
 
 /*****************************************************************************
@@ -372,7 +323,7 @@ static int RunInitCmd (ClientData clientData, Tcl_Interp * interp, int argc,
    int spinUp;              /* Seconds of tidal spinUp. */
    int f_saveSpinUp;
    int imxb, jmxb;
-   char bsnAbrev[5];
+/*   char bsnAbrev[5]; */
    const char *bntDir;
    float ht1, ht2;
    char rexComment[201];
@@ -380,8 +331,9 @@ static int RunInitCmd (ClientData clientData, Tcl_Interp * interp, int argc,
    char rexVersion;
    char f_wantRex;
    int rexSaveMin;
-   char *rexName;
+   const char *rexName;
    int tideThresh = 0;
+   short wave;
 
    if (argc == 2) {
       if (strcmp (argv[1], "-V") == 0) {
@@ -407,13 +359,14 @@ static int RunInitCmd (ClientData clientData, Tcl_Interp * interp, int argc,
    strncpy (adj_name, argv[8], MY_MAX_PATH-1);
    spinUp = atoi (argv[9]) * 3600;
    f_saveSpinUp = atoi (argv[10]);
-   strncpy (bsnAbrev, argv[11], 5);
+   strncpy (gt->bsnAbrev, argv[11], 5);
    bntDir = argv[12];
    rexName = argv[13];
    rexVersion = atoi (argv[14]);
    f_wantRex = atoi (argv[15]);
    rexSaveMin = atoi (argv[16]);
-   if (SetBsnLatLon (bntDir, bsnAbrev, &imxb, &jmxb) != 0) {
+   wave = 0;  /* Don't use waves with GUI version yet. */
+   if (SetBsnLatLon (bntDir, gt->bsnAbrev, &imxb, &jmxb) != 0) {
       sprintf (interp->result, "ERROR: Problems initializing the model.\n");
       return TCL_ERROR;
    }
@@ -424,11 +377,12 @@ static int RunInitCmd (ClientData clientData, Tcl_Interp * interp, int argc,
    if (RexOpen (&(gt->rex), rexName, rexVersion) != 0) {
       return TCL_ERROR;
    }
-   RexSaveHeader (&(gt->rex), imxb, jmxb, rexComment, bsnAbrev);
+   RexSaveHeader (&(gt->rex), imxb, jmxb, rexComment, gt->bsnAbrev);
 
-   if (RunInit (&(gt->st), gt->trk_name, dta_name, gt->xxx_name, f40_name,
+   if (RunInit (gt->bsnAbrev, &(gt->st), gt->trk_name, dta_name, gt->xxx_name, f40_name,
                 &mhalt, &(gt->modelClock), f_tide, tideThresh, ft03_name, bhc_name, &(gt->tgrid),
-                adj_name, spinUp, f_saveSpinUp, &(gt->rex), f_wantRex, rexSaveMin) != 0) {
+                adj_name, spinUp, f_saveSpinUp, &(gt->rex), f_wantRex, rexSaveMin,
+                wave) != 0) {
       sprintf (interp->result, "ERROR: Problems initializing the model.\n");
       return TCL_ERROR;
    }
@@ -449,113 +403,10 @@ static int RunInitCmd (ClientData clientData, Tcl_Interp * interp, int argc,
 }
 
 /*****************************************************************************
- * Start of Generic dta file stuff.
- *****************************************************************************/
-/* 0=0, 1=day, 2=week, 3=month, 4=year
- * most likely timeOffset will be "on the hour/min/sec", but not necessarily
- */
-static int ColorMatch214Cmd (ClientData clientData, Tcl_Interp * interp, int argc,
-#if (TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION <= 3)
-                             char *argv[])
-#else
-                             const char *argv[])
-#endif
-{
-   int adjust, timespan;
-   sInt4 timeOffset;
-
-   if (argc != 6) {
-      sprintf (interp->result, "usage: %s <string> <match> <adjust>  "
-               "<timespan 0=perm, 1=day, 2=week, 3=month, 4=year> "
-               "<time offset (int) (use clock scan)>", argv[0]);
-      return TCL_ERROR;
-   }
-   if ((strlen (argv[1]) == 0) || (strlen (argv[2]) == 0)) {
-      sprintf (interp->result, "0");
-   } else {
-      adjust = atoi (argv[3]);
-      timespan = atoi (argv[4]);
-      timeOffset = atol (argv[5]);
-      if (ColorMatch214 (argv[1], argv[2], adjust, timespan, timeOffset)) {
-         sprintf (interp->result, "1");
-      } else {
-         sprintf (interp->result, "0");
-      }
-   }
-   return TCL_OK;
-}
-
-static int ColorConfig214Cmd (ClientData clientData, Tcl_Interp * interp, int argc,
-#if (TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION <= 3)
-                              char *argv[])
-#else
-                              const char *argv[])
-#endif
-{
-   const char *str;
-   double tot_adj;
-   double sum;
-   int i, res_i = 0;
-   int rem, adjust, timespan;
-   sInt4 timeOffset;
-
-   if (argc != 7) {
-      sprintf (interp->result,
-               "usage: %s <verify> <verify2> <string> <adjust> "
-               "<timespan 0=perm, 1=day, 2=week, 3=month, 4=year> "
-               "<time offset (int) (use clock scan)>", argv[0]);
-      return TCL_ERROR;
-   }
-   if ((strncmp (argv[1], "Arthur", 6) != 0)
-       && (strncmp (argv[1], "Wilson", 6) != 0)) {
-      sprintf (interp->result,
-               "usage: %s <verify> <verify2> <string> <adjust> "
-               "<timespan 0=perm, 1=day, 2=week, 3=month, 4=year> "
-               "<time offset (int) (use clock scan)>", argv[0]);
-      return TCL_ERROR;
-   }
-   adjust = atoi (argv[4]);
-   timespan = atoi (argv[5]);
-   timeOffset = atol (argv[6]);
-   i = 1;
-   if (strcmp (argv[1], "Arthur Taylor") == 0) {
-      i = 0;
-   } else if (strcmp (argv[1], "Wilson Shaffer") == 0) {
-      i = 0;
-      if (strcmp (argv[3], "Arthur Taylor") == 0) {
-         timespan = 4;
-      }
-   }
-   /* make sure that it is Arthur or Wilson. */
-   if (ColorMatch214 (argv[1], argv[2], 0, i, 0)) {
-      tot_adj = adjust + ColorTime214 (timespan, timeOffset);
-      tot_adj = floor (pow (tot_adj, 1.5));
-      str = argv[3];
-      sum = tot_adj;
-      for (i = 0; i < strlen (str); i++) {
-         sum += (str[i] - 32 % (126 - 32) + 1) * (126 - 32) * (i + 1);
-      }
-      while (sum > 0) {
-         rem = (int) floor (sum - floor (sum / 34.) * 34);
-         if (rem < 26) {
-            interp->result[res_i] = (char) (rem + 'a');
-         } else {
-            interp->result[res_i] = (char) (rem + '2' - 26);
-         }
-         res_i++;
-         sum = sum / 34.;
-         sum = floor (sum);
-      }
-      interp->result[res_i] = '\0';
-   }
-   return TCL_OK;
-}
-
-/*****************************************************************************
  *  usage: halo_IsDtaCmd <filename> <first 10 char> <bsn x> <bsn y>
  *  3 tests: 1 matches first 10 char if they are given.
  *           2 has the word "REVISED" starting at char #45.
- *           3 matches the basin dimmensions if given.
+ *           3 matches the basin dimensions if given.
  *****************************************************************************/
 /* Returns 0 if the dta file it claims, 1 if it is fails test 1,
    2 if it fails test 2, 3 if it fails test 3. */
@@ -685,11 +536,6 @@ int SloshRun_Init (Tcl_Interp * interp)
                       (ClientData) gt, (Tcl_CmdDeleteProc *) NULL);
    Tcl_CreateCommand (interp, "run_CleanUp", CleanUpCmd,
                       (ClientData) gt, (Tcl_CmdDeleteProc *) NULL);
-
-   Tcl_CreateCommand (interp, "run_ColorMatch", ColorMatch214Cmd,
-                      (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
-   Tcl_CreateCommand (interp, "run_ColorConfig", ColorConfig214Cmd,
-                      (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
 
    Tcl_CreateCommand (interp, "halo_IsDta", dta_IsDtaCmd,
                       (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);

@@ -262,7 +262,7 @@ void xy2pq (double x, double y, double *p, double *q, bsndta_type * bsn)
    *p = (Comp_real (Z3) / bsn->Delrg + bsn->xig);
    *q =
       fmod (Comp_imag (Z3) + (bsn->yjg - 1) * bsn->Delrg +
-            2 * 3.14159265358979, 2 * 3.14159265358979) / bsn->Delrg + 1;
+            2 * 3.14159265358979323846, 2 * 3.14159265358979323846) / bsn->Delrg + 1;
 }
 
 /*****************************************************************************

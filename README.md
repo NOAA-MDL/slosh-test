@@ -19,7 +19,7 @@ You have a git-hub Personal Access Token (PAT).  If not, see:
 **LINUX**
 
 1. GCC 4.5.0 has been installed.  If not, see:
-   [setup-gcc](../master/docs/SETUP-gcc.md)
+   [setup-gcc](../master/docs/SETUP-gcc450.md)
 
 -------------------------------------------------------------------------------
 ### SLOSH COMPILER VERSION
@@ -68,7 +68,7 @@ SLOSH's official compiler has evolved over time as follows:
 3. If you want the **SLOSH-GUI** (vs just the command line) then:
 ```bash
    cd ~/save/slosh/gui
-   getGuiLib.sh v4.12
+   getGuiLib.sh v4.20
 ```
 
 4. Build, install, and clean up - SLOSH model
@@ -76,14 +76,9 @@ SLOSH's official compiler has evolved over time as follows:
 **MS-WINDOWS**
 ```bash
    cd ~/save/slosh/sorc/slosh
-   make -f makefile.dos install
-
-   # If you also want the GUI, then
-   make -f makefile.win clean
+   # 'makefile.win' auto detects if you've run 'getGuiLib.sh'
    make -f makefile.win install
-
-   # Clean up.
-   make -f makefile.dos clean
+   make -f makefile.win clean
 ```
 
 **LINUX**
@@ -114,7 +109,7 @@ model such as (P-Surge, P-ETSS, or ETSS).
    # Don't Panic.  In the following call, there will be a few 'Notes' and
    # 'Cautions' because some basins do not have all of the tide files (i.e.,
    # Binary Harmonic Constants, Datum Adjustments, or Tide-Flavor).
-   getBasin.sh v4.12
+   getBasin.sh v4.20
 ```
 
 -------------------------------------------------------------------------------
@@ -123,7 +118,7 @@ model such as (P-Surge, P-ETSS, or ETSS).
 1. Get the required storms for the tests:
 ```bash
    cd ~/save/slosh/dev
-   getStorm.sh v4.12
+   getStorm.sh v4.20
 ```
 
 2. Run the tests:
@@ -169,8 +164,14 @@ If there are differences, you can use 'rexout' to look more carefully.
    ../util/rexout -pnt hch2.pnt -rex ./work/hugo.rex -style 0 > hugoW.csv
    ../util/rexout -pnt hch2.pnt -rex ./sample/hugo.rex -style 0 > hugoS.csv
 
+   # This second option may be better for a vimdiff as it doesn't create very
+   # long lines
+   ../util/rexout -pnt hch2.pnt -rex ./work/hugo.rex -style 2 -bsnDir ../parm/bnt > hugoW2.csv
+   ../util/rexout -pnt hch2.pnt -rex ./sample/hugo.rex -style 2 -bsnDir ../parm/bnt > hugoS2.csv
+
    # Compare the CSV files via:
    vimdiff hugoW.csv hugoS.csv
+   vimdiff hugoW2.csv hugoS2.csv
 
    # Repeat for Andrew.
 ```
@@ -184,34 +185,42 @@ If you decided you wanted the **SLOSH-GUI**, then you can start it via:
    run.sh
 ```
 
-Now you can run Hugo in HCH2:
+You can now run Hugo in HCH2:
 ```bash
    # Step 1: Select a basin
    > File->Select Basin
      >> hch2dta
    # Step 2: Select a storm
+   > File->Add 100pt Trk
       >> ~/save2/slosh/dev/storms/hugo.trk
    # Step 3: Press the green "G" button (middle control pannel)
 ```
 
-Repeat with Andrew in HMI3.  After running them, you can check the answers via:
+Repeat with Andrew in HMI3.  After running them, you can check the answers via
 ```bash
-   cd ~/save/slosh/gui/work
-   diff andrew.hm3 ../../dev/sample/andrew.env
-   diff andrew.rex ../../dev/sample/andrew.rex
-   diff hugo.ch2 ../../dev/sample/hugo.env
-   diff hugo.rex ../../dev/sample/hugo.rex
+   cd ~/save/slosh/dev/work
+   diff andrew.hm3 ../sample/andrew.env
+   diff andrew.rex ../sample/andrew.rex
+   diff hugo.ch2 ../sample/hugo.env
+   diff hugo.rex ../sample/hugo.rex
 ```
 
 -------------------------------------------------------------------------------
 ## CLEAN UP
 
-To remove all temporary files (e.g., object files, downloaded basins, answers
-to tests, etc):
-
+To remove all temporary files (e.g., object files, test-results, tar files, and
+GUI config files:
 ```bash
    cd ~/save/slosh
-   ./util/cleanUp.sh go
+   ./util/cleanUp.sh tidy
+```
+
+To remove all non-repo related files (e.g., do the 'tidy' option and remove:
+executables, basin data, test answers, and GUI libraries)
+GUI config files:
+```bash
+   cd ~/save/slosh
+   ./util/cleanUp.sh wipe
 ```
 
 -------------------------------------------------------------------------------

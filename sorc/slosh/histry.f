@@ -1,0 +1,163 @@
+      SUBROUTINE HISTRY
+C        JELESNIANSKI   OCTOBER        TDL   IBM 360/195
+C
+C        PURPOSE
+C           THIS SUBROUTINE (HISTRY) SMOOTHS THE SURGE AT 10
+C           PRE-SELECTED GRID POINTS AND SAVES THEM ON TAPE FOR FUTURE
+C           PRINT OUT. ALSO, WIND SPEED AND DIRECTION ARE ALSO SAVED AT
+C           THE SAME 10 POINTS.
+C        DATA SET USE
+C           FT 10, TEMPORARY SCRATCH TAPE FOR SURGE STORAGE
+C           FT 20, TEMPORARY SCRATCH TAPE FOR WIND SPEED STORAGE
+C           FT 30, TEMPORARY SCRATCH TAPE FOR STORAGE OF WIND DIRECTION
+C
+C        VARIABLES
+C   IPN(10) IPL(10) = SUBSCRIPTS FOR 10 SELECTED POINTS
+C        HB(  ,  ) = SURGE FIELD
+C        ZB(  ,   ) = DEPTH FIELD
+C       IP(4) JP(4) = SHIFT SUBSCRIPTS TO 4 ADJACENT MOMENTUM POINTS
+C       ZBM(  ,   ) = MAXIMUM BARRIER HEIGHT AT A MOMENTUM POINT
+C COST(  ) SINT(  ) = RAY PROJECTIONS THRU MOMNTM POINTS, ON (X,Y) AXIS
+C        GRIDRF(  ) = RADIAL DISTANCES TOMOMENTUM POINTS
+C             AX AY = CMPNENTS OF TOTAL STRM TRVRSE, ADVNCD IN 'STMVAL'
+C             C1 C2 = COMPONENTS OF INITIAL STORM POSITION
+C             NCATG = 1 FOR LAKE WINDS, 2 FOR OCEAN WINDS
+C          W1218(2) = TWICE THE MAXIMUM WINDS, LAKE/OCEAN WINDS
+C   CW(800) SW(800) = INFLOW ANGLE FOR LAKE WINDS
+C     C(800) S(800) = INFLOW ANGLE FOR OCEAN WINDS
+C           X12(50) = FIXED COEFFICIENTS
+C    X12(9) X12(10) = COMPONENTS OF FORWARD SPEED, 1ST HOUR
+C          WIND(10) = WIND SPEED AT 10 SELECTED POINTS
+C          TDIR(10) = WIND DIRECTION AT 10 SELECTED POINTS
+C               PHI = SLANT, Y-AXIS TO N/S DIRECTION, AZMTH+270
+C               RAD = RADIAN MEASURE
+C             IPRHR = 1,WHEN ON THE HOUR; 2, WHEN HALF HOUR IN BETWEEN;
+C                     3, OTHERWISE
+C
+C        GENERAL COMMENTS
+C           THIS SUBROUTINE RESIDES IN OVERLAY 'CMPUTE'. IT IS CALLED
+C           IN BY SUBROUTINE 'CMPUTE' AT SELECTED TIME INTERVALS.
+C
+      USE PARM2
+      INCLUDE 'parm.for'
+C
+C      COMMON /SLAT/   FSOUTH
+      COMMON /FFTH/   ITIME,MHALT
+      COMMON /PRHSY/  IPRHR,JUMPR,IPRT
+      COMMON /DUMBSV/ SAVEH(10),IPN(10),IPL(10),STATS(10)
+      COMMON /STRMSB/ C1,C2,C21,C22,AX,AY,PTENCY,RTENCY
+C STIME interferes with C code, so switched to STIME2
+      COMMON /STIME2/  ISTM,JHR,ITMADV,NHRAD,IBGNT,ITEND
+      COMMON /FRST/   X1(50),X12(50)
+      COMMON /DUMY44/ SW(800),CW(800),W1218(2),WMAX(2)
+      COMMON /DUMMY4/ S(800),C(800),P(800),DELP(800)
+      COMMON /BSN/    PHI,ALTO,ALNO,PHI1,ALT1,ALN1,ALT1C
+C---------------------------------------------------------
+      COMMON /GPRT1/  DOLLAR,EBSN
+      CHARACTER*2     DOLLAR
+      CHARACTER*1     EBSN
+C---------------------------------------------------------
+      DIMENSION       WIND(10),TDIR(10)
+      CHARACTER*16 STATS
+      DATA KHR/1/
+C
+C
+C       KEEP TRACK TIME, ON THE HOUR,HALF HOUR BETWEEN, OR ELSE
+C       FROM MOD(IME,100)=1,OR 2,OR 3
+C
+       IF (ITIME.EQ.0) THEN
+       IME=0
+       ELSE
+       GO TO (10,20,30),IPRHR
+   10  KHR=KHR+1
+       IME=KHR*100+1
+       GO TO 40
+   20  IME=KHR*100+2
+       GO TO 40
+   30  IME=KHR*100+3
+   40  CONTINUE
+       ENDIF
+C********SMOOTHING HISTORICAL SURGES AT 10 SELECTED GRID POINTS*********
+      DO 1190 L=1,10
+      I=IPN(L)
+      J=IPL(L)
+C
+      SAVEH(L)=HB(I,J)
+      IF (DOLLAR.EQ.'2$') SAVEH(L)=HB(I,J)-ZSUB(J)
+ 1190 CONTINUE
+C**************END SMOOTHING********************************************
+C
+C        WRITING HISTORICAL SURGES AT SELECTED GRID PTS ONTO TAPE
+CCCC      WRITE(10)   IME,SAVEH
+C      WRITE(*,2222)   IME,SAVEH
+C 2222  FORMAT(I5,10F7.2)
+C
+C++++++++COMPUTING VECTOR WIND AT 10 SELECTED POINTS++++++++++++++++++++
+C
+C                     +*********+
+C                     *         *
+C                     *         *
+C                     *    I    *
+C                     *    .    * COST,SINT
+C                     *    J    *
+C                     *         *
+C                     *         *
+C                     +*********+
+C                          ^
+C                        GRIDRF
+C
+      DO 230 L=1,10
+      I=IPN(L)
+      J=IPL(L)
+      X=ELPCL(I)*COSL(J)
+      Y=ELPDL(I)*SINL(J)
+      XP=X-C1-AX
+      YP=Y-C2-AY
+      RSQ=XP*XP+YP*YP
+      RS=SQRT(RSQ)
+      R1=RS/5280.+1.
+      K=R1
+      R2=K
+      DR=R1-R2
+      K=MIN0(K,790)
+      ITEST=0
+      if (itree(i,j).eq.'2') ITEST=ITEST+1
+      if (itree(i+1,j).eq.'2') ITEST=ITEST+1
+      if (itree(i,j+1).eq.'2') ITEST=ITEST+1
+      if (itree(i+1,j+1).eq.'2') ITEST=ITEST+1
+      IF (ITEST.GE.1) THEN
+      ncatg=2
+      else
+      NCATG=1
+      endif
+      X1218=W1218(NCATG)
+      CK1=CW(K)+DR*(CW(K+1)-CW(K))
+      SK1=SW(K)+DR*(SW(K+1)-SW(K))
+      CCN=X12(15)+RSQ
+      CC=1./CCN
+      RHOL=ABS(XP*X12(20)+YP*X12(21))
+      CCC=CCN*RHOL/(X12(15)+RHOL*RHOL)
+      A=RS*X12(9) -X1218*(YP*CK1+XP*SK1)+CCC*X12(23)
+      B=RS*X12(10)+X1218*(XP*CK1-YP*SK1)+CCC*X12(24)
+C
+C        FSOHTH=-1. FOR SOUTHERN HEMISPHERE; =1. FOR NORTHERN HEMIS.
+C
+C      A=RS*X12(9) -FSOUTH*X1218*(YP*CK1+FSOUTH*XP*SK1)+CCC*X12(23)
+C      B=RS*X12(10)+FSOUTH*X1218*(XP*CK1-FSOUTH*YP*SK1)+CCC*X12(24)
+c
+      SS=SQRT(A*A+B*B)
+      WIND(L)=X12(4)*SS*CC*3600./5280.
+        IF (SS.LT.1.E-5) THEN
+        Z=180.
+        ELSE
+       Z      =ATAN2(A,B)/1.74532925199433E-2+180.
+         ENDIF
+       TDIR(L)=AMOD(Z+PHI,360.)
+ 230   CONTINUE
+C++++++++END COMPUTATION OF VECTOR WINDS++++++++++++++++++++++++++++++++
+C
+C        WRITING HISTORICAL VECTOR WINDS AT SELECTED POINTS ONTO TAPE
+CCCCC      WRITE(20)   IME,WIND
+CCCCC      WRITE(30)   IME,TDIR
+      RETURN
+      END

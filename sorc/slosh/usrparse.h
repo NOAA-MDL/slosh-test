@@ -12,8 +12,10 @@ typedef struct {
                        * respectively */
    char *bsnDir;      /* Name of basin directory. */
    char *bntDir;      /* Name of bnt directory. */
-   char *envDir;      /* Name of output rex directory (Assuming a number of runs)*/
-   char *rexDir;      /* Name of output env directory (Assuming a number of runs)*/
+   char *envDir;      /* Name of output env directory (Assuming a number of runs)*/
+   char *envDir2;     /* Name of second env output directory (to allow for both
+                         6hr and 1hr envelope saves) */
+   char *rexDir;      /* Name of output rex directory (Assuming a number of runs)*/
    int f_appendBsn;   /* Flag to append the basin to the rexDir and envDir */
    char *tideDir;     /* Name of tide directory. */
    char *trkFile;     /* Name of 100 point track file. */
@@ -23,6 +25,7 @@ typedef struct {
    char *doneFile;    /* Name of file that exists when lstFile is complete. */
    sChar lstType;     /* [0] original, 1 new format for lstFile.*/
    int rexSaveMin;    /* [10] how often to save the rex file. */
+   int envSave2Min;   /* [0] how often in minutes to save to envDir2. */
    int f_tide;      /* Flag to run tides, [0] surge, [1] surge+tideV1, [-1]
                        * tidesV1 only. [2] surge+tideV2 [21] surge+tideV2.1
                        * [3] surge+tideV3 */
@@ -33,7 +36,8 @@ typedef struct {
    int spinUp;        /* Number of seconds of spin up for tide code. */
    int f_saveSpinUp;  /* [0] false, 1, true : want to save spin up to rex. */
    double asOf;       /* as of time (before is hindcast, after is forecast) */
-
+   short f_restart;   /* [0] false, 1, true : want to save restart files. */
+   short f_wave;      /* [0] no wave, 1 wave version 1. */
 } userType;
 
 int ParseTide (const char *next, int *f_tide, int *tideThresh);

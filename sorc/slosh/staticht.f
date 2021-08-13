@@ -1,0 +1,42 @@
+      SUBROUTINE STATICHT (I,J,ANS)
+C        JELESNIANSKI   SEPTEMBER 1980 TDL   IBM 360/195
+C        Taylor         May 2013 MDL
+C
+C        PURPOSE
+C           Borrowed most of this code from BDRYHT to compute the static
+C        height for deep water cells where we want to force the tide:
+C
+C        DATA SET USE
+C           NONE
+C
+C        VARIABLES
+C             AX AY = COMPS OF TOTAL STRM MOTION, ADVANCED IN 'STMVAL'
+C             C1 C2 = INITIAL COMPS OF STORM, SET IN 'INTVAL'
+C COSL(  ) SINL(  ) = CO-SINE OF ANGLE, RAYS TO X-AXIS, (HEIGHT POINTS
+C             IMXB1 = MAX I-SUBSCRIPT FOR HEIGHT POINTS
+C            SEADTM = INITIAL HEIGHT OF THE SEA (NO STATIC HEIGHTS)
+C         DELP(800) = STATIC HEIGHTS AT MILE INTERVALS FROM STORM CENTER
+C        HB(  ,   ) = SURGE HEIGHTS
+C        ITREE( , ) = A,   ON AT LEAST ONE BOUNDARY CORNER AS STATIC
+C                     HEIGHT IS USED
+      INCLUDE 'parm.for'
+C
+      COMMON /DUMMY4/ S(800),C(800),P(800),DELP(800)
+      COMMON /STRMSB/ C1,C2,C21,C22,AX,AY,PTENCY,RTENCY
+      COMMON /DATUM/  SEADTM,DTMLAK
+C
+C       BOUNDARY SQUARES DETERMINED IN SUBROUTINE DEPSFC
+C
+      XR=ELPCL(I)*COSL(J)
+      YR=ELPDL(I)*SINL(J)
+      X=XR-C1-AX
+      Y=YR-C2-AY
+      RSQ=X*X+Y*Y
+      R1=SQRT(RSQ)/5280.+1.
+      K=R1
+      R2=K
+      DR=R1-R2
+      K=MIN0(K,790)
+      ANS=DELP(K)+DR*(DELP(K+1)-DELP(K))+SEADTM
+      RETURN
+      END

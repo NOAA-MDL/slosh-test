@@ -11,9 +11,11 @@ typedef struct {
   slosh_type st;
   TideGridType tgrid;
   double modelClock;
-  char xxx_name[MAX_PATH];
-  char trk_name[MAX_PATH];
+  char xxx_name[MY_MAX_PATH];
+  char trk_name[MY_MAX_PATH];
   rexType rex;
+  char bsnAbrev[5];
+  double tideClock;
 } global_type;
 
 int SloshRun_Init (Tcl_Interp *interp);

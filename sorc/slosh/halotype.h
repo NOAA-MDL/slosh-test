@@ -4,7 +4,7 @@
 /*
  * Assumes following Defines in makefile... use -D option
  * _UNIX_  : For unix machines.
- * _LINUX_ : For Linux Opertaing system.
+ * _LINUX_ : For Linux Operating system.
  *
  * HAVE_TCL  : To compile code assuming TCL/TK.
  * (obsolete) _sysStandAlone : (obsolete) was used for standalone exe on MS-Windows
@@ -58,7 +58,9 @@
 
 /* SLOSH Basin dimensions */
 #define BAS_X 999
-#define BAS_Y 1399
+#define BAS_Y 1655
+/* Oct. 2018. Increase to allow HSF1 (425x1500) and HMS8 (655x852) */
+/* Jun. 2019. Increase to allow HW4 (340x1650) and SCP (999x1425) == (999x1655) */
 
 /*
  * A data structure containing [0..255] for RGB values, as opposed to XColor

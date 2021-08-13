@@ -71,6 +71,79 @@ static sInt4 Data_WriteTrk (FILE * fp2, const char *trkName, int f_tide)
    sprintf (buff1, "envl");
    FWRITE_LIT (buff1, sizeof (char), 4, fp2);
 
+/* Read the new format of trk file 
+ *  *  * Added by Huiqing Liu/MDL Feb. 2016*/
+
+   fgets (buff2, 200, fp);
+
+   rewind (fp);
+
+   if (strncmp(buff2, "FileVersion=", 12) == 0) {
+      printf ("New format of trk file %s\n", buff2);
+ /* skip the header file */
+      for (i = 0; i < 16; i++) {
+          fgets (buff2, 200, fp);
+      }
+
+      for (i = 0; i < 100; i++) {
+          fgets (buff2, 200, fp);
+          for (j = 0; j < 1; j++) {
+              buff2[j] = ' ';
+          }
+          sscanf (buff2, "%d %f %f %f %f", &j, &lat, &lon, 
+               &delp, &rmax);
+           spd=0.;
+           dir=0.;
+           FWRITE_LIT (&lat, sizeof (float), 1, fp2);
+           FWRITE_LIT (&lon, sizeof (float), 1, fp2);
+           FWRITE_LIT (&spd, sizeof (float), 1, fp2);
+           FWRITE_LIT (&dir, sizeof (float), 1, fp2);
+           FWRITE_LIT (&delp, sizeof (float), 1, fp2);
+           FWRITE_LIT (&rmax, sizeof (float), 1, fp2);
+      }
+    rewind (fp);
+    /* skip the header file */
+      for (i = 0; i < 6; i++) {
+          fgets (buff2, 200, fp);
+      }
+/* read the landfall,begin and end hour */
+      fgets (buff2, 200, fp);
+      k = (int) atoi (buff2 + 13);
+      printf("landful=%s\n",buff2+13);
+
+      fgets (buff2, 200, fp);
+      printf("begin=%s\n",buff2+10);
+      i = (int) atoi (buff2 + 10);
+ 
+      fgets (buff2, 200, fp);
+      printf("ending=%s\n",buff2+8);
+      j = (int) atoi (buff2 + 8);
+
+      c_temp = (char) i;
+      FWRITE_LIT (&c_temp, sizeof (char), 1, fp2);
+      c_temp = (char) j;
+      FWRITE_LIT (&c_temp, sizeof (char), 1, fp2);
+      c_temp = (char) k;
+      FWRITE_LIT (&c_temp, sizeof (char), 1, fp2);
+
+      fgets (buff2, 200, fp);
+/* read the datum ht1 and ht2 */
+      fgets (buff2, 200, fp);
+      ht1 = (float) atof (buff2 + 11);
+      printf("ht1=%s\n",buff2+11);
+      fgets (buff2, 200, fp);
+      printf("ht2=%s\n",buff2+10);
+      ht2 = (float) atof (buff2 + 10);
+
+   /* Tide mode of program run should over-ride the initWater. */
+      InitWater_TideModeOverride (&ht1, f_tide, &ht2);
+      FWRITE_LIT (&ht1, sizeof (float), 1, fp2);
+      FWRITE_LIT (&ht2, sizeof (float), 1, fp2);
+      fclose (fp);
+
+   } else {
+
+
    fgets (buff2, 200, fp);
    fgets (buff2, 200, fp);
    for (i = 0; i < 100; i++) {
@@ -126,7 +199,9 @@ static sInt4 Data_WriteTrk (FILE * fp2, const char *trkName, int f_tide)
    FWRITE_LIT (&ht2, sizeof (float), 1, fp2);
 
    fclose (fp);
+ }
    return (4 + 600 * sizeof (float) + 3 + 2 * sizeof (float));
+  
 }
 
 /*****************************************************************************

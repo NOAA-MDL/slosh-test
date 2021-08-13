@@ -185,7 +185,6 @@
 #     (stm_num,hour,delp)
 #     (stm_num,hour,rmax)
 #
-#   source_dir     : Contains the directory of the .tcl files.
 #   SLOSH_resize_flag (G) 1 if we are in the middle of a ResizeMain event.
 #                   (This is used so I can update idletasks to let the scroll
 #                   bars settle down and not get called 2 or 3 times.)
@@ -202,32 +201,34 @@ if {[catch halo_pixmap_init] != 0} {
     exit
   }
 }
-# Set up the source_dir variable.
-set source_dir [file dirname [info script]]
-if {$source_dir == "."} {
-  set source_dir [pwd]
+# Set up the rootDir variable.
+set rootDir [file normalize [pwd]]
+if {! [file isdirectory "$rootDir/exec"]} {
+  tk_messageBox -message "Error - Expecting $rootDir/exec to exist"
+  exit
 }
-if {[file isdirectory "$source_dir/tclsrc"]} {
-  set src "$source_dir/tclsrc"
-} else {
-  set src $source_dir
-}
-source "$src/scroll.tcl"
-source "$src/dialog2.tcl"
-source "$src/pane.tcl"
-source "$src/text2.tcl"
-source "$src/entry2.tcl"
-source "$src/atdir3.tcl"
-source "$src/label.tcl"
 
-source "$src/graph.tcl"
-source "$src/zoom.tcl"
-source "$src/util.tcl"
-source "$src/hotline.tcl"
-source "$src/track.tcl"
-source "$src/runlist.tcl"
-source "$src/rungraph.tcl"
-source "$src/meow.tcl"
+# Set up the tclsrcDir variable.
+set srcDir [file dirname [info script]]
+if {$srcDir == "."} {
+  set srcDir [pwd]
+}
+source "$srcDir/scroll.tcl"
+source "$srcDir/dialog2.tcl"
+source "$srcDir/pane.tcl"
+source "$srcDir/text2.tcl"
+source "$srcDir/entry2.tcl"
+source "$srcDir/atdir3.tcl"
+source "$srcDir/label.tcl"
+
+source "$srcDir/graph.tcl"
+source "$srcDir/zoom.tcl"
+source "$srcDir/util.tcl"
+source "$srcDir/hotline.tcl"
+source "$srcDir/track.tcl"
+source "$srcDir/runlist.tcl"
+source "$srcDir/rungraph.tcl"
+source "$srcDir/meow.tcl"
 
 # Set a default font to use in any widgets.
 catch {font delete default_slosh}
@@ -637,7 +638,7 @@ proc run_GetIni {ray_name filename flag} {
   }
 
   if {(! [info exists ray(path,Base)]) || ($ray(path,Base) == "Default")} {
-    set ray(path,Base) $ray(src_dir)
+    set ray(path,Base) $ray(root_dir)
   }
 # Read the sloshdsp.ini file... get to the correct section...
   set lcn_fp [open "$filename" "r"]
@@ -851,14 +852,29 @@ proc run_BasinDraw {ray_name} {
 
 # Draw the basin grid if asked to.
   if {$ray(slosh_grid) == 1} {
-    halo_bsnDraw $img $ray(Zwin) $ray(grid_pen) 0 0 0 0 $ray(i_min) \
+    set drawPen $ray(grid_pen)
+    set Sub_Land 0
+    set dspDD3 0
+    set LandOnly -9999 ;# Land is terrain greater than this value in feet.
+    set SurgeOnly -20 ;# inundation level is greater than this value in feet.
+
+    halo_bsnDraw $img $ray(Zwin) $drawPen noFill $ray(i_min) \
           $ray(i_max) $ray(j_min) $ray(j_max) 1 \
           $ray(DD3_pen1) $ray(DD3_pen2) $ray(DD3_pen3) $ray(DD3_pen4) \
           $ray(DD3_pen5) $ray(DD3_pen6) $ray(DD3_pen7) $ray(DD3_pen8) \
           $ray(DD3_pen9) $ray(DD3_pen10) $ray(DD3_pen11) $ray(DD3_pen12) \
           $ray(DD3_pen13) $ray(DD3_pen14) $ray(DD3_pen15) $ray(DD3WaterBndry) \
           $ray(DD3Band1a) $ray(DD3Band1b) $ray(DD3Band2a) $ray(DD3Band2b) \
-          $ray(DD3_Shade) grid_only 0 0
+          $ray(DD3_Shade) grid_only $Sub_Land $dspDD3 $LandOnly $SurgeOnly
+
+#    halo_bsnDraw $img $ray(Zwin) $ray(grid_pen) 0 0 0 0 $ray(i_min) \
+#          $ray(i_max) $ray(j_min) $ray(j_max) 1 \
+#          $ray(DD3_pen1) $ray(DD3_pen2) $ray(DD3_pen3) $ray(DD3_pen4) \
+#          $ray(DD3_pen5) $ray(DD3_pen6) $ray(DD3_pen7) $ray(DD3_pen8) \
+#          $ray(DD3_pen9) $ray(DD3_pen10) $ray(DD3_pen11) $ray(DD3_pen12) \
+#          $ray(DD3_pen13) $ray(DD3_pen14) $ray(DD3_pen15) $ray(DD3WaterBndry) \
+#          $ray(DD3Band1a) $ray(DD3Band1b) $ray(DD3Band2a) $ray(DD3Band2b) \
+#          $ray(DD3_Shade) grid_only 0 0
   }
 #### tk_messageBox -message "here I am 4c1b"
 
@@ -870,14 +886,31 @@ proc run_BasinDraw {ray_name} {
       set min [expr $min *3.281]
       set max [expr $max *3.281]
     }
-    halo_bsnDraw $img $ray(Zwin) $ray(grid_pen) $ray(cont_min_pen) \
-          $ray(cont_max_pen) $max $min $ray(i_min)\
+    set legendRanges ""
+    set lenTable [expr ($ray(cont_max_pen) - $ray(cont_min_pen) + 1)]
+    set ratio [expr ($max - $min) / ($lenTable + 0.0)]
+    for {set i 0} {$i < $lenTable} {incr i} {
+      # f_flag is 0 for (a,b), 1 for (a,b], 2 for [a,b), and 3 for [a,b]
+      set f_flag 3
+      lappend legendRanges [list [expr $i + $ray(cont_min_pen)] [expr ($max - ($i + 1) * $ratio)] [expr ($max - $i * $ratio)] $f_flag] 
+    }
+    halo_bsnDraw $img $ray(Zwin) $drawPen $legendRanges $ray(i_min) \
           $ray(i_max) $ray(j_min) $ray(j_max) 1 \
           $ray(DD3_pen1) $ray(DD3_pen2) $ray(DD3_pen3) $ray(DD3_pen4) \
           $ray(DD3_pen5) $ray(DD3_pen6) $ray(DD3_pen7) $ray(DD3_pen8) \
           $ray(DD3_pen9) $ray(DD3_pen10) $ray(DD3_pen11) $ray(DD3_pen12) \
           $ray(DD3_pen13) $ray(DD3_pen14) $ray(DD3_pen15) $ray(DD3WaterBndry) \
-          $ray(DD3Band1a) $ray(DD3Band1b) $ray(DD3Band2a) $ray(DD3Band2b) $ray(DD3_Shade) no_grid 0 0
+          $ray(DD3Band1a) $ray(DD3Band1b) $ray(DD3Band2a) $ray(DD3Band2b) \
+          $ray(DD3_Shade) no_grid $Sub_Land $dspDD3 $LandOnly $SurgeOnly
+
+#    halo_bsnDraw $img $ray(Zwin) $ray(grid_pen) $ray(cont_min_pen) \
+#          $ray(cont_max_pen) $max $min $ray(i_min)\
+#          $ray(i_max) $ray(j_min) $ray(j_max) 1 \
+#          $ray(DD3_pen1) $ray(DD3_pen2) $ray(DD3_pen3) $ray(DD3_pen4) \
+#          $ray(DD3_pen5) $ray(DD3_pen6) $ray(DD3_pen7) $ray(DD3_pen8) \
+#          $ray(DD3_pen9) $ray(DD3_pen10) $ray(DD3_pen11) $ray(DD3_pen12) \
+#          $ray(DD3_pen13) $ray(DD3_pen14) $ray(DD3_pen15) $ray(DD3WaterBndry) \
+#          $ray(DD3Band1a) $ray(DD3Band1b) $ray(DD3Band2a) $ray(DD3Band2b) $ray(DD3_Shade) no_grid 0 0
   }
 }
 
@@ -1462,37 +1495,6 @@ proc run_SLOSHRun {ray_name} {
   upvar #0 $ray_name ray
   upvar #0 $ray(track_name) Track
 
-# Test if we have permission to run...
-#  set f_permission 0
-#  if {[info exists ray(S217)]} {
-#    set line [split $ray(S217) :]
-#    set s217 [lindex $line 0]
-#    set tOffset [clock scan [lindex $line 1] -gmt true]
-#    if {[run_ColorMatch $ray(S214) $ray(S215) 0 $s217 $tOffset]} {
-#      set f_permission 1
-#    }
-#  }
-#  if {! $f_permission} {
-#    set IP [split [getIp] .]
-#    set f1 [lindex $IP 0]
-#    set f2 [lindex $IP 1]
-#    set f3 [lindex $IP 2]
-#    if {($f1 == 140) && ($f2 == 90) && ($f3 == 176)} {
-#      set f_permission 0
-#    }
-#    if {($f1 == 140) && ($f2 == 90) && ($f3 == 24)} {
-#      set f_permission 0
-#    }
-#    if {($f1 == 10) && ($f2 == 201) && ($f3 == 10)} {
-#      set f_permission 0
-#    }
-#  }
-#  if {! $f_permission} {
-#    tk_messageBox -message "Sorry, you do not have permission to run the SLOSH model\n\
-#                            Please Contact Arthur Taylor at arthur.taylor@noaa.gov"
-#    return
-#  }
-
 # For the time being... run means go through all loaded tracks.
   if {$Track(last_num) == 0} {
     tk_messageBox -message "Please load a track first."
@@ -1666,15 +1668,31 @@ proc run_SLOSHRun {ray_name} {
         if {! [file exists $bhc]} {
            # try 'etss' 'retired' 'other' subfolders of tide_dir
            set bhc "$ray(tide_dir)/etss/$bsn_name\.bhc"
-           set adj "$ray(tide_dir)/etss/$bsn_name\.adj"
            if {! [file exists $bhc]} {
               set bhc "$ray(tide_dir)/retired/$bsn_name\.bhc"
-              set adj "$ray(tide_dir)/retired/$bsn_name\.adj"
               if {! [file exists $bhc]} {
                  set bhc "$ray(tide_dir)/other/$bsn_name\.bhc"
-                 set adj "$ray(tide_dir)/other/$bsn_name\.adj"
                  if {! [file exists $bhc]} {
-                    tk_messageBox -message "Turning off the tide because I can't find file $bhc"
+                    tk_messageBox -message "Turning off the tide because I can't find $bsn_name\.bhc \
+                                            \n\nYou may need to gunzip it in $ray(tide_dir)."
+                    set f_tide 0
+                    set ray(f_tide) 0
+                 }
+              }
+           }
+        }
+      }
+      if {$f_tide != 0} {
+        if {! [file exists $adj]} {
+           # try 'etss' 'retired' 'other' subfolders of tide_dir
+           set adj "$ray(tide_dir)/etss/$bsn_name\.adj"
+           if {! [file exists $adj]} {
+              set adj "$ray(tide_dir)/retired/$bsn_name\.adj"
+              if {! [file exists $adj]} {
+                 set adj "$ray(tide_dir)/other/$bsn_name\.adj"
+                 if {! [file exists $adj]} {
+                    tk_messageBox -message "Turning off the tide because I can't find $bsn_name\.adj \
+                                            \n\nYou may need to gunzip it in $ray(tide_dir)."
                     set f_tide 0
                     set ray(f_tide) 0
                  }
@@ -1694,6 +1712,7 @@ proc run_SLOSHRun {ray_name} {
       } else {
         set spinUp $ray(spinUp)
       }
+      cd $ray(DATA_dir)
       set temp [run_C_Init "$bsn_file\.trk" "$bsn_file" \
                 "$env_file" "ft40" \
                 $f_tide $ft03 $bhc $adj $spinUp $ray(saveSpinUp) \
@@ -1996,20 +2015,22 @@ proc run_RedrawMain {ray_name redraw_cnty redraw_scale} {
         halo_latlonGridDraw $ray(canv).safe $ray(Zwin) 1 0 $large 0 1
       }
     }
-    foreach i [glob -nocomplain "$ray(data_dir)/*.mrt"] {
+    foreach i [glob -nocomplain "$ray(mrt_dir)/*.mrt"] {
       if {[slosh_fileCheck $i 4] == 0} {
         # draw counties.
+        set drawPen2 -2
+        set countyFont {Times -17 {bold}}
         if {$ray(cnty_text) == 1} {
           set val [halo_cntyDraw $ray(canv).safe $i $ray(Zwin) $cnty_pen \
-                $ray(land_pen) $ray(text_pen) 0 1]
+                $ray(land_pen) $ray(text_pen) 0 1 $drawPen2 $countyFont]
         } else {
           set val [halo_cntyDraw $ray(canv).safe $i $ray(Zwin) $cnty_pen \
-                $ray(land_pen) -2 0 1]
+                $ray(land_pen) -2 0 1 $drawPen2 $countyFont]
         }
         if {$val == 1} {
           # draw states.
           halo_cntyDraw $ray(canv).safe $i $ray(Zwin) $ray(coast_pen) \
-                -2 -2 1 1
+                -2 -2 1 1 $drawPen2 $countyFont
         }
       }
     }
@@ -2061,8 +2082,8 @@ proc run_RedrawMain {ray_name redraw_cnty redraw_scale} {
 # 2) Copy safe to img.
 #           Makes sure that new transparent cells are transparent.
   $img copy $ray(canv).safe 0
-# If needed, this is a reasonable place to show what we've drawn so far.
 
+# If needed, this is a reasonable place to show what we've drawn so far.
   if {$ray(Current) != ""} {
 
 # 3) Draw Basin.
@@ -2271,13 +2292,13 @@ proc run_Configuration {ray_name {flag 0}} {
     run_SaveIni $ray_name $ray(ini_file)
     catch {destroy $tl}
   } elseif {$flag == 2} {
-    set ray(n_track_dir) $ray(src_dir)/trkfiles
-    set ray(n_bnt_dir) $ray(src_dir)/bnt
-    set ray(n_tide_dir) $ray(src_dir)/tidefile.ec2014
-    set ray(n_dta_dir) $ray(src_dir)/dta
-    set ray(n_rex_dir) $ray(src_dir)/rexfiles
-    set ray(n_env_dir) $ray(src_dir)/output
-    set ray(n_out_dir) $ray(src_dir)/output
+    set ray(n_track_dir) $ray(root_dir)/../dev/storms
+    set ray(n_bnt_dir) $ray(root_dir)/../parm/bnt
+    set ray(n_tide_dir) $ray(root_dir)/../parm/tidefile.ec2014
+    set ray(n_dta_dir) $ray(root_dir)/../parm/dta
+    set ray(n_rex_dir) $ray(root_dir)/../dev/output
+    set ray(n_env_dir) $ray(root_dir)/../dev/output
+    set ray(n_out_dir) $ray(root_dir)/../dev/output
   }
 }
 
@@ -2344,9 +2365,13 @@ proc run_Header {tl ray_name} {
 
   $tl.txt insert end "SLOSH Model ($ray(Version))\n"
   $tl.txt insert end "Date: $ray(Date)\n\n"
-  $tl.txt insert end "Authors: [lindex $ray(AuthorList) 0]\n"
-  for {set i 1} {$i < [llength $ray(AuthorList)]} {incr i} {
-    $tl.txt insert end "[lindex $ray(AuthorList) $i]\n"
+  $tl.txt insert end "Authors:\n"
+  for {set i 0} {$i < [llength $ray(AuthorList)]} {incr i 2} {
+    if {[expr $i + 1] >= [llength $ray(AuthorList)]} {
+      $tl.txt insert end "[lindex $ray(AuthorList) $i]\n"
+    } else {
+      $tl.txt insert end "[lindex $ray(AuthorList) $i], [lindex $ray(AuthorList) [expr $i + 1]]\n"
+    }
   }
   $tl.txt insert end "$ray(aboutExtra)\n\n"
   $tl.txt tag add Tag1 0.0 end
@@ -2697,7 +2722,7 @@ proc run_Options {ray_name tl f_validate} {
     set ray(spinUp) $val3
     set ray(saveSpinUp) $val4
     set ray(f_stat) $val5
-    run_SaveIni $ray_name $ray(src_dir)/sloshrun.ini
+    run_SaveIni $ray_name $ray(root_dir)/sloshrun.ini
     catch {destroy $tl}
   }
 }
@@ -2711,7 +2736,7 @@ proc run_Quit {ray_name} {
 
 # check to see if we are last instance... if yes save to sloshrun.ini.
 # No... Just save to sloshrun.ini
-  run_SaveIni $ray_name $ray(src_dir)/sloshrun.ini
+  run_SaveIni $ray_name $ray(root_dir)/sloshrun.ini
 
   set f_exit 0
   if {$slosh_ExitOnClose == 1} {
@@ -2959,25 +2984,12 @@ proc run_GetVersionNumber {ray_name} {
   upvar #0 $ray_name ray
   global FIRST_INSTANCE
 
-  if {$FIRST_INSTANCE == 1} {
-   # Seems that first_instance always == 1
-#    tk_messageBox -message "hello world"
-#    for {set i 0} {$i < 16} {incr i} {
-#      if {[file exists $ray(src_dir)/sloshrun.in[base36 $i]] == 1} {
-#        file copy -force $ray(src_dir)/sloshrun.in[base36 $i] sloshrun.ini
-#        catch {file delete -force $ray(src_dir)/sloshrun.in[base36 $i]}
-#        catch {file delete -force $ray(src_dir)/basin[base36 $i].llx}
-#        catch {file delete -force $ray(src_dir)/basin[base36 $i]}
-#        catch {file delete -force $ray(src_dir)/basin[base36 $i].trk}
-#      }
-#    }
-  }
   set first -1
   set recent -1
-  set tm [file mtime $ray(src_dir)/sloshrun.ini]
+  set tm [file mtime $ray(root_dir)/sloshrun.ini]
   for {set i 0} {$i < 16} {incr i} {
-    if {[file exists $ray(src_dir)/basin[base36 $i].ini] == 1} {
-      set time [file mtime $ray(src_dir)/basin[base36 $i].ini]
+    if {[file exists $ray(root_dir)/basin[base36 $i].ini] == 1} {
+      set time [file mtime $ray(root_dir)/basin[base36 $i].ini]
       if {$tm < $time} {
         set recent [base36 $i]
         set time $tm
@@ -2997,11 +3009,11 @@ proc run_GetVersionNumber {ray_name} {
     }
     for {set i 0} {$i < 15} {incr i} {
       set small $i
-      set tm [file mtime $ray(src_dir)/basin[format "%1s" [lindex $lst $i]].ini]
+      set tm [file mtime $ray(root_dir)/basin[format "%1s" [lindex $lst $i]].ini]
       for {set j [expr $i +1]} {$j < 16} {incr j} {
-        if { $tm > [file mtime $ray(src_dir)/basin[format "%1s" [lindex $lst $j]].ini]} {
+        if { $tm > [file mtime $ray(root_dir)/basin[format "%1s" [lindex $lst $j]].ini]} {
           set small $j
-          set tm [file mtime $ray(src_dir)/basin[format "%1s" [lindex $lst $j]].ini]
+          set tm [file mtime $ray(root_dir)/basin[format "%1s" [lindex $lst $j]].ini]
         }
       }
       set temp [lindex $lst $i]
@@ -3009,7 +3021,7 @@ proc run_GetVersionNumber {ray_name} {
       set lst [lreplace $lst $small $small $temp]
     }
     for {set i 0} {$i < 8} {incr i} {
-      catch {file delete -force $ray(src_dir)/basin[lindex $lst $i].ini}
+      catch {file delete -force $ray(root_dir)/basin[lindex $lst $i].ini}
       catch {file delete -force $ray(src_dir)/basin[lindex $lst $i].llx}
       catch {file delete -force $ray(src_dir)/basin[lindex $lst $i]}
       catch {file delete -force $ray(src_dir)/basin[lindex $lst $i].trk}
@@ -3019,12 +3031,12 @@ proc run_GetVersionNumber {ray_name} {
   set ray(version_number) [base36 $first]
   if {$recent == -1} {
 # Did not find any newer copies, so copy sloshrun.ini
-    file copy -force $ray(src_dir)/sloshrun.ini \
-          $ray(src_dir)/basin$ray(version_number).ini
+    file copy -force $ray(root_dir)/sloshrun.ini \
+          $ray(root_dir)/basin$ray(version_number).ini
   } else {
 # recent has the good copy.
-    file copy -force $ray(src_dir)/basin$recent.ini \
-          $ray(src_dir)/basin$ray(version_number).ini
+    file copy -force $ray(root_dir)/basin$recent.ini \
+          $ray(root_dir)/basin$ray(version_number).ini
   }
 }
 
@@ -3041,10 +3053,10 @@ proc run_rayInit {ray_name} {
 
 # The INI_LIST is the array elements to load/save from the .ini file.
   global INI_LIST
-  set INI_LIST "bnt_dir dta_dir tide_dir track_dir rex_dir adv_dir env_dir out_dir trk_file \
+  set INI_LIST "bnt_dir mrt_dir DATA_dir dta_dir tide_dir track_dir rex_dir adv_dir env_dir out_dir trk_file \
                 dta_file Current Type surge_unit wind_unit dist_unit deg_unit \
                 latlon_grid latlon_gridspace f_smooth rex_timer disp_timer spinUp saveSpinUp f_stat imp_rex_dir \
-                S217 S214 S215 latlon_raised cnty_text f_locations f_buoys \
+                latlon_raised cnty_text f_locations f_buoys \
                 rex_version f_surge f_tide"
 
   set about [run_C_Init -V]
@@ -3070,8 +3082,15 @@ proc run_rayInit {ray_name} {
       lappend ray(AuthorList) $author
     }
   }
+  set aboutAuthor2 [string trim [lindex $aboutList 5]]
+  foreach author [split $aboutAuthor2 ,] {
+    set author [string trim $author]
+    if {$author != ""} {
+      lappend ray(AuthorList) $author
+    }
+  }
 
-  set ray(aboutExtra) [lindex $aboutList 5]
+  set ray(aboutExtra) [lindex $aboutList 6]
 
   set ray(min_width) 500
   set ray(min_height) 500
@@ -3096,7 +3115,7 @@ proc run_rayInit {ray_name} {
   set ray(water_pen) 156
   set ray(text_pen) 157
   set ray(cnty_text) 1
-  set ray(f_locations) 1
+  set ray(f_locations) 0
   set ray(f_buoys) 1
   set ray(coast_pen) 158
   set ray(grid_pen) 159
@@ -3145,8 +3164,8 @@ proc run_rayInit {ray_name} {
   set ray(Type) "NULL"
   set ray(Ext) "---"
   set ray(surge_unit) f
-  set ray(latlon_grid) 0
-  set ray(latlon_gridspace) 1
+  set ray(latlon_grid) 4
+  set ray(latlon_gridspace) 0
   set ray(Start_Run) 0
   set ray(slosh_grid) 1
   set ray(f_smooth) 1
@@ -3170,33 +3189,42 @@ proc run_rayInit {ray_name} {
   set ray(FollowCursor) 0
   set ray(AnimPause) 1
 
-  set ray(dist_unit) sm
+  set ray(dist_unit) km
   set ray(wind_unit) 1
   set ray(deg_unit) dec
-  set ray(bnt_dir) "$ray(src_dir)/bnt"
-  set ray(tide_dir) "$ray(src_dir)/tidefile.ec2014"
-  set ray(dta_dir) "$ray(src_dir)/dta"
-  set ray(track_dir) "$ray(src_dir)/trkfiles"
-  set ray(rex_dir) "$ray(src_dir)/rexfiles"
-  set ray(adv_dir) "$ray(src_dir)"
+  set ray(bnt_dir) "$ray(root_dir)/../parm/bnt"
+  set ray(mrt_dir) "$ray(root_dir)/geodata"
+  set ray(DATA_dir) "$ray(root_dir)"
+  set ray(tide_dir) "$ray(root_dir)/../parm/tidefile.ec2014"
+  set ray(dta_dir) "$ray(root_dir)/../parm/dta"
+  set ray(track_dir) "$ray(root_dir)/../dev/storms"
+  set ray(rex_dir) "$ray(root_dir)/../dev/output"
+  set ray(adv_dir) "$ray(root_dir)"
   set ray(imp_rex_dir) $ray(rex_dir)
-  set ray(env_dir) "$ray(src_dir)/output"
-  set ray(out_dir) "$ray(src_dir)/output"
+  set ray(env_dir) "$ray(root_dir)/../dev/output"
+  set ray(out_dir) "$ray(root_dir)/../dev/output"
 
-  if {(! [file isfile $ray(src_dir)/sloshrun.ini])} {
+  set ray(latlon_raised) 0
+  set ray(f_surge) 1
+  set ray(f_tide) 2
+
+  if {(! [file isfile $ray(root_dir)/sloshrun.ini])} {
+    if {(! [info exists ray(path,Base)]) || ($ray(path,Base) == "Default")} {
+      set ray(path,Base) $ray(root_dir)
+    }
     # Save defaults which have already been loaded.
-    run_SaveIni $ray_name $ray(src_dir)/sloshrun.ini
+    run_SaveIni $ray_name $ray(root_dir)/sloshrun.ini
   }
-  if {[slosh_fileCheck "$ray(src_dir)/sloshrun.ini" 6] != 0} {
-    tk_messageBox -message "FATAL Error: Can not read/write the file $ray(src_dir)/slsohrun.ini"
+  if {[slosh_fileCheck "$ray(root_dir)/sloshrun.ini" 6] != 0} {
+    tk_messageBox -message "FATAL Error: Can not read/write the file $ray(root_dir)/slsohrun.ini"
     exit
   }
 # Find out our version number, basin(0..z).ini
   run_GetVersionNumber $ray_name
 
-  set ray(ini_file) $ray(src_dir)/basin$ray(version_number).ini
+  set ray(ini_file) $ray(root_dir)/basin$ray(version_number).ini
 # Next is so we can have basin1 basin2.llx etc.
-  set ray(bsn_file) $ray(src_dir)/basin$ray(version_number)
+  set ray(bsn_file) $ray(DATA_dir)/basin$ray(version_number)
 
   run_GetIni $ray_name $ray(ini_file) 0
   if {($ray(trk_file) != "") && ([slosh_fileCheck "$ray(trk_file)" 4] != 0)} {
@@ -3695,12 +3723,9 @@ catch {unset SLOSHRUN_ray}
 catch {unset SLOSHRUN_bnt}
 catch {unset SLOSHRUN_track}
 catch {unset SLOSHRun_graph}
-set SLOSHRUN_ray(src_dir) $source_dir
-if {[file isdirectory "$source_dir/geodata"]} {
-  set SLOSHRUN_ray(data_dir) "$source_dir/geodata"
-} else {
-  set SLOSHRUN_ray(data_dir) $source_dir
-}
+set SLOSHRUN_ray(src_dir) $srcDir
+set SLOSHRUN_ray(root_dir) $rootDir
+set SLOSHRUN_ray(data_dir) $rootDir/geodata
 set SLOSHRUN_ray(bnt_name) SLOSHRUN_bnt
 set SLOSHRUN_ray(track_name) SLOSHRUN_track
 set SLOSHRUN_ray(1,graph_name) SLOSHRUN_graph

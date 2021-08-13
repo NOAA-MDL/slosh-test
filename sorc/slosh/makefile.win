@@ -1,254 +1,351 @@
 #!/bin/make
-SHELL = /usr/bin/bash
-
-############################
-# This makefile is intended to create the Windows executable.
+#------------------------------------------------------------------------------
+# makefile.win                                          Last Change: 2021-07-23
+#                                                        Arthur.Taylor@noaa.gov
+#                                                              NWS/OSTI/MDL/DSB
 #
-# USAGE:
-#    make B=gcc342 | gcc450 | gcc461 (B is for build)
+# Makefile for slosh (command line and GUI interface) in MS-Windows
+# Usage:
+#    make                     Build the executable
+#    make install             Move the built executable to the exec dir
+#    make clean               Start with a clean slate
 #
-# Other options...
-#    make MEM=true, DEBUG=true, DOUBLE=true, EXPR=true
-#    EXPR=true means enable experimental options.
-#       EXPR should be false for FOIA CD so it has well tested options.
-############################
-#B=gcc342
-#DOUBLE=false
-B=gcc450
-MEM=false
-DEBUG=false
-DOUBLE=true
-MPI=false
-MINGW=true
-EXPR=true
+#    make B=4.5.0             Version of MinGW or cygwin ([4.5.0], cygwin)
+#------------------------------------------------------------------------------
+SHELL=/bin/bash#              # Shell for script evaluations
+MPI=false#                    # Do we build with MPI?
+MINGW=true#                   # Allow MinGW specific functions
+B?=4.5.0#                     # See usage.
+DOUBLE=true#                  # Use double precision flags
 
-# MPI currently only works for cygwin (gcc453)...
-ifeq ($(MPI),true)
-  B=gcc453
-  MINGW=false
+#-----------------
+# Set up the PATH
+#-----------------
+PATH=/cygdrive/c/sys/MinGW/MinGW-$(B)/bin
+ifeq ($(B),cygwin)
+   MINGW=false
+   # Reset the PATH for 'cygwin' (vs MinGW)
+   PATH=/usr/bin
 endif
 
-############################
-# Set up the path.
-############################
+#-------------------------------------------
+# Set up the called executables and version
+#-------------------------------------------
+CC=gcc
+VER:=$(shell $(CC) --version | head -n1 | cut -d' ' -f2,3 --output-delimiter='-')
+FC=gfortran
+MV=/bin/mv
+RM=/bin/rm
+MKDIR=/bin/mkdir
+
+#--------------------------
+# Set the C compiler flags
+#--------------------------
+CFLAGS=-O3#                   # Optimization level
+CFLAGS+=-Wall#                # Activate all warnings
+CFLAGS+=-Wextra -pedantic -ansi# Activate more warnings
+CFLAGS+=-D_GCC_#              # Use GCC wrappings for binding to FORTRAN
+ifeq ($(DOUBLE),true)
+   CFLAGS+=-DDOUBLE_FORTRAN#  # Compile with double precision in FORTRAN
+endif
+ifeq ($(MPI),true)
+   CFLAGS+=-D_MPI_#           # Compile with MPI
+endif
 ifeq ($(MINGW),true)
-  ifeq ($(B),gcc342)
-  BINDIR = /cygdrive/c/sys/MinGW/MinGW-3.4.2/bin
-  else
-    ifeq ($(B),gcc450)
-    BINDIR = /cygdrive/c/sys/MinGW/MinGW-4.5.0/bin
-    else
-    BINDIR = /cygdrive/c/sys/MinGW/MinGW-4.6.1/bin
-    endif
+   CFLAGS+=-D_MINGW_#         # Allow MinGW specific sleep(), mkdir() functions
+endif
+# CFLAGS+=-DEBUG#             # Turn on debug flags
+CFLAGS+=-D_EXPR_#             # Activate experimental options
+CFLAGS+=-I.#                  # Add '.' to the include path
+
+#-------------------------------
+# Set up the GUI compiler flags
+#-------------------------------
+GUI_FLAGS=$(CFLAGS)
+GUI_FLAGS+=-D_WINDOWS_#       # Use MS-Windows GUI Support
+GUI_FLAGS+=-DHAVE_TCL#        # Use Tcl API connections
+# Order matters with -I
+GUI_FLAGS+=-I../../gui/include/tcl8.5.3_win
+# Following checks if file **doesn't exist**
+ifeq (,$(wildcard ../../gui/include/tcl8.5.3_win/tcl.h))
+  GUI_COMPILE=no
+else
+  GUI_COMPILE=yes
+endif
+
+#-----------------------------------
+# Set up the FORTRAN compiler flags
+#-----------------------------------
+FFLAGS=-O3#                   # Optimization level
+ifeq ($(DOUBLE),true)
+   FFLAGS+=-fdefault-real-8#  # Use double precision flags
+endif
+# FFLAGS+=-fmax-stack-var-size=4000# # Use stack for arrays smaller than 4000 bytes
+# FFLAGS+=-frecursive#        # Treat all procs as recursive with regards to stack array
+# FFLAGS+=-fno-automatic#     # Avoid using the stack
+
+#------------------------------------------
+# Set up the Library flags (order matters)
+#------------------------------------------
+LIBS=-lgfortran
+LIBS+=-Wl,-Bstatic
+
+GUI_LIBS=$(LIBS)
+GUI_LIBS+=-L../../gui/exec -Wl,-Bdynamic -ltk85
+GUI_LIBS+=-L../../gui/exec -Wl,-Bdynamic -ltcl85
+GUI_LIBS+=-L../../gui/exec -Wl,-Bdynamic -lhalo85
+
+LIBS+=-L/usr/lib -lm
+GUI_LIBS+=-L/usr/lib -lm#     # Order matters.
+
+#-------------------------------------
+# Set up the command executable flags
+#-------------------------------------
+CMDFLAGS1=$(CFLAGS) -DCC_VER="\"$(VER)\""# Add compiler version.
+CMDFLAGS2=$(GUI_FLAGS) -DCC_VER="\"$(VER)\""# Add compiler version.
+
+#--------------------------------------------------------
+# Set up the Linker flags
+#   86,115,305 is min after move itree to parm2.f
+#   85,983,233 is min after -fmax-stack-var-size=4000
+#   85,917,697 is min after -fno-automatic (But slower!)
+#   Max size on MS-Windows 10: 885,983,233
+#--------------------------------------------------------
+LDFLAGS=-Wl,--stack,46500000# Set the stack size
+ifeq ($(DOUBLE),true)
+   LDFLAGS=-Wl,--stack,86115305# Set the stack size
+endif
+GUI_LDFLAGS=$(LDFLAGS)
+GUI_LDFLAGS+=-mconsole#       # Provide console diagnostics
+
+#------------------------------------------------------------------------------
+# Source (CSRC, MPISRC, FSRC); HEADERS, FORT_HEADERS; OBJS; Main
+#------------------------------------------------------------------------------
+CSRC=amyutil.c
+CSRC+=clock.c
+CSRC+=complex.c
+CSRC+=myassert.c
+CSRC+=myutil.c
+CSRC+=pack.c
+CSRC+=rex.c
+CSRC+=savellx.c
+CSRC+=setup.c
+CSRC+=slosh2.c
+CSRC+=tendian.c
+CSRC+=tideutil.c
+CSRC+=tio3.c
+CSRC+=usrparse.c
+
+MPISRC=mpiutil.c
+
+#----------------------------------
+# Intrface.f :: Was in this order.
+#----------------------------------
+FSRC=parm2.f#                 # Compile FORTRAN modules first.
+# FSRC+=inital.f
+FSRC+=wind.f
+FSRC+=wav.f
+# FSRC+=tmstep.f
+FSRC+=clnup.f
+FSRC+=cln_hs.f
+FSRC+=dealloc.f
+FSRC+=xy2llx.f
+FSRC+=staticht.f
+FSRC+=issubgrid.f
+FSRC+=casename.f
+
+#--------------------------------
+# Spinup.f :: Was in this order.
+#--------------------------------
+FSRC+=intlhtsub.f
+FSRC+=intlhtadd.f
+FSRC+=momntm2.f
+FSRC+=mntmbd2.f
+FSRC+=flw1dm2.f
+FSRC+=tmstp2.f
+
+FSRC+=initalcommon.f
+
+#---------------------------------
+# runslhg.f :: Was in this order.
+#---------------------------------
+FSRC+=extrpt.f
+FSRC+=intdlt.f
+FSRC+=intval.f
+FSRC+=cnstnt.f
+FSRC+=btmstr.f
+FSRC+=setcmp.f
+FSRC+=stmval.f
+FSRC+=cnsdlt.f
+FSRC+=force1.f
+FSRC+=intwnd.f
+FSRC+=prtstm.f
+FSRC+=crdrd1.f
+FSRC+=alloc.f
+FSRC+=ttimer.f
+FSRC+=initlz.f
+FSRC+=inputn.f
+FSRC+=steron.f
+FSRC+=setdst.f
+FSRC+=depmsy.f
+FSRC+=intlht.f
+FSRC+=crdrd2.f
+FSRC+=crdrd2_n.f
+FSRC+=depsfc.f
+FSRC+=contty.f
+FSRC+=bdryht.f
+FSRC+=channl.f
+FSRC+=flw1dm_block.f#         # subblock and flw1dm combined.
+FSRC+=frcpnt.f
+FSRC+=momntm.f
+FSRC+=mntmbd.f
+FSRC+=fhmxsv.f
+FSRC+=archiv.f
+FSRC+=histry.f
+FSRC+=hstry2.f
+FSRC+=filtrp.f
+FSRC+=hmxsv.f
+FSRC+=smpt2g.f
+FSRC+=flt2g.f
+FSRC+=filter.f
+FSRC+=flter2.f
+FSRC+=snapsh.f
+FSRC+=xfilter.f
+FSRC+=inputn2.f
+FSRC+=spline.f
+FSRC+=splint.f
+ifeq ($(B),intel)
+   FSRC+=rstout_WCOSS.f
+else
+   FSRC+=rstout.f
+endif
+FSRC+=setcmp_hs.f
+FSRC+=hbuv_hs.f
+
+#-------------------------------------
+# FORTRAN code for command line only.
+#-------------------------------------
+FSRC1=wave.f
+FSRC1+=inital.f
+FSRC1+=tmstep.f
+
+# FORTRAN code for GUI only.
+FSRC2=inital_GUI.f
+FSRC2+=tmstep_GUI.f
+
+#----------------
+# C header files
+#----------------
+HEADERS=amyutil.h
+HEADERS+=clock.h
+HEADERS+=complex.h
+HEADERS+=halotype.h
+HEADERS+=mpiutil.h
+HEADERS+=myassert.h
+HEADERS+=myutil.h
+HEADERS+=pack.h
+HEADERS+=rex.h
+HEADERS+=savellx.h
+HEADERS+=setup.h
+HEADERS+=slosh2.h
+HEADERS+=tendian.h
+HEADERS+=tideutil.h
+HEADERS+=tio3.h
+HEADERS+=type.h
+HEADERS+=usrparse.h
+
+#------------------------------------
+# FORTRAN include (aka header) files
+#------------------------------------
+FORT_HEADERS+=parm.for
+FORT_HEADERS+=parmmsy.for
+FORT_HEADERS+=wav1.for
+
+#---------------------------------
+# Setup OBJ1 list and CMD1 target
+#---------------------------------
+OBJS1=$(CSRC:.c=.o)
+# Handle MPISRC
+ifeq ($(MPI),true)
+   OBJS1+=mpiutil.o
+endif
+OBJS1+=$(FSRC:.f=.o)
+OBJS1+=$(FSRC1:.f=.o)
+MAIN1=cstart.c
+CMD1=sloshDos
+EXT=.exe
+
+#---------------------------------------
+# Setup GUI (OBJ2) list and CMD2 target
+#---------------------------------------
+ifeq ($(GUI_COMPILE),yes)
+  GUISRC=haloclock2.c
+  GUISRC+=tclslosh.c
+
+  GUI_HEADERS+=$(HEADERS)
+  GUI_HEADERS+=haloclock2.h
+  GUI_HEADERS+=halo_out.h
+  GUI_HEADERS+=tclslosh.h
+
+  OBJS2=$(CSRC:.c=.o)
+  ifeq ($(MPI),true)
+    OBJS2+=$(MPISRC:.c=.o)
   endif
+  OBJS2+=$(FSRC:.f=.o)
+  OBJS2+=$(FSRC2:.f=.o)
+  OBJS2+=$(GUISRC:.c=.o)
+
+  MAIN2=tclstart.c
+  CMD2=sloshGui
 else
-  BINDIR=/usr/bin
-endif
-PATH := $(BINDIR)
-
-############################
-# Set up the binary files and version info.
-############################
-HEAD = /usr/bin/head
-CUT = /usr/bin/cut
-CP = /usr/bin/cp
-MKDIR = /usr/bin/mkdir
-RM = /usr/bin/rm
-ifeq ($(MPI),true)
-  CC = mpicc
-else
-  CC = gcc
-endif
-ifeq ($(B),gcc342)
-  F77 = g77
-else
-  F77 = gfortran
-endif
-STRIP = strip
-
-############################
-# Set up Targets
-############################
-NAME = sloshGui
-ifeq ($(DOUBLE),true)
-  PRJ_NAME = $(NAME)_$(B)Dbl
-else
-  PRJ_NAME = $(NAME)_$(B)
-endif
-TARGETS = $(PRJ_NAME)
-SUFFIX = .exe
-
-############################
-# Set up Compiler flags...
-#   CFLAGS (via STD_DEF and STD_INC) and FFLAGS
-############################
-      # _WINDOWS_ ==> Means use Windows GUI support.
-STD_DEF = -D_WINDOWS_
-      # _WINDOWS_ ==> Means use Tcl API connections.
-STD_DEF += -DHAVE_TCL
-      # _GCC_ ==> Means use GCC wrappings for connecting to fortran.
-STD_DEF += -D_GCC_
-      # CC_VER ==> embeds the compiler version into exectuable.
-CC_VER := $(shell $(BINDIR)/$(CC) --version | $(HEAD) -n1 | $(CUT) -d' ' -f2,3 --output-delimiter='-')
-STD_DEF += -DCC_VER="\"$(CC_VER)\""
-      # Compile with double precision flags.
-ifeq ($(DOUBLE),true)
-  STD_DEF += -DDOUBLE_FORTRAN
-endif
-      # Allows Mingw specific sleep(), mkdir() functions.
-ifeq ($(MINGW),true)
-  STD_DEF += -D_MINGW_
-endif
-      # Compile with MPI
-ifeq ($(MPI),true)
-  STD_DEF += -D_MPI_
-endif
-      # Allow for MemWatch diagnostics.
-ifeq ($(MEM),true)
-  STD_DEF += -DMEMWATCH -DMEMWATCH_STDIO -DDEBUG
-  MEMWATCH = memwatch.o
-  STD_INC = -I./memwatch
-else
-  ifeq ($(DEBUG),true)
-     STD_DEF += -DDEBUG
-  endif
-  MEMWATCH =
-  STD_INC =
-endif
-   # check to see if EXPR options should be enabled (not true in FOIA case)
-ifeq ($(EXPR),true)
-  STD_DEF += -D_EXPR_
+  CMD2=
 endif
 
-# Add Tcl/Tk headers.
-STD_INC += -I../../gui/include/tcl8.5.3_win
-STD_INC += -I.
+#------------------------------------------------------------------------------
+# Targets
+#------------------------------------------------------------------------------
+all: $(CMD1) $(CMD2)
+.PHONY: all
 
-CFLAGS = -O3 -Wall -Wextra -pedantic -ansi
-CFLAGS += $(STD_DEF) $(STD_INC)
+$(CMD1): $(OBJS1) $(MAIN1) $(HEADERS) $(FORT_HEADERS)
+	$(CC) $(MAIN1) $(CMDFLAGS1) $(LDFLAGS) $(OBJS1) $(LIBS) -o $(CMD1)
 
-ifeq ($(DOUBLE),true)
-  FFLAGS = -O3
-  FFLAGS += -fdefault-real-8
-else
-  FFLAGS = -O0
-endif
+$(CMD2): $(OBJS2) $(MAIN2) $(GUI_HEADERS) $(FORT_HEADERS)
+	$(CC) $(MAIN2) $(CMDFLAGS2) $(GUI_LDFLAGS) $(OBJS2) $(GUI_LIBS) -o $(CMD2)
 
-############################
-# Set up Linker flags...
-#    STD_LIB and LD_FLAGS
-############################
-ifeq ($(DOUBLE),true)
-  LD_FLAGS = -Wl,--stack,68000000
-else
-  LD_FLAGS = -Wl,--stack,34000000
-endif
-ifeq ($(B),gcc342)
-  STD_LIB = -lg2c
-else
-  STD_LIB = -Wl,-Bstatic -lgfortran
-endif
-      # Compile with MPI
-ifeq ($(MPI),true)
-  STD_LIB += -Wl,-Bdynamic -lmpi -lesmtp
-endif
-
-# Add TK/TCL/halo85 libraries to Lib Path.
-STD_LIB += -L../../gui/exec -Wl,-Bdynamic -ltk85
-STD_LIB += -L../../gui/exec -Wl,-Bdynamic -ltcl85
-STD_LIB += -L../../gui/exec -Wl,-Bdynamic -lhalo85
-
-# Provide console diagnostics
-LD_FLAGS += -mconsole
-STD_LIB += -L/usr/lib -lm
-
-############################
-# FILES
-############################
-SOURCE = amyutil.c \
-         clock.c \
-         complex.c \
-         mpiutil.c \
-         myassert.c \
-         myutil.c \
-         pack.c \
-         rex.c \
-         savellx.c \
-         setup.c \
-         slosh2.c \
-         tendian.c \
-         tideutil.c \
-         tio3.c \
-         usrparse.c
-
-FSOURCE = intrface.f \
-          runslhg.f \
-          spinup.f
-
-GUISOURCE = haloclock2.c \
-            tclslosh.c
-
-OBJECTS = $(SOURCE:.c=.o) \
-          $(FSOURCE:.f=.o) \
-          $(GUISOURCE:.c=.o) \
-          $(MEMWATCH)
-
-HEADERS = amyutil.h \
-          clock.h \
-          complex.h \
-          halotype.h \
-          mpiutil.h \
-          myassert.h \
-          myutil.h \
-          pack.h \
-          parm.for \
-          parmmsy.for \
-          rex.h \
-          savellx.h \
-          setup.h \
-          slosh2.h \
-          tendian.h \
-          tideutil.h \
-          tio3.h \
-          type.h \
-          usrparse.h
-
-GUIHEADERS = haloclock2.h \
-             halo_out.h \
-             tclslosh.h
-
-C_MAIN = tclstart.c
-
-############################
-# TARGETS
-############################
-all: $(TARGETS)
-	@echo ""
-
-help:
-	@echo "make B=(gcc342 | gcc450 | gcc461)"
-	@echo "     other options: MEM=true, DEBUG=true, DOUBLE=true, EXPR=true"
-
-$(PRJ_NAME): $(OBJECTS) $(C_MAIN) $(HEADERS) $(LIB_DEP)
-	$(CC) $(C_MAIN) $(CFLAGS) $(LD_FLAGS) $(OBJECTS) $(STD_LIB) -o $(PRJ_NAME)
-	$(STRIP) -s $(PRJ_NAME)$(SUFFIX)
-
-install: $(TARGETS)
+.PHONY: install
+install: $(CMD1) $(CMD2)
+	$(MKDIR) -p ../../exec
+	$(MV) $(CMD1)$(EXT) ../../exec
+ifeq ($(GUI_COMPILE),yes)
 	$(MKDIR) -p ../../gui/exec
-#	$(CP) $(PRJ_NAME)$(SUFFIX) ../../gui/exec
-	$(CP) $(PRJ_NAME)$(SUFFIX) ../../gui/exec/$(NAME)$(SUFFIX)
+	$(MV) $(CMD2)$(EXT) ../../gui/exec
+endif
 
+.PHONY: clean
 clean:
-	$(RM) -f *.o *.bak *.BAK
+	-$(RM) -f $(OBJS1)
+	-$(RM) -f *.mod
+	-$(RM) -f $(CMD1)$(EXT)
+ifeq ($(GUI_COMPILE),yes)
+	-$(RM) -f $(OBJS2)
+	-$(RM) -f $(CMD2)$(EXT)
+endif
 
-############################
-# SUFFIXES
-############################
-.c.o : $(HEADERS)
+#------------------------------------------------------------------------------
+# Suffixes
+#------------------------------------------------------------------------------
+.c.o:
 	$(CC) -c $(CFLAGS) $<
 
-.f.o :
-	$(F77) -c $(FFLAGS) $<
+.f.o:
+	$(FC) -c $(FFLAGS) $<
 
-memwatch.o: ./memwatch/memwatch.c ./memwatch/memwatch.h
-	$(CC) -c $(CFLAGS) ./memwatch/memwatch.c
+mpiutil.o: mpiutil.c $(HEADERS)
+	$(CC) -c $(CFLAGS) mpiutil.c
+
+haloclock2.o: haloclock2.c $(GUI_HEADERS)
+	$(CC) -c $(GUI_FLAGS) haloclock2.c
+
+tclslosh.o: tclslosh.c $(GUI_HEADERS)
+	$(CC) -c $(GUI_FLAGS) tclslosh.c

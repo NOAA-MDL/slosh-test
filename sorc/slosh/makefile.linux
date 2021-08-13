@@ -1,319 +1,325 @@
 #!/bin/make
-SHELL = /usr/bin/bash
-
-############################
-# This makefile is intended to create the Linux executable.
+#------------------------------------------------------------------------------
+# makefile.linux                                        Last Change: 2021-07-27
+#                                                        Arthur.Taylor@noaa.gov
+#                                                              NWS/OSTI/MDL/DSB
 #
-# USAGE:
-#    make B=gcc | B=intel (B is for build)
+# Makefile for slosh (command line) on LINUX systems
+# Usage:
+#    make                     Build the executable
+#    make install             Move the built executable to the exec dir
+#    make clean               Start with a clean slate
 #
-# Other options...
-#    make MEM=true, DEBUG=true, BIT=32 | 64, DOUBLE=true, MPI=true, EXPR=true
-#    EXPR=true means enable experimental options.
-#       EXPR should be false for FOIA CD so it has well tested options.
-############################
-B=gcc
-MEM=false
-DEBUG=false
-BIT=32
-DOUBLE=true
-MPI=false
-EXPR=true
+#    make B=gcc               Build using gcc suite (linux)
+#    make B=intel             Build using intel suite
+#------------------------------------------------------------------------------
+SHELL=/bin/bash#              # Shell for script evaluations
+MPI=false#                    # Do we build with MPI?
+MINGW=false#                  # Allow MinGW specific functions
+B=gcc#                        # See usage.
+DOUBLE=true#                  # Use double precision flags
+BIT=32#                       # Use 32 (vs 64) bit compilation
 
-############################
-# Set up the path.
-############################
+#-------------------------------------------
+# Set up the called executables and version
+#-------------------------------------------
+CC=gcc
+VER:=$(shell $(CC) --version |head -n1 |cut -d' ' -f2,3 --output-delimiter='-')
+FC=gfortran
 ifeq ($(B),intel)
-#  B_ROOT = /opt/intel/composerxe
-#  B_ROOT = /opt/intel/composer_xe_2013.3.171
-#  B_ROOT = /share/opt/intel/composer_xe_2013.2.146
-  B_ROOT=/usrx/local/intel/composer_xe_2011_sp1.11.339
-else
-  B_ROOT = /usr/local
+   CC=icc
+   FC=ifort
 endif
+MV=/bin/mv
+RM=/bin/rm
+MKDIR=/bin/mkdir
 
-ifeq ($(MPI),true)
-#  MPI_ROOT = /opt/mpich2
-#  MPI_ROOT = /share/opt/intel/impi/4.1.0.024
-  MPI_ROOT = /usrx/local/intel/impi/4.0.3.008
-endif
-
-EXTRADIR =
-ifeq ($(MPI),true)
-  BINDIR = $(MPI_ROOT)/intel64/bin
-  ifeq ($(B),intel)
-    ifeq ($(BIT),32)
-      EXTRADIR = $(B_ROOT)/bin/ia32:/usr/bin
-    else
-      EXTRADIR = $(B_ROOT)/bin/intel64:/usr/bin
-    endif
-  else
-    EXTRADIR = /bin:/usr/bin
-  endif
-else
-  ifeq ($(B),intel)
-    ifeq ($(BIT),32)
-      BINDIR = $(B_ROOT)/bin/ia32
-    else
-      BINDIR = $(B_ROOT)/bin/intel64
-    endif
-    EXTRADIR = /usr/bin
-  else
-    BINDIR := $(PATH)
-  endif
-endif
-
-PATH := $(BINDIR):$(EXTRADIR)
-
-ifeq ($(MPI),true)
-  ifeq ($(BIT),32)
-    MPI_INC = -I$(MPI_ROOT)/ia32/include
-    MPI_LIB = -L$(MPI_ROOT)/ia32/lib
-    MPI_RUNLIB = -R$(MPI_ROOT)/ia32/lib
-  else
-    MPI_INC = -I$(MPI_ROOT)/intel64/include
-    MPI_LIB = -L$(MPI_ROOT)/intel64/lib
-    MPI_RUNLIB = -R$(MPI_ROOT)/intel64/lib
-  endif
-endif
-
+#--------------------------
+# Set the C compiler flags
+#--------------------------
+CFLAGS=-O3#                   # Optimization level
+CFLAGS+=-Wall#                # Activate all warnings
 ifeq ($(B),intel)
-  ifeq ($(BIT),32)
-    INTEL_LIB = $(B_ROOT)/compiler/lib/ia32
-  else
-    INTEL_LIB = $(B_ROOT)/compiler/lib/intel64
-  endif
+   CFLAGS+=-strict-ansi -fp-model strict# Activate more warnings
 endif
-
-############################
-# Set up the binary files and version info.
-############################
-HEAD = /usr/bin/head
-CUT = /bin/cut
-CP = /bin/cp
-RM = /bin/rm
-ifeq ($(B),intel)
-  ifeq ($(MPI),true)
-    CC = mpiicc
-  else
-    CC = icc
-  endif
-  FC = ifort
-else
-  ifeq ($(MPI),true)
-    CC = mpicc
-  else
-    CC = gcc
-  endif
-  FC = gfortran
+ifeq ($(B),gcc)
+   CFLAGS+=-Wextra -pedantic -ansi# Activate more warnings
 endif
-STRIP = strip
-
-############################
-# Set up Targets
-############################
-ifeq ($(MPI),true)
-  NAME = sloshMPI
-else
-  NAME = sloshLinux
-endif
-ifeq ($(DOUBLE),true)
-  PRJ_NAME = $(NAME)_$(B)_$(BIT)Dbl
-else
-  PRJ_NAME = $(NAME)_$(B)_$(BIT)
-endif
-TARGETS = $(PRJ_NAME)
-SUFFIX =
-
-############################
-# Set up Compiler flags...
-#   CFLAGS (via STD_DEF and STD_INC) and FFLAGS
-############################
-# _LINUX_ ==> Indicates this is linux (vs aix)
-STD_DEF = -D_LINUX_
-
-# _GCC_ ==> Means use GCC wrappings for connecting to fortran.
-STD_DEF += -D_GCC_
-
-# SIZEOF_LONG_INT ==> long int is 8 vs 4 bytes (file I/O)
+CFLAGS+=-D_LINUX_#            # Operating system (_LINUX_,_UNIX_,_WINDOWS_)
 ifeq ($(BIT),64)
-  STD_DEF += -DSIZEOF_LONG_INT=8
+  CFLAGS+=-DSIZEOF_LONG_INT=8#  # Compile on a 64 bit platform
 endif
-
-# CC_VER ==> embeds the compiler version into exectuable.
-CC_VER := $(shell $(CC) --version | $(HEAD) -n1 | $(CUT) -d' ' -f2,3 --output-delimiter='-')
-STD_DEF += -DCC_VER="\"$(CC_VER)\""
-
-# Compile with double precision flags.
+CFLAGS+=-D_GCC_#              # Use GCC wrappings for binding to FORTRAN
 ifeq ($(DOUBLE),true)
-  STD_DEF += -DDOUBLE_FORTRAN
+   CFLAGS+=-DDOUBLE_FORTRAN#  # Compile with double precision in FORTRAN
 endif
-
-# Compile with MPI
 ifeq ($(MPI),true)
-  STD_DEF += -D_MPI_
+   CFLAGS+=-D_MPI_#           # Compile with MPI
 endif
-
-# Allow for MemWatch diagnostics.
-ifeq ($(MEM),true)
-  STD_DEF += -DMEMWATCH -DMEMWATCH_STDIO -DDEBUG
-  MEMWATCH = memwatch.o
-  STD_INC = -I./memwatch
-else
-  ifeq ($(DEBUG),true)
-    STD_DEF += -DDEBUG
-  endif
-  MEMWATCH =
+ifeq ($(MINGW),true)
+   CFLAGS+=-D_MINGW_#         # Allow MinGW specific sleep(), mkdir() functions
 endif
-
-# check to see if EXPR options should be enabled (not true in FOIA case)
-ifeq ($(EXPR),true)
-  STD_DEF += -D_EXPR_
-endif
-
-ifeq ($(MPI),true)
-  STD_INC += $(MPI_INC)
-endif
-STD_INC += -I.
-
-# Default compiler flags
-ifeq ($(B),intel)
-  CFLAGS = -O3 -w
-  FFLAGS = -O3 -w
-else
-  CFLAGS = -O3 -Wall -Wextra -pedantic -ansi
-  FFLAGS = -O3
-endif
-
-# Enhance compiler flags
+# CFLAGS+=-DEBUG#             # Turn on debug flags
+CFLAGS+=-D_EXPR_#             # Activate experimental options
+CFLAGS+=-I.#                  # Add '.' to the include path
 ifeq ($(BIT),32)
-  CFLAGS += -m32
-  FFLAGS += -m32
+  CFLAGS+=-m32
 endif
-CFLAGS += $(STD_DEF) $(STD_INC)
 
+#-----------------------------------
+# Set up the FORTRAN compiler flags
+#-----------------------------------
+FFLAGS=-O3#                   # Optimization level
 ifeq ($(DOUBLE),true)
-  ifeq ($(FC),ifort)
-    FFLAGS += -r8
-  else
-    FFLAGS += -fdefault-real-8
-  endif
+   ifeq ($(B),intel)
+      FFLAGS+=-r8#            # Use double precision flags
+   else
+      FFLAGS+=-fdefault-real-8# Use double precision flags
+   endif
 endif
-
-############################
-# Set up Linker flags...
-#    STD_LIB and LD_FLAGS
-############################
 ifeq ($(B),intel)
-  ifeq ($(BIT),32)
-    # Following tells it where the runtime library is.
-    LD_FLAGS = -Wl,-R$(INTEL_LIB)
-    ifeq ($(MPI),true)
-      LD_FLAGS += -Wl,$(MPI_RUNLIB)
-    endif
-  else
-    LD_FLAGS =
-  endif
-  STD_LIB = -L$(INTEL_LIB) -lifcore -limf -lintlc
+   FFLAGS+=-fp-model strict#  # Activate more warnings
+   FFLAGS+=-check bounds#     # Make sure no out of array index calls.
+#   FFLAGS+=-warn all
+#   FFLAGS+=-warn nodeclarations
+#   FFLAGS+=-warn unused
+#   FFLAGS+=-fp-stack-check
+#   FFLAGS+=-heap-arrays 10
+endif
+ifeq ($(BIT),32)
+  FFLAGS+=-m32
+endif
+
+#------------------------------------------
+# Set up the Library flags (order matters)
+#------------------------------------------
+LIBS=-lgfortran
+# LIBS+=-Wl,-Bstatic
+# LIBS+=-lquadmath#           # Used for EMC's workstation (8/9/2019)
+
+
+LIBS+=-L/usr/lib -lm
+ifeq ($(B),intel)
+   LIBS=-lifcore -limf
+endif
+
+#-------------------------------------
+# Set up the command executable flags
+#-------------------------------------
+#CFLAGS+=-DCC_VER="\"$(VER)\""# Add compiler version.
+#CMDFLAGS1=$(CFLAGS)# Add compiler version.
+CMDFLAGS1=$(CFLAGS) -DCC_VER="\"$(VER)\""# Add compiler version.
+
+#--------------------------------------------------------
+# Set up the Linker flags
+#--------------------------------------------------------
+LDFLAGS=
+ifeq ($(B),intel)
+   LDFLAGS=-xAVX#             # Avoid complaint about MOVBE, FMA, BMI, LZCNT,
+                              # AVX2 when at higher than O0 optimization.
+endif
+
+#------------------------------------------------------------------------------
+# Source (CSRC, MPISRC, FSRC); HEADERS, FORT_HEADERS; OBJS; Main
+#------------------------------------------------------------------------------
+CSRC=amyutil.c
+CSRC+=clock.c
+CSRC+=complex.c
+CSRC+=myassert.c
+CSRC+=myutil.c
+CSRC+=pack.c
+CSRC+=rex.c
+CSRC+=savellx.c
+CSRC+=setup.c
+CSRC+=slosh2.c
+CSRC+=tendian.c
+CSRC+=tideutil.c
+CSRC+=tio3.c
+CSRC+=usrparse.c
+
+MPISRC=mpiutil.c
+
+#----------------------------------
+# Intrface.f :: Was in this order.
+#----------------------------------
+FSRC=parm2.f#                 # Compile FORTRAN modules first.
+# FSRC+=inital.f
+FSRC+=wind.f
+FSRC+=wav.f
+# FSRC+=tmstep.f
+FSRC+=clnup.f
+FSRC+=cln_hs.f
+FSRC+=dealloc.f
+FSRC+=xy2llx.f
+FSRC+=staticht.f
+FSRC+=issubgrid.f
+FSRC+=casename.f
+
+#--------------------------------
+# Spinup.f :: Was in this order.
+#--------------------------------
+FSRC+=intlhtsub.f
+FSRC+=intlhtadd.f
+FSRC+=momntm2.f
+FSRC+=mntmbd2.f
+FSRC+=flw1dm2.f
+FSRC+=tmstp2.f
+
+FSRC+=initalcommon.f
+
+#---------------------------------
+# runslhg.f :: Was in this order.
+#---------------------------------
+FSRC+=extrpt.f
+FSRC+=intdlt.f
+FSRC+=intval.f
+FSRC+=cnstnt.f
+# ifeq ($(FC),gfortran)
+#ifeq ($(BIT),64)
+#FSRC+=btmstr_gnu.f
+#else
+FSRC+=btmstr.f
+#endif
+FSRC+=setcmp.f
+FSRC+=stmval.f
+FSRC+=cnsdlt.f
+FSRC+=force1.f
+FSRC+=intwnd.f
+FSRC+=prtstm.f
+FSRC+=crdrd1.f
+FSRC+=alloc.f
+FSRC+=ttimer.f
+FSRC+=initlz.f
+FSRC+=inputn.f
+FSRC+=steron.f
+FSRC+=setdst.f
+FSRC+=depmsy.f
+FSRC+=intlht.f
+FSRC+=crdrd2.f
+FSRC+=crdrd2_n.f
+FSRC+=depsfc.f
+FSRC+=contty.f
+FSRC+=bdryht.f
+FSRC+=channl.f
+FSRC+=flw1dm_block.f#         # subblock and flw1dm combined.
+FSRC+=frcpnt.f
+FSRC+=momntm.f
+FSRC+=mntmbd.f
+FSRC+=fhmxsv.f
+FSRC+=archiv.f
+FSRC+=histry.f
+FSRC+=hstry2.f
+FSRC+=filtrp.f
+FSRC+=hmxsv.f
+FSRC+=smpt2g.f
+FSRC+=flt2g.f
+FSRC+=filter.f
+FSRC+=flter2.f
+FSRC+=snapsh.f
+FSRC+=xfilter.f
+FSRC+=inputn2.f
+FSRC+=spline.f
+FSRC+=splint.f
+ifeq ($(B),intel)
+   FSRC+=rstout_WCOSS.f
 else
-  LD_FLAGS =
-  STD_LIB = -lgfortran
-  ifeq ($(BIT),32)
-    STD_LIB += -L/usr/lib -lm
-  else
-    STD_LIB += -L/usr/lib64 -lm
-  endif
+   FSRC+=rstout.f
 endif
+FSRC+=setcmp_hs.f
+FSRC+=hbuv_hs.f
 
+#-------------------------------------
+# FORTRAN code for command line only.
+#-------------------------------------
+FSRC1=wave.f
+FSRC1+=inital.f
+FSRC1+=tmstep.f
+
+# FORTRAN code for GUI only.
+FSRC2=inital_GUI.f
+FSRC2+=tmstep_GUI.f
+
+#----------------
+# C header files
+#----------------
+HEADERS=amyutil.h
+HEADERS+=clock.h
+HEADERS+=complex.h
+HEADERS+=halotype.h
+HEADERS+=mpiutil.h
+HEADERS+=myassert.h
+HEADERS+=myutil.h
+HEADERS+=pack.h
+HEADERS+=rex.h
+HEADERS+=savellx.h
+HEADERS+=setup.h
+HEADERS+=slosh2.h
+HEADERS+=tendian.h
+HEADERS+=tideutil.h
+HEADERS+=tio3.h
+HEADERS+=type.h
+HEADERS+=usrparse.h
+
+#------------------------------------
+# FORTRAN include (aka header) files
+#------------------------------------
+FORT_HEADERS+=parm.for
+FORT_HEADERS+=parmmsy.for
+FORT_HEADERS+=wav1.for
+
+#---------------------------------
+# Setup OBJ1 list and CMD1 target
+#---------------------------------
+OBJS1=$(CSRC:.c=.o)
+# Handle MPISRC
 ifeq ($(MPI),true)
-  STD_LIB += $(MPI_LIB)
+   OBJS1+=mpiutil.o
 endif
+OBJS1+=$(FSRC:.f=.o)
+OBJS1+=$(FSRC1:.f=.o)
+MAIN1=cstart.c
+CMD1=sloshLinux
 
-############################
-# FILES
-############################
-SOURCE = amyutil.c \
-         clock.c \
-         complex.c \
-         mpiutil.c \
-         myassert.c \
-         myutil.c \
-         rex.c \
-         pack.c \
-         savellx.c \
-         setup.c \
-         slosh2.c \
-         tendian.c \
-         tideutil.c \
-         tio3.c \
-         usrparse.c
-
-FSOURCE = intrface.f \
-          runslhg.f \
-          spinup.f
-
-OBJECTS = $(SOURCE:.c=.o) \
-          $(FSOURCE:.f=.o) \
-          $(MEMWATCH)
-
-HEADERS = amyutil.h \
-          clock.h \
-          complex.h \
-          halotype.h \
-          mpiutil.h \
-          myassert.h \
-          myutil.h \
-          pack.h \
-          parm.for \
-          parmmsy.for \
-          rex.h \
-          savellx.h \
-          setup.h \
-          slosh2.h \
-          tendian.h \
-          tideutil.h \
-          tio3.h \
-          type.h \
-          usrparse.h
-
-C_MAIN = cstart.c
-
-############################
-# TARGETS
-############################
+#------------------------------------------------------------------------------
+# Targets
+#------------------------------------------------------------------------------
+all: $(CMD1)
 .PHONY: all
-all: $(TARGETS)
-	@echo ""
 
-.PHONY: help
-help:
-	@echo "make B=(gcc | intel)"
-	@echo "     other options: MEM=true, DEBUG=true, BIT=(32 | 64), DOUBLE=true, MPI=true, EXPR=true"
-
-$(PRJ_NAME): $(OBJECTS) $(C_MAIN) $(HEADERS)
-	$(CC) $(C_MAIN) $(CFLAGS) $(LD_FLAGS) $(OBJECTS) $(STD_LIB) -o $(PRJ_NAME)
-	$(STRIP) -s $(PRJ_NAME)$(SUFFIX)
+$(CMD1): $(OBJS1) $(MAIN1) $(HEADERS) $(FORT_HEADERS)
+ifeq ($(B),intel)
+	@echo "********************************************************************"
+	@echo "Remember to 'module load ./Intel.module' for icc version 14."
+	@echo "********************************************************************"
+endif
+	$(CC) $(MAIN1) $(CMDFLAGS1) $(LDFLAGS) $(OBJS1) $(LIBS) -o $(CMD1)
 
 .PHONY: install
-install: $(TARGETS)
-#	$(CP) $(PRJ_NAME)$(SUFFIX) ../../exec
-	$(CP) $(PRJ_NAME)$(SUFFIX) ../../exec/$(NAME)$(SUFFIX)
+install: $(CMD1)
+	$(MKDIR) -p ../../exec
+	$(MV) $(CMD1) ../../exec
 
 .PHONY: clean
 clean:
-	$(RM) -f *.o *.bak *.BAK
+	-$(RM) -f $(OBJS1)
+	-$(RM) -f $(CMD1)
+	-$(RM) -f *.mod
+	-$(RM) -f *genmod.f90
 
-############################
-# SUFFIXES
-############################
-.c.o : $(HEADERS)
+#------------------------------------------------------------------------------
+# Suffixes
+#------------------------------------------------------------------------------
+.c.o: $(HEADERS)
 	$(CC) -c $(CFLAGS) $<
 
-.f.o :
+.f.o: $(FORT_HEADERS)
 	$(FC) -c $(FFLAGS) $<
 
-############################
-# Dependencies
-############################
-memwatch.o: ./memwatch/memwatch.c ./memwatch/memwatch.h
-	$(CC) -c $(CFLAGS) ./memwatch/memwatch.c
+mpiutil.o: mpiutil.c $(HEADERS)
+	$(CC) -c $(CFLAGS) mpiutil.c
+
+topology.o: topology.c $(HEADERS)
+	$(CC) -c $(CFLAGS) topology.c
+
+winBuffer.o: winBuffer.c $(HEADERS)
+	$(CC) -c $(CFLAGS) winBuffer.c

@@ -1,0 +1,31 @@
+      SUBROUTINE HBUV_HS
+      include 'parm.for'
+      COMMON /DUMB3/  IMXB,JMXB,IMXB1,JMXB1
+      COMMON /HTNM/ HTMAIN,HTHB,HTUV,HTWV,HTWVT,HTHMX
+      character*80 HTMAIN,HTHB,HTUV,HTWV,HTWVT,HTHMX
+      CHARACTER(LEN=20)STRING1,STRING2
+
+      WRITE(STRING1,'("(",I4,"(F20.3,X))")') JMXB
+      WRITE(STRING2,'("(",I4,"(F9.3,X))")') JMXB1
+
+      OPEN(1002,FILE=HTHB,STATUS='OLD')
+      OPEN(1003,FILE=HTUV,STATUS='OLD')
+
+c     Transportation
+      DO I=1,IMXB
+        READ(1003,STRING1)(UB(I,J),J=1,JMXB)
+      END DO
+      DO I=1,IMXB
+        READ(1003,STRING1)(VB(I,J),J=1,JMXB)
+      END DO
+
+C     Water level
+      DO I=1,IMXB1
+        READ(1002,STRING2)(HB(I,J),J=1,JMXB1)
+      END DO
+
+      CLOSE(1002)
+      CLOSE(1003)
+
+      RETURN
+      END

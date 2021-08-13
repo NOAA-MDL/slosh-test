@@ -813,7 +813,7 @@ size_t tWrite (void *Src, size_t elem_size, size_t num_elem, TIO_type * tio)
    }
 }
 
-TFLAG_SYSTEM _system = 0;
+TFLAG_SYSTEM _system = TFLAG_MadeOnIntel;
 
 int tSet (TFLAG_SYSTEM sys)
 {
@@ -837,9 +837,9 @@ void topen_ (int *fid, char *name, int *flag, int *sys)
    /* if sys == 2, then FORTRAN is using the endian'ness of the last call by 
     * 'C' to tSet. */
    if (*sys == 2) {
-      tOpen ((unsigned short int) *fid, name, *flag, _system);
+      tOpen ((unsigned short int) *fid, name, (TFLAG_ACCESS) *flag, _system);
    } else {
-      tOpen ((unsigned short int) *fid, name, *flag, *sys);
+      tOpen ((unsigned short int) *fid, name, (TFLAG_ACCESS) *flag, (TFLAG_SYSTEM) *sys);
    }
 }
 void tread_ (int *fid, sInt4 * ptr, int *num)

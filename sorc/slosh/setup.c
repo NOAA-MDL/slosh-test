@@ -16,6 +16,15 @@
 #include "memwatch.h"
 #endif
 
+#ifdef _GCC_
+#define INITALCOMMON initalcommon_
+extern int initalcommon_
+#else
+#define INITALCOMMON initalcommon
+extern int initalcommon
+#endif
+   (void);
+
 int SetBsnLatLon (const char *bntDir, char bsnAbrev[5], int *imxb, int *jmxb)
 {
    char * bsnDefFile;
@@ -91,7 +100,8 @@ int SetBsnLatLon (const char *bntDir, char bsnAbrev[5], int *imxb, int *jmxb)
 /* Assumes bsnAbrev is inited via... bsnAbrev[0] = '\0'; */
 int setFileNames (userType *usr, char bsnAbrev[5], char dtaName[MY_MAX_PATH],
                   char trkName[MY_MAX_PATH], char envName[MY_MAX_PATH],
-                  char **rexName, int *imxb, int *jmxb, int *bsnStatus)
+                  char envName2[MY_MAX_PATH], char **rexName, int *imxb, int *jmxb, 
+                  int *bsnStatus)
 {
    int len;
    char type;
@@ -100,6 +110,9 @@ int setFileNames (userType *usr, char bsnAbrev[5], char dtaName[MY_MAX_PATH],
    char *trkRoot;
    char *bsnPath;
    FILE *fp;
+
+   /* Initialize the common blocks. */
+   INITALCOMMON ();
 
    len = strlen (usr->basin);
    /* bsn = ' bos', bsnAbrev = ' bos', type = p, bsnPath = 'bos' */
@@ -199,6 +212,8 @@ int setFileNames (userType *usr, char bsnAbrev[5], char dtaName[MY_MAX_PATH],
          } else {
             if ((trkRoot = strrchr (usr->trkFile, '/')) == NULL) {
                trkRoot = usr->trkFile;
+            } else {
+               trkRoot++; /* Get past the last '/' in the trkfile. */            
             }
             if (usr->f_appendBsn) {
                if (strlen(usr->envDir) + 1 + strlen(bsnPath) + 1 + strlen(trkRoot) + 1 >= MY_MAX_PATH) {
@@ -206,13 +221,24 @@ int setFileNames (userType *usr, char bsnAbrev[5], char dtaName[MY_MAX_PATH],
                   return -1;
                }
                sprintf (envName, "%s/%s/%s", usr->envDir, bsnPath, trkRoot);
+               if (strlen(usr->envDir2) + 1 + strlen(bsnPath) + 1 + strlen(trkRoot) + 1 >= MY_MAX_PATH) {
+                  fprintf (stderr, "'%s/%s/%s' is too long a path\n", usr->envDir2, bsnPath, trkRoot);
+                  return -1;
+               }
+               sprintf (envName2, "%s/%s/%s", usr->envDir2, bsnPath, trkRoot);
             } else {
                if (strlen(usr->envDir) + 1 + strlen(trkRoot) + 1 >= MY_MAX_PATH) {
                   fprintf (stderr, "'%s/%s' is too long a path\n", usr->envDir, trkRoot);
                   return -1;
                }
                sprintf (envName, "%s/%s", usr->envDir, trkRoot);
+               if (strlen(usr->envDir2) + 1 + strlen(trkRoot) + 1 >= MY_MAX_PATH) {
+                  fprintf (stderr, "'%s/%s' is too long a path\n", usr->envDir2, trkRoot);
+                  return -1;
+               }
+               sprintf (envName2, "%s/%s", usr->envDir2, trkRoot);
             }
+            strncpy (envName2 + strlen (envName2) - 3, "env", 3);  /* This may be the key line!! */
          }
          strncpy (envName + strlen (envName) - 3, "env", 3);
       } else {
@@ -238,6 +264,8 @@ int setFileNames (userType *usr, char bsnAbrev[5], char dtaName[MY_MAX_PATH],
          } else {
             if ((trkRoot = strrchr (usr->trkFile, '/')) == NULL) {
                trkRoot = usr->trkFile;
+            } else {
+               trkRoot++; /* Get past the last '/' in the trkfile. */            
             }
             if (usr->f_appendBsn) {
                *rexName = (char *) malloc (strlen(usr->rexDir) + 1 + strlen (bsnPath) + 1 + strlen (trkRoot) + 1);

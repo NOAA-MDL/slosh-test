@@ -1,6 +1,6 @@
 #!/bin/bash
 #------------------------------------------------------------------------------
-# run.sh                                                Last Change: 2021-06-23
+# run.sh                                                Last Change: 2021-07-23
 #                                                        Arthur.Taylor@noaa.gov
 #                                                              NWS/OSTI/MDL/DSD
 #------------------------------------------------------------------------------
@@ -17,4 +17,4 @@ fi
 
 #------------------------------------------------------------------ START -----
 # srcDir=$(cd "$(dirname "$0")" && pwd)
-exec/sloshGui start4.tcl
+exec/sloshGui tclsrc/start4.tcl

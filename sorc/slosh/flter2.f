@@ -1,0 +1,103 @@
+      SUBROUTINE FLTER2
+      USE PARM2
+      INCLUDE 'parm.for'
+C
+      COMMON /FFTH/   ITIME,MHALT
+      COMMON /DUMB3/  IMXB,JMXB,IMXB1,JMXB1,IMXB2,JMXB2
+      COMMON /EGTH/   DELS,DELT,G,COR
+      COMMON /DUMB8/  IP(4),JP(4),IH(4),JH(4)
+      COMMON /DUM88/  IIH(4),JJH(4),IHH(4),JHH(4)
+      COMMON /GAMAF/  GAMA,GAMA1,GAMFP(4)
+      COMMON /GPRT1/  DOLLAR,EBSN
+      COMMON /HTERAIN/ HTER
+      DIMENSION       GAMF(4)
+      CHARACTER*2     DOLLAR
+      CHARACTER*1     EBSN
+      DATA HCRT/0.5/
+C
+      DO 100 J=1,JMXB
+      DO 100 I=1,IMXB
+ 100  HSUB(I,J)=HB(I,J)
+      DO 210 M=1,2
+C     TOP AND BOTTOM BOUNDARY CONDITIONS M=2
+C     INTERIOR POINTS M=1 INCLUDING SIDE BOUNDARIES.
+       IF (M.EQ.1) THEN
+         IL  =2
+         IM  =IMXB2
+         INCR=1
+         ELSE
+         IL  =1
+         IM  =IMXB1
+         INCR=IMXB2
+         ENDIF
+      DO 200 J=1,JMXB1
+      DO 190 I=IL,IM,INCR
+C        SKIP COMPUTATIONS FOR TERRAIN HIGHER THAN 35 FT.
+C    CHANGED BY NSM TO HTER FROM 35 11/20/2010 : Accepted 4/4/2011
+      IF(ZB(I,J).LE.-HTER) GO TO 190
+      HST=HSUB(I,J)+ZB(I,J)
+C        TEST FOR LAND WETTED LESS THAN 1 FT.
+      IF(HST.LT.HCRT) GO TO 190
+      HSM=0.
+      HDIF=0.
+C
+C******** 'LOOP' FOR SMOOTHING******************************************
+      GAM0=ELPDL2(I)+(ELPCL2(I)-ELPDL2(I))*SINL2(J)
+      DO 170 K=1,4
+      II=I+IIH(K)
+      JJ=J+JJH(K)
+      IF (JJ.EQ.0) JJ=JMXB1
+        IF (II.EQ.0) THEN
+        GAMF(K)=0.
+        GO TO 160
+        ENDIF
+ 158  CONTINUE
+      IF (EBSN.EQ.'$'.OR.EBSN.EQ.'+') THEN
+      GAMFK=ELPDL2(II)+(ELPCL2(II)-ELPDL2(II))*SINL2(JJ)
+c      GAMF(K)=.5*(1.+GAMFK/GAM0)-1.
+      Z=GAMFK/GAM0
+      GAMF(K)=2.*Z/(1.+Z)-1.
+      ELSE
+      GAMF(K)=GAMFP(K)
+      ENDIF
+      IF (II.EQ.IMXB) GOTO 160
+C        THE NEIGHBORING SQUARE IS MERELY WET(LESS THAN 1 FT).
+      IF (HSUB(II,JJ)+ZB(II,JJ).LT.HCRT) GO TO 160
+      KK=MOD(K,4)+1
+      IA=I+IP(K)
+      IB=I+IP(KK)
+      JA=J+JP(K)
+      JB=J+JP(KK)
+      Z =ZBM(IA,JA)
+      ZZ=ZBM(IB,JB)
+C      ZZZ=AMIN1(Z,ZZ)+1.
+      ZZZ=AMIN1(Z,ZZ)+HCRT
+C        WATER ON EITHER SIDE MUST EXCEED THE BARRIER(LOWER) BY AT
+C        LEAST 1 FT.
+      IF( HSUB(I,J).LT.ZZZ.OR.HSUB(II,JJ).LT.ZZZ) THEN
+          HSM=HSM+HSUB(I,J)
+          HZZ=HSUB(I,J)
+          ELSE
+          HSM=HSM+HSUB(II,JJ)
+          HZZ=HSUB(II,JJ)
+          ENDIF
+      GOTO 212
+ 160  CONTINUE
+          HSM=HSM+HSUB(I,J)
+          HZZ=HSUB(I,J)
+ 212  CONTINUE
+C       WEIGHTING ADJUSTMENTS IN I-DIRECTION DUE TO POLAR GRIDS.
+       HDIF=HDIF+HZZ*GAMF(K)
+C
+ 170  CONTINUE
+      HTEMP=.5*HSUB(I,J)+(HSM+HDIF)/8.
+C******* END 'LOOP' FOR SMOOTHING **************************************
+C
+ 180  HB(I,J)=AMAX1(-ZB(I,J),HTEMP)
+ 190  CONTINUE
+ 200  CONTINUE
+ 210  CONTINUE
+      DO 300 I=1,IMXB
+ 300  HB(I,JMXB)=HB(I,1)
+      RETURN
+       END

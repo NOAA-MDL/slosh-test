@@ -79,7 +79,7 @@
  *   size_t numCol = 0;           Number of columns in spBuff.
  *   char **col = NULL;           Pointer into spBuff at start of columns.
  *   if (mySplit(buffer, ',', &spBuffLen, &spBuff, &numCol, &col, 1) != 0) {
- *      goto error;
+ *      handle error;
  *   }
  *   if (spBuff != NULL) {
  *      free(spBuff);

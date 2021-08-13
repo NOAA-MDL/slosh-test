@@ -57,22 +57,24 @@ int Tcl_AppInit (Tcl_Interp * interp)
 
 void SloshAbout (char *buffer)
 {
+   sprintf (buffer, "\nVersion: %s\nDate: %s\nAuthors: "
+              "Chester Jelesnanski, Albion Taylor, Jye Chen, Wilson Shaffer,\n"
+              "   Arthur Taylor, Cristina Forbes, Amy Haase, Brian Zachry, Jindong Wang,\n"
+              "   Huiqing Liu, Dongming Yang, Tatiana Gonzalez\n\n",
+            PROGRAM_VERSION, PROGRAM_DATE);
+   sprintf (buffer, "%sCompiled by: %s\n", buffer, CC_VER);
+   sprintf (buffer, "%s         on: %s\n", buffer, __DATE__);
    #ifdef DOUBLE_FORTRAN
-   sprintf (buffer, "slosh (GUI)\nVersion: %s\nDate: %s\n"
-            "Author: Chester Jelesnanski, Albion Taylor, Jye Chen,\n"
-            "Wilson Shaffer, Arthur Taylor\n%s\nCompiled by %s\nCompiled with double precision\n", PROGRAM_VERSION,
-            PROGRAM_DATE, PROGRAM_COMMENT, CC_VER);
+     sprintf (buffer, "%s       with: double precision\n", buffer);
    #else
-   sprintf (buffer, "slosh (GUI)\nVersion: %s\nDate: %s\n"
-            "Author: Chester Jelesnanski, Albion Taylor, Jye Chen,\n"
-            "Wilson Shaffer, Arthur Taylor\n%s\nCompiled by %s\nCompiled with single precision\n", PROGRAM_VERSION,
-            PROGRAM_DATE, PROGRAM_COMMENT, CC_VER);
+     sprintf (buffer, "%s       with: single precision\n", buffer);
    #endif
+   sprintf (buffer, "%s\n", buffer);
 }
 
 int main (int argc, char *argv[])
 {
-   char buffer[200];
+   char buffer[1000];
 
    if (argc == 2) {
       if (strcmp (argv[1], "-V") == 0) {

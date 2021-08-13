@@ -7,7 +7,11 @@
 #-----------------
 # Version configs
 #-----------------
-LATEST=v4.12
+LATEST=v4.20
+#-----------------
+V=v4.20; D="2019-11-13"; vers+=($V); ds+=($D)
+T420="${V}_$D"
+F_v420+=(T420:1989-Hugo T420:1992-Andrew)
 #-----------------
 V=v4.12; D="2014-09-03"; vers+=($V); ds+=($D)
 # T412="${V}_$D"
@@ -80,7 +84,7 @@ for f in ${!var} ; do
    #-------------------
    fRay=(${f//:/ })
    FILE=${fRay[1]}.tar.gz
-   echo "[*] Downloading $tarDir/$FILE"
+   echo -n "[*] Downloading $FILE"
    if [[ ${fRay[0]} == "FILE" ]] ; then
       #---------------------------------------
       # Copy the file if its on local machine
@@ -120,7 +124,7 @@ for v in data:
    #-----------------
    if [[ -e $tarDir/$FILE ]] ; then
       # echo "[*] Expanding.. $tarDir/$FILE"
-      echo "[*] Expanding.."
+      echo -n " ... Expanding ... "
       tar -xzf $tarDir/$FILE
       aRay=(${fRay[1]//-/ })
       name=${aRay[1],,}
@@ -131,5 +135,6 @@ for v in data:
       cp ${fRay[1]}/$name.rex $ansDir
       cp ${fRay[1]}/$name.env $ansDir
       rm -rf ${fRay[1]}
+      echo "Done"
    fi
 done
