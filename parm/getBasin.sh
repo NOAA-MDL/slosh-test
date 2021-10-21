@@ -1,6 +1,6 @@
 #!/bin/bash
 #------------------------------------------------------------------------------
-# getBasin.sh                                           Last Change: 2021-08-13
+# getBasin.sh                                           Last Change: 2021-10-21
 #                                                        Arthur.Taylor@noaa.gov
 #                                                              NWS/OSTI/MDL/DSD
 #------------------------------------------------------------------------------
@@ -8,6 +8,7 @@
 # Version configs
 #-----------------
 LATEST=v4.20
+MODEL=SLOSH  # ETSS, PSURGE, SLOSH
 #-----------------
 V=v4.20; D="2019-11-13"; vers+=($V); ds+=($D)
 T420="${V}_$D"
@@ -17,13 +18,16 @@ F_v420+=(T420:f0103.ejx3 T420:f1003.etp3 T420:f1102.cd2  T420:f1203.ap3  T420:f1
 F_v420+=(T420:f1404.epn3)
 F_v420+=(T420:g0103.emo2 T420:g0309.ms7  T420:g0402.lf2  T420:g0505.ebp3 T420:g0604.egl3)
 F_v420+=(T420:g0702.ps2  T420:g0803.cr3  T420:g0903.ebr3)
-#...Comment following for ETSS:
-F_v420+=(T412:f0403.eok3 T420:f0602.hsff T420:f0603.hsfe T420:f0604.hsfd)
-#...Comment following for P-Surge:
-F_v420+=(T420:f0202.co2  T420:f0303.pb3  T420:f0503.hmi3 T420:f0704.eke2 T420:f0903.efm2)
-F_v420+=(T420:x0103.exm  T420:x0205.eglc T420:x0303.nep  T420:x0401.egoa T420:x0602.ebbc)
-#...Comment following for P-Surge and ETSS:
-F_v420+=(T412:g0310.hms8 T412:i0101.bha  T412:i0202.hsju T412:i0301.evi2 T412:i0601.hnl)
+if [[ $MODEL != "ETSS" ]] ; then
+   F_v420+=(T412:f0403.eok3 T420:f0602.hsff T420:f0603.hsfe T420:f0604.hsfd)
+fi
+if [[ $MODEL != "PSURGE" ]] ; then
+   F_v420+=(T420:f0202.co2  T420:f0303.pb3  T420:f0503.hmi3 T420:f0704.eke2 T420:f0903.efm2)
+   F_v420+=(T420:x0103.exm  T420:x0205.eglc T420:x0303.nep  T420:x0401.egoa T420:x0602.ebbc)
+fi
+if [[ $MODEL != "ETSS" && $MODEL != "PSURGE" ]] ; then
+   F_v420+=(T412:g0310.hms8 T412:i0101.bha  T412:i0202.hsju T412:i0301.evi2 T412:i0601.hnl)
+fi
 #-----------------
 V=v4.12; D="2014-09-03"; vers+=($V); ds+=($D)
 T412="${V}_$D"
@@ -145,7 +149,11 @@ for v in data:
    if [[ -e $tarDir/$FILE ]] ; then
       # echo "[*] Expanding.. $tarDir/$FILE"
       echo -n " ... Expanding ... "
-      expandBasin.sh $tarDir/$FILE
+      ./expandBasin.sh $tarDir/$FILE
       echo "Done"
    fi
 done
+
+#----------------------------------------------------------------------------
+# Extra code for ETSS, P-ETSS, P-Surge
+#----------------------------------------------------------------------------

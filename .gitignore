@@ -1,6 +1,7 @@
 # Ignore the executables
 /exec
 /sorc/slosh/*.o
+/sorc/slosh/parm2.mod
 /sorc/slosh/sloshDos*
 /sorc/slosh/sloshGui*
 /sorc/slosh/sloshLinux*

@@ -1,4 +1,4 @@
-> *setup-mingw.md*      SLOSH Model Help Pages          Last Change: 2021-08-12
+> *setup-mingw.md*      SLOSH Model Help Pages          Last Change: 2021-10-21
 
 The intent of this file is to help the user setup MinGW.
 
@@ -18,7 +18,7 @@ Or, if you've cloned the slosh repo, it's in:
 
 ```bash
    cp ~/save/slosh/docs/util/getMinGW-450.sh .
-   getMinGW-450.sh go
+   ./getMinGW-450.sh go
 ```
 
 -------------------------------------------------------------------------------

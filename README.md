@@ -13,7 +13,10 @@ You have a git-hub Personal Access Token (PAT).  If not, see:
 1. Cygwin has been installed.  If not, see:
    [setup-cygwin](../master/docs/SETUP-cygwin.md)
 
-2. MinGW 4.5.0 has been installed.  If not, see:
+2. Your installation of 'Cygwin' includes git, curl, and python for the GitHub
+   interactions in /parm/getBasin.sh, /parm/getStorm.sh
+
+3. MinGW 4.5.0 has been installed.  If not, see:
    [setup-mingw](../master/docs/SETUP-mingw.md)
 
 **LINUX**
@@ -52,7 +55,8 @@ SLOSH's official compiler has evolved over time as follows:
    cd slosh
 ```
 
-2. Add the correct version of 'GCC' to the path:
+2. Add the correct version of 'GCC' to the path (to avoid having to do this
+in each session, you may want to add it to your ~/.bash_profile):
 
 **MS-WINDOWS**
    * This is unnecessary as the path is set inside makefile.win.
@@ -67,7 +71,7 @@ SLOSH's official compiler has evolved over time as follows:
 ```bash
    cd ~/save/slosh/gui
    token=$(cat ~/.ssh/gitHub_pat)
-   getGuiLib.sh $token v4.20
+   ./getGuiLib.sh $token v4.20
 ```
 
 4. Build, install, and clean up - SLOSH model
@@ -109,7 +113,18 @@ model such as (P-Surge, P-ETSS, or ETSS).
    # 'Cautions' because some basins do not have all of the tide files (i.e.,
    # Binary Harmonic Constants, Datum Adjustments, or Tide-Flavor).
    token=$(cat ~/.ssh/gitHub_pat)
-   getBasin.sh $token v4.20
+   ./getBasin.sh $token v4.20
+```
+
+* Note - If you have problems automatically downloading basin assets from
+github, you can manually download the .tar.gz files from:
+
+https://github.com/NOAA-MDL/slosh/releases (Click 'Assets')
+
+and place them in "~/save/slosh/tar/".  Then run expandBasin.sh via:
+```bash
+   cd ~/save/slosh/parm
+   ./expandBasin.sh ../tar/a0102.pv2.tar.gz
 ```
 
 -------------------------------------------------------------------------------
@@ -119,13 +134,21 @@ model such as (P-Surge, P-ETSS, or ETSS).
 ```bash
    cd ~/save/slosh/dev
    token=$(cat ~/.ssh/gitHub_pat)
-   getStorm.sh $token v4.20
+   ./getStorm.sh $token v4.20
 ```
+
+* Note - If you have problems automatically downloading test cases from github,
+you can manually download the .tar.gz files from:
+
+https://github.com/NOAA-MDL/slosh/releases (Click 'Assets')
+
+and place them in "~/save/slosh/tar/".  Then you'll need to look at the bottom
+of ~/save/slosh/dev/getStorm.sh for how to un-tar them.
 
 2. Run the tests:
 ```bash
    cd ~/save/slosh/dev
-   runme.sh go
+   ./runme.sh go
 ```
 
 While runme.sh compares the outputs with the expected results, you can do so
@@ -149,7 +172,7 @@ yourself via:
 If you decided you wanted the **SLOSH-GUI**, then you can start it via:
 ```bash
    cd ~/save/slosh/gui
-   run.sh
+   ./run.sh
 ```
 
 You can now run Hugo in HCH2:

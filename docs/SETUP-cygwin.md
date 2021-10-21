@@ -1,4 +1,4 @@
-> *SETUP-cygwin.md*     SLOSH Model Help Pages          Last Change: 2021-08-12
+> *SETUP-cygwin.md*     SLOSH Model Help Pages          Last Change: 2021-10-21
 
 The intent of this file is to help the user install Cygwin.
 
@@ -26,6 +26,8 @@ The intent of this file is to help the user install Cygwin.
          * Net:           * curl; rsync; wget
       * Add icon to Start Menu
 ```
+
+* Make sure you grab **git**, **python**, and **curl**.
 
 -------------------------------------------------------------------------------
 > vim:norl:fdm=marker:fmr=```bash,```
