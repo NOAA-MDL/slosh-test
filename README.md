@@ -1,4 +1,4 @@
-> *README.md*           SLOSH Model Help Pages          Last Change: 2021-08-13
+> *README.md*           SLOSH Model Help Pages          Last Change: 2021-10-21
 
 The intent of this file is to help the user start using the SLOSH model.
 
@@ -55,9 +55,7 @@ SLOSH's official compiler has evolved over time as follows:
 2. Add the correct version of 'GCC' to the path:
 
 **MS-WINDOWS**
-```bash
-   export PATH=/cygdrive/c/sys/MinGW/MinGW-4.5.0/bin:$PATH
-```
+   * This is unnecessary as the path is set inside makefile.win.
 
 **LINUX**
 ```bash
@@ -68,7 +66,8 @@ SLOSH's official compiler has evolved over time as follows:
 3. If you want the **SLOSH-GUI** (vs just the command line) then:
 ```bash
    cd ~/save/slosh/gui
-   getGuiLib.sh v4.20
+   token=$(cat ~/.ssh/gitHub_pat)
+   getGuiLib.sh $token v4.20
 ```
 
 4. Build, install, and clean up - SLOSH model
@@ -109,7 +108,8 @@ model such as (P-Surge, P-ETSS, or ETSS).
    # Don't Panic.  In the following call, there will be a few 'Notes' and
    # 'Cautions' because some basins do not have all of the tide files (i.e.,
    # Binary Harmonic Constants, Datum Adjustments, or Tide-Flavor).
-   getBasin.sh v4.20
+   token=$(cat ~/.ssh/gitHub_pat)
+   getBasin.sh $token v4.20
 ```
 
 -------------------------------------------------------------------------------
@@ -118,7 +118,8 @@ model such as (P-Surge, P-ETSS, or ETSS).
 1. Get the required storms for the tests:
 ```bash
    cd ~/save/slosh/dev
-   getStorm.sh v4.20
+   token=$(cat ~/.ssh/gitHub_pat)
+   getStorm.sh $token v4.20
 ```
 
 2. Run the tests:
@@ -136,44 +137,10 @@ yourself via:
    diff ./work/andrew.env ./sample/andrew.env
 ```
 
-If there are differences, you can use 'envutil' to look more carefully to
-determine if it is just round-off error due to compiler versions:
-```bash
-   ../util/envutil -D work/hugo.env sample/hugo.env
-   ../util/envutil -D work/andrew.env sample/andrew.env
-
-   # To filter for interesting differences, try:
-   ../util/envutil -D work/andrew.env sample/andrew.env |
-      awk '$3 != 999 && $5 != 999 && ($3 - $5 > 1 || $3 - $5 < -1) {
-           sub("\r", "", $0); print $0, "delta:", $3 - $5}'
-```
-
 4. Compare the rex files (a time history at each grid cell):
 ```bash
    diff ./work/hugo.rex ./sample/hugo.rex
    diff ./work/andrew.rex ./sample/andrew.rex
-```
-
-If there are differences, you can use 'rexout' to look more carefully.
-```bash
-   # Create a 'pnt' file:
-   ../util/rexPnt.sh hch2   # Creates hch2.pnt for 1989-Hugo
-   ../util/rexPnt.sh hmi3   # Creates hmi3.pnt for 1992-Andrew
-
-   # Dump the rex files to CSV files:
-   ../util/rexout -pnt hch2.pnt -rex ./work/hugo.rex -style 0 > hugoW.csv
-   ../util/rexout -pnt hch2.pnt -rex ./sample/hugo.rex -style 0 > hugoS.csv
-
-   # This second option may be better for a vimdiff as it doesn't create very
-   # long lines
-   ../util/rexout -pnt hch2.pnt -rex ./work/hugo.rex -style 2 -bsnDir ../parm/bnt > hugoW2.csv
-   ../util/rexout -pnt hch2.pnt -rex ./sample/hugo.rex -style 2 -bsnDir ../parm/bnt > hugoS2.csv
-
-   # Compare the CSV files via:
-   vimdiff hugoW.csv hugoS.csv
-   vimdiff hugoW2.csv hugoS2.csv
-
-   # Repeat for Andrew.
 ```
 
 -------------------------------------------------------------------------------
@@ -194,6 +161,8 @@ You can now run Hugo in HCH2:
    > File->Add 100pt Trk
       >> ~/save2/slosh/dev/storms/hugo.trk
    # Step 3: Press the green "G" button (middle control pannel)
+   #
+   # Note: It may ask about overwritting the rex-file in gui/../dev/work
 ```
 
 Repeat with Andrew in HMI3.  After running them, you can check the answers via
@@ -216,8 +185,7 @@ GUI config files:
 ```
 
 To remove all non-repo related files (e.g., do the 'tidy' option and remove:
-executables, basin data, test answers, and GUI libraries)
-GUI config files:
+executables, basin data, test answers, and GUI libraries):
 ```bash
    cd ~/save/slosh
    ./util/cleanUp.sh wipe

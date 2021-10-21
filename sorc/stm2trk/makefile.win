@@ -1,12 +1,22 @@
 #!/bin/make
+#------------------------------------------------------------------------------
+# makefile.win                                          Last Change: 2021-10-21
+#                                                        Arthur.Taylor@noaa.gov
+#                                                              NWS/OSTI/MDL/DSB
+#------------------------------------------------------------------------------
 SHELL = /bin/sh
+
+B?=4.5.0
+PATH=/cygdrive/c/sys/MinGW/MinGW-$(B)/bin
+MV=/bin/mv
+RM=/bin/rm
 
 CC = gcc
 STD_FLAGS = -O3 -Wall -ansi
 
 STD_DEF = -D_WINDOWS_ -D_GCC_ -DPRINT
 
-STD_INC= -I.
+STD_INC = -I.
 
 STD_LIB = -L/usr/lib -lm
 
@@ -31,23 +41,22 @@ C_MAIN = stm2trk.c
 
 C_OBJECTS = $(C_SOURCES:.c=.o)
 
-############################
-#
-# TARGETS
-#
-############################
+#------------------------------------------------------------------------------
+# Targets
+#------------------------------------------------------------------------------
 all: $(PRJ_NAME)
 
 $(PRJ_NAME): $(C_OBJECTS) $(C_MAIN) $(H_SOURCES)
 	$(CC) $(C_MAIN) $(CFLAGS) $(C_OBJECTS) $(STD_LIB) -o $(PRJ_NAME)
 
-clean:
-	rm -f *.o *.bak *.BAK
+install:
+	$(MV) $(PRJ_NAME).exe ../../exec
 
-############################
-#
-# SUFFIXES
-#
-############################
-.c.o : $(H_SOURCES)
+clean:
+	-$(RM) -f *.o *.bak *.BAK
+
+#------------------------------------------------------------------------------
+# Suffixes
+#------------------------------------------------------------------------------
+.c.o:
 	$(CC) -c $(CFLAGS) $<
