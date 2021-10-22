@@ -1,4 +1,4 @@
-> *README.md*           SLOSH Model Help Pages          Last Change: 2021-10-21
+> *README.md*           SLOSH Model Help Pages          Last Change: 2021-10-22
 
 The intent of this file is to help the user start using the SLOSH model.
 
@@ -55,11 +55,16 @@ SLOSH's official compiler has evolved over time as follows:
    cd slosh
 ```
 
-2. Add the correct version of 'GCC' to the path (to avoid having to do this
-in each session, you may want to add it to your ~/.bash_profile):
+2. Add the correct version of 'GCC' to the path:
+  * You may want to add this to your ~/.bash_profile (to avoid having to do
+    it in each session).
 
 **MS-WINDOWS**
-   * This is unnecessary as the path is set inside makefile.win.
+   * Note - we can't use c:/ in the following because PATH uses ':' as a
+     seperator.  So we use 'cygdrive/c' instead.
+```bash
+   export PATH=/cygdrive/c/sys/MinGW/MinGW-4.5.0/bin:$PATH
+```
 
 **LINUX**
 ```bash
