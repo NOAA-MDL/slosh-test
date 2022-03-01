@@ -1,5 +1,4 @@
       SUBROUTINE CRDRD2
-      USE PARM2
       INCLUDE 'parm.for'
 C      INCLUDE 'parmmsy.for'
 C
@@ -31,14 +30,14 @@ C      DATA XA1/'X'/,YA1/'Y'/,ZA1/'Z'/,SIG_/'$'/
 C
 C       READ BOUNDARY TYPES ALONG LEFT,RIGHT,TOP AND BOTTOM BOUNDARIES
 C        ALONG MOMENTUM POINTS.
-C             .****.****.****.****.****.****.****.****.  TOP BNDRY
+C             .****.****.****.****.****.****.****.****.  TOP BOUNDARY
 C             *                                       *
 C             *                                       *
 C             .    .    .    .    .    .    .    .    .
-C LEFT BNDY   *                                       *   RIGHT BNDY
+C LEFT BNDY   *                                       *  RIGHT BOUNDARY
 C             * +         +         +         +       *
 C             *                                       *
-C             .****.****.****.****.****.****.****.****.  BOTTOM BNDRY
+C             .****.****.****.****.****.****.****.****.  BOTTOM BOUNDARY
 C             2    8    8    8    9    9    9    1    1
 C DEEP WATER-) (-INTERMEDIATE----) (-SHALLOW----) (--LAND----
 C

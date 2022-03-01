@@ -33,7 +33,7 @@
 sInt4 Stuff_xxx (FILE * fp, uChar * pbuf, sChar * pbufLoc, sInt4 val,
                  char f_flag)
 {
-   static uInt4 prev = 0, run = 0;
+   static sInt4 prev = 0, run = 0;
    sInt4 count = 0;
 
    if (f_flag == 1) {
@@ -41,16 +41,13 @@ sInt4 Stuff_xxx (FILE * fp, uChar * pbuf, sChar * pbufLoc, sInt4 val,
       if (run != 0) {
          run = run - 1;
          fileBitWrite (&run, sizeof (uInt4), 8, fp, pbuf, pbufLoc);
-/*      tPutBit (&run, sizeof (run), 8, tp);*/
          fileBitWrite (&prev, sizeof (uInt4), 9, fp, pbuf, pbufLoc);
-/*      tPutBit (&prev, sizeof (prev), 9, tp);*/
          count += 17;
          run = 0;
       }
       /* Clear the put byte. Only time count += TPUTBIT */
       /* Flush the put buffer. */
       count += fileBitWrite (&prev, sizeof (uInt4), 0, fp, pbuf, pbufLoc);
-/*    count += tFlush (1, tp);*/
       return count;
    }
    if (((val > 360) && (val != 999)) || (val < -150))
@@ -64,9 +61,7 @@ sInt4 Stuff_xxx (FILE * fp, uChar * pbuf, sChar * pbufLoc, sInt4 val,
       if (run == 256) {
          run = run - 1;
          fileBitWrite (&run, sizeof (uInt4), 8, fp, pbuf, pbufLoc);
-/*      tPutBit (&run, sizeof (run), 8, tp);*/
          fileBitWrite (&prev, sizeof (uInt4), 9, fp, pbuf, pbufLoc);
-/*      tPutBit (&prev, sizeof (prev), 9, tp);*/
          count += 17;
          run = 0;
       }
@@ -75,9 +70,7 @@ sInt4 Stuff_xxx (FILE * fp, uChar * pbuf, sChar * pbufLoc, sInt4 val,
       if (run != 0) {
          run = run - 1;
          fileBitWrite (&run, sizeof (uInt4), 8, fp, pbuf, pbufLoc);
-/*      tPutBit (&run, sizeof (run), 8, tp);*/
          fileBitWrite (&prev, sizeof (uInt4), 9, fp, pbuf, pbufLoc);
-/*      tPutBit (&prev, sizeof (prev), 9, tp);*/
          count += 17;
       }
       prev = val;
@@ -88,7 +81,7 @@ sInt4 Stuff_xxx (FILE * fp, uChar * pbuf, sChar * pbufLoc, sInt4 val,
 
 sInt4 memStuff_xxx (char **ptr, uChar * bufLoc, sInt4 val, char f_flag)
 {
-   static uInt4 prev = 0, run = 0;
+   static sInt4 prev = 0, run = 0;
    sInt4 count = 0;
    size_t numUsed;
 
@@ -100,10 +93,6 @@ sInt4 memStuff_xxx (char **ptr, uChar * bufLoc, sInt4 val, char f_flag)
          *ptr = *ptr + numUsed;
          memBitWrite (&prev, sizeof (uInt4), *ptr, 9, bufLoc, &numUsed);
          *ptr = *ptr + numUsed;
-/*
-      tPutBit (&run, sizeof (run), 8, tp);
-      tPutBit (&prev, sizeof (prev), 9, tp);
-*/
          count += 17;
          run = 0;
       }
@@ -129,10 +118,6 @@ sInt4 memStuff_xxx (char **ptr, uChar * bufLoc, sInt4 val, char f_flag)
          *ptr = *ptr + numUsed;
          memBitWrite (&prev, sizeof (uInt4), *ptr, 9, bufLoc, &numUsed);
          *ptr = *ptr + numUsed;
-/*
-      tPutBit (&run, sizeof (run), 8, tp);
-      tPutBit (&prev, sizeof (prev), 9, tp);
-*/
          count += 17;
          run = 0;
       }
@@ -144,10 +129,6 @@ sInt4 memStuff_xxx (char **ptr, uChar * bufLoc, sInt4 val, char f_flag)
          *ptr = *ptr + numUsed;
          memBitWrite (&prev, sizeof (uInt4), *ptr, 9, bufLoc, &numUsed);
          *ptr = *ptr + numUsed;
-/*
-      tPutBit (&run, sizeof (run), 8, tp);
-      tPutBit (&prev, sizeof (prev), 9, tp);
-*/
          count += 17;
       }
       prev = val;
@@ -185,7 +166,7 @@ sInt4 memStuff_xxx (char **ptr, uChar * bufLoc, sInt4 val, char f_flag)
 sInt4 Stuff2_xxx (FILE * fp, uChar * pbuf, sChar * pbufLoc, sInt4 val,
                   char f_flag)
 {
-   static uInt4 prev = 0, run = 0;
+   static sInt4 prev = 0, run = 0;
    sInt4 count = 0;
 
    if (f_flag == 1) {
@@ -193,15 +174,12 @@ sInt4 Stuff2_xxx (FILE * fp, uChar * pbuf, sChar * pbufLoc, sInt4 val,
       if (run != 0) {
          run = run - 1;
          fileBitWrite (&run, sizeof (uInt4), 8, fp, pbuf, pbufLoc);
-/*      tPutBit (&run, sizeof (run), 8, tp);*/
          fileBitWrite (&prev, sizeof (uInt4), 10, fp, pbuf, pbufLoc);
-/*      tPutBit (&prev, sizeof (prev), 10, tp);*/
          count += 18;
          run = 0;
       }
       /* Clear the put byte. Only time count += TPUTBIT */
       count += fileBitWrite (&prev, sizeof (uInt4), 0, fp, pbuf, pbufLoc);
-/*    count += tFlush (1, tp);*/
       return count;
    }
    if (((val > 700) && (val != 999)) || (val < -320))
@@ -215,9 +193,7 @@ sInt4 Stuff2_xxx (FILE * fp, uChar * pbuf, sChar * pbufLoc, sInt4 val,
       if (run == 256) {
          run = run - 1;
          fileBitWrite (&run, sizeof (uInt4), 8, fp, pbuf, pbufLoc);
-/*      tPutBit (&run, sizeof (run), 8, tp);*/
          fileBitWrite (&prev, sizeof (uInt4), 10, fp, pbuf, pbufLoc);
-/*      tPutBit (&prev, sizeof (prev), 10, tp);*/
          count += 18;
          run = 0;
       }
@@ -226,9 +202,7 @@ sInt4 Stuff2_xxx (FILE * fp, uChar * pbuf, sChar * pbufLoc, sInt4 val,
       if (run != 0) {
          run = run - 1;
          fileBitWrite (&run, sizeof (uInt4), 8, fp, pbuf, pbufLoc);
-/*      tPutBit (&run, sizeof (run), 8, tp);*/
          fileBitWrite (&prev, sizeof (uInt4), 10, fp, pbuf, pbufLoc);
-/*      tPutBit (&prev, sizeof (prev), 10, tp);*/
          count += 18;
       }
       prev = val;
@@ -239,7 +213,7 @@ sInt4 Stuff2_xxx (FILE * fp, uChar * pbuf, sChar * pbufLoc, sInt4 val,
 
 sInt4 memStuff2_xxx (char **ptr, uChar * bufLoc, sInt4 val, char f_flag)
 {
-   static uInt4 prev = 0, run = 0;
+   static sInt4 prev = 0, run = 0;
    sInt4 count = 0;
    size_t numUsed;
 
@@ -251,10 +225,6 @@ sInt4 memStuff2_xxx (char **ptr, uChar * bufLoc, sInt4 val, char f_flag)
          *ptr = *ptr + numUsed;
          memBitWrite (&prev, sizeof (uInt4), *ptr, 10, bufLoc, &numUsed);
          *ptr = *ptr + numUsed;
-/*
-      tPutBit (&run, sizeof (run), 8, tp);
-      tPutBit (&prev, sizeof (prev), 10, tp);
-*/
          count += 18;
          run = 0;
       }
@@ -284,10 +254,6 @@ sInt4 memStuff2_xxx (char **ptr, uChar * bufLoc, sInt4 val, char f_flag)
          *ptr = *ptr + numUsed;
          memBitWrite (&prev, sizeof (uInt4), *ptr, 10, bufLoc, &numUsed);
          *ptr = *ptr + numUsed;
-/*
-      tPutBit (&run, sizeof (run), 8, tp);
-      tPutBit (&prev, sizeof (prev), 10, tp);
-*/
          count += 18;
          run = 0;
       }
@@ -299,10 +265,6 @@ sInt4 memStuff2_xxx (char **ptr, uChar * bufLoc, sInt4 val, char f_flag)
          *ptr = *ptr + numUsed;
          memBitWrite (&prev, sizeof (uInt4), *ptr, 10, bufLoc, &numUsed);
          *ptr = *ptr + numUsed;
-/*
-      tPutBit (&run, sizeof (run), 8, tp);
-      tPutBit (&prev, sizeof (prev), 10, tp);
-*/
          count += 18;
       }
       prev = val;

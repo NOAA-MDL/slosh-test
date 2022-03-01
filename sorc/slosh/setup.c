@@ -2,7 +2,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-#include "slosh2.h"
+/* #include "slosh2.h"*/
+#include "setup.h"
 #include "myutil.h"
 #include "myassert.h"
 #include "savellx.h"

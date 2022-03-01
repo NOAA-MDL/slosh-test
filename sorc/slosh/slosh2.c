@@ -17,41 +17,43 @@
 #include "memwatch.h"
 #endif
 
-/*
-#ifndef _sysDOS
-*/
-#ifdef _GCC_
-#define LLX2PQ llx2pq_
-extern int llx2pq_
-#else
-#define LLX2PQ llx2pq
-extern int llx2pq
-#endif
-#ifdef DOUBLE_FORTRAN
-  (double *lt, double *lg, int *i, int *j);
-#else
-  (float *lt, float *lg, int *i, int *j);
+#ifdef _MPI_
+#include "mpi.h"
+#include <unistd.h> /* for sleep() */
 #endif
 
 #ifdef _GCC_
-#define TMSTEP tmstep_
-extern int tmstep_
+#define TMSTPC tmstpc_
+extern int tmstpc_
 #else
-#define TMSTEP tmstep
-extern int tmstep
+#define TMSTPC tmstpc
+extern int tmstpc
 #endif
 #ifdef DOUBLE_FORTRAN
 /* The order BAS_Y then BAS_X is because FORTRAN and C flip things in 2d array. */
-   (int *itime, int *mhalt, double hb[BAS_Y][BAS_X], double *del_t,
-   double *storm_lat, double *storm_lon, double *delp, double *size,
-   double *wspeed, double *wdirct, short *csflag, short *fpass, double *modelClock,
-   short *restart);
+   (double hb[BAS_Y][BAS_X], short *fpass, short *restart);
 #else
 /* The order BAS_Y then BAS_X is because FORTRAN and C flip things in 2d array. */
-   (int *itime, int *mhalt, float hb[BAS_Y][BAS_X], float *del_t,
-   float *storm_lat, float *storm_lon, float *delp, float *size,
-   float *wspeed, float *wdirct, short *csflag, short *fpass, double *modelClock,
-   short *restart);
+   (float hb[BAS_Y][BAS_X], short *fpass, short *restart);
+#endif
+
+#ifdef _GCC_
+#define TMSTPM tmstpm_
+extern int tmstpm_
+#else
+#define TMSTPM tmstpm
+extern int tmstpm
+#endif
+#ifdef DOUBLE_FORTRAN
+/* The order BAS_Y then BAS_X is because FORTRAN and C flip things in 2d array. */
+   (int *itime, int *mhalt, double *del_t, double *storm_lat, double *storm_lon, 
+    double *delp, double *size, double *wspeed, double *wdirct, double *modelClock, 
+    short *restart);
+#else
+/* The order BAS_Y then BAS_X is because FORTRAN and C flip things in 2d array. */
+   (int *itime, int *mhalt, float *del_t, float *storm_lat, float *storm_lon,
+    float *delp, float *size, float *wspeed, float *wdirct, float *modelClock,
+    short *restart);
 #endif
 
 #ifdef _GCC_
@@ -61,11 +63,7 @@ extern int tmstp2_
 #define TMSTP2 tmstp2
 extern int tmstp2
 #endif
-#ifdef DOUBLE_FORTRAN
    (void);
-#else
-   (void);
-#endif
 
 #ifdef _GCC_
 #define INTLHTSUB intlhtsub_
@@ -93,10 +91,6 @@ extern int intlhtadd_
 extern int intlhtadd
 #endif
    (void);
-/* Declare a dynamic assigned character arrays to avoid -check bound error
- passing length of character from c language procedure (slosh2.c) to fortran inital.f*/
-
-/* Huiqing Liu /MDL Oct. 2018 */
 
 #ifdef _GCC_
 #define INITAL inital_
@@ -107,20 +101,22 @@ extern int inital
 #endif
 #ifdef DOUBLE_FORTRAN
 /* The order BAS_Y then BAS_X is because FORTRAN and C flip things in 2d array. */
+/* Pass the length of the character array to avoid -check bound error *
+ * Huiqing Liu / MDL Oct. 2018 */
    (int *mhalt, int *imxb, int *jmxb, double zb[BAS_Y][BAS_X],
    int *m_hour, int *m_min, int *m_day, int *m_month, int *m_year,
    char trk_name[MY_MAX_PATH], int *len_trk, char dta_name[MY_MAX_PATH],
    int *len_dta, char xxx_name[MY_MAX_PATH], int *len_env,
-   char f40_name[MY_MAX_PATH], int * len_ft40, double *del_t, char bsnAbrev[5], double *modelClock,
-   short *wave);
+   char f40_name[MY_MAX_PATH], int * len_ft40, double *del_t,
+   char bsnAbrev[5], int *len_bsn, double *modelClock, short *wave);
 #else
 /* The order BAS_Y then BAS_X is because FORTRAN and C flip things in 2d array. */
    (int *mhalt, int *imxb, int *jmxb, float zb[BAS_Y][BAS_X],
    int *m_hour, int *m_min, int *m_day, int *m_month, int *m_year,
    char trk_name[MY_MAX_PATH], int *len_trk, char dta_name[MY_MAX_PATH],
    int *len_dta, char xxx_name[MY_MAX_PATH], int *len_env,
-   char f40_name[MY_MAX_PATH], int * len_ft40, float *del_t, char bsnAbrev[5], float *modelClock,
-   short *wave);
+   char f40_name[MY_MAX_PATH], int * len_ft40, float *del_t,
+   char bsnAbrev[5], int *len_bsn, float *modelClock, short *wave);
 #endif
 
 #ifdef _GCC_
@@ -214,6 +210,20 @@ extern int issubgrid
 #endif
 #pragma pack()
 
+/* Access FORTRAN common block "frank" for istar, istop, jstar, jstop, irank */
+#pragma pack(2)
+ extern struct {
+  int IRANK, ISTAR, ISTOP, JSTAR, JSTOP;
+ }
+#ifdef _GCC_
+ frank_;
+ #define FRANK frank_
+#else
+ frank;
+ #define FRANK frank
+#endif
+#pragma pack()
+
 /* Access FORTRAN common block "dumb10" for HMX 4/2018 D.Y*/
 #pragma pack(2)
  extern struct {
@@ -251,45 +261,6 @@ extern int issubgrid
  #define BCPTS bcpts
 #endif
 #pragma pack()
-
-/*
-#else
-  extern int llx2pq_(float *lt, float *lg, int *i, int *j);
-  void llx2pq(float *lt, float *lg, int *i, int *j) {
-    llx2pq_(lt,lg,i,j);
-  }
-  extern int tmstep_(int *itime, int *mhalt, float hb[BAS_Y][BAS_X], float *del_t,
-           float *storm_lat, float *storm_lon, float *delp, float *size,
-           float *wspeed, float *wdirct, short *csflag, short *smooth, short *fpass);
-  void tmstep(int *itime, int *mhalt, float hb[BAS_Y][BAS_X], float *del_t,
-          float *storm_lat, float *storm_lon, float *delp, float *size,
-          float *wspeed, float *wdirct, short *csflag, short *smooth, short *fpass) {
-    tmstep_(itime,mhalt,hb,del_t,storm_lat,storm_lon,delp,size,wspeed,wdirct,
-            csflag,smooth,fpass);
-  }
-  extern int inital_(int *mhalt, int *imxb, int *jmxb, float zb[BAS_Y][BAS_X],
-           int *m_hour, int *m_min, int *m_day, int *m_month, int *m_year,
-           char trk_name[31], char dta_name[31], char xxx_name[31], char llx_name[31],
-           char f40_name[31]);
-  void inital(int *mhalt, int *imxb, int *jmxb, float zb[BAS_Y][BAS_X],
-         int *m_hour, int *m_min, int *m_day, int *m_month, int *m_year,
-         char trk_name[31], char dta_name[31], char xxx_name[31], char llx_name[31],
-         char f40_name[31]) {
-    inital_(mhalt,imxb,jmxb,zb,m_hour,m_min,m_day,m_month,m_year,trk_name,
-            dta_name,xxx_name,llx_name,f40_name);
-  }
-  extern int clnup_(float hb[BAS_Y][BAS_X], int *f_saveEnv);
-  void clnup(float hb[BAS_Y][BAS_X], int *f_saveEnv) {
-    clnup_(hb, f_saveEnv);
-  }
-  extern int wind_(float iu[WNDU][WNDU], float iv[WNDU][WNDU], float ip[WNDU][WNDU],
-               float *delsnm, int *n0, float *wspeed, float *wdirct);
-  void wind(float iu[WNDU][WNDU], float iv[WNDU][WNDU], float ip[WNDU][WNDU],
-            float *delsnm, int *n0, float *wspeed, float *wdirct) {
-    wind_(iu,iv,ip,delsnm,n0,wspeed,wdirct);
-  }
-#endif
-*/
 
 /*****************************************************************************
  * InitWater --- Arthur Taylor / MDL
@@ -539,7 +510,7 @@ int InitWater_TideModeOverride (float *ht1, int f_tide, float *ht2)
     A2 = (xode * amp) per (cell and constit)
 -> kind of inclined towards keeping CalcTide as a function of (time,InitTide)
 *****************************************************************************/
-static int CalcTideGrid (int imxb, int jmxb, slosh_type *st,
+static int CalcTideGrid (int imxb, slosh_type *st,
                          TideGridType *tgrid, double modelClock,
                          int f_tide)
 {
@@ -557,7 +528,6 @@ static int CalcTideGrid (int imxb, int jmxb, slosh_type *st,
                                * For f_tide == -1 => depths <= 0 and wet cells.
                                *   The New Orleans area would have dry levys.*/
 
-   whichCell = 0;
    now = (modelClock - tgrid->tideAngleClock) / 3600.;
    for (k = 0; k < NUMT; k++) {
       CA[k] = cos (tgrid->ang[k].angle * now);
@@ -569,8 +539,9 @@ static int CalcTideGrid (int imxb, int jmxb, slosh_type *st,
       return -1;
    }
 
-   for (j = 0; j < jmxb - 1; j++) {
-      for (i = 0; i < imxb - 1; i++) {
+   /* Deal with the map shift. */
+   for (j = 0; j < FRANK.JSTOP - FRANK.JSTAR; j++) {
+      for (i = 0; i < FRANK.ISTOP - FRANK.ISTAR; i++) {
 /* Originally we only calculated tide when hb + zb != 0 (e.g. wet)
  * Issue: For tideOnly, a cell can become dry based on a negative tide.
  *   If that happens, we no longer calculate the tide.
@@ -599,6 +570,8 @@ static int CalcTideGrid (int imxb, int jmxb, slosh_type *st,
             }
          }
          if (f_calc) {
+            /* Determine whichCell. */
+            whichCell = (j + FRANK.JSTAR - 1) * (imxb - 1) + (i + FRANK.ISTAR - 1);
 
             /* This is where calctidegrid starts. Initial water level set to
              * adjustment field.*/
@@ -662,30 +635,28 @@ if (k >= 37) {
             /* st->tide_V1max[j][i] does not change in dry case. */
 
          }
-         whichCell++;
       }
    }
-
    return 0;
 }
 
-void SetTideUsableFlag (int imxb, int jmxb, TideGridType *tgrid, int f_tide,
+void SetTideUsableFlag (int imxb, TideGridType *tgrid, int f_tide,
                         int tideThresh)
 {
    int whichCell;             /* Index of grid cell. */
    int i, j;                  /* Counter through grid cells. */
    int subI, subJ, iAns;
 
-   /* whichCell = (j * (imxb -1) + i */
-   whichCell = 0;
-
    if ((f_tide != 21) && (f_tide != 22) && (f_tide !=24)) {
       return;
    }
-   for (j = 0; j < jmxb - 1; j++) {
-      for (i = 0; i < imxb - 1; i++) {
-           /* Subtract old tide/add new tide if not TideV2.1 or cell is
-              < -1 * tideThresh feet. */
+   for (j = 0; j < FRANK.JSTOP - FRANK.JSTAR; j++) {
+      for (i = 0; i < FRANK.ISTOP - FRANK.ISTAR; i++) {
+         /* Determine whichCell. */
+         whichCell = (j + FRANK.JSTAR - 1) * (imxb - 1) + (i + FRANK.ISTAR - 1);
+
+         /* Subtract old tide/add new tide if not TideV2.1 or cell is
+            < -1 * tideThresh feet. */
          if (DUMB5.ZB[j][i] <= tideThresh) {
             tgrid->cells[whichCell].f_usable = 0;
          } else if (f_tide == 22 || f_tide == 24) {
@@ -697,7 +668,6 @@ void SetTideUsableFlag (int imxb, int jmxb, TideGridType *tgrid, int f_tide,
                tgrid->cells[whichCell].f_usable = 0;
             }
          }
-         whichCell++;
       }
    }
 }
@@ -766,7 +736,7 @@ void SetTideUsableFlag (int imxb, int jmxb, TideGridType *tgrid, int f_tide,
  *         computed ahead of time.  Refer to InitTideGrid in tideutil.c for
  *         that setup
  ****************************************************************************/
-static int CalcTideGrid2 (int imxb, int jmxb, slosh_type *st,
+static int CalcTideGrid2 (int imxb, slosh_type *st,
                           TideGridType *tgrid, double modelClock,
                           int f_tide, int f_first)
 {
@@ -811,16 +781,16 @@ static int CalcTideGrid2 (int imxb, int jmxb, slosh_type *st,
       SA[k] = sin (tgrid->ang[k].angle * now);
    }
 
-   /* whichCell = (j * (imxb -1) + i */
-   whichCell = 0;
-
 /*   if ((f_first) && (f_tide < 5)) {*/
    if (f_first) {
       /* Add the tide grid for all wet cells (f_tide = 3,4,5,6) */
-      for (j = 0; j < jmxb - 1; j++) {
-         for (i = 0; i < imxb - 1; i++) {
+      for (j = 0; j < FRANK.JSTOP - FRANK.JSTAR; j++) {
+         for (i = 0; i < FRANK.ISTOP - FRANK.ISTAR; i++) {
             /* Calculate tide only on grid cells that are wet. */
             if ((DUMB7.HB[j][i] + DUMB5.ZB[j][i]) != 0.0) {
+               /* Determine whichCell. */
+               whichCell = (j + FRANK.JSTAR - 1) * (imxb - 1) + (i + FRANK.ISTAR - 1);
+
                /* Initial water level set to adjustment field.*/
                tide = -1 * tgrid->cells[whichCell].navd88_mtl;
                for (k = 0; k < NUMT; k++) {
@@ -850,17 +820,19 @@ if (k >= 37) {
                /* Handle the dry cell by stating the tide is 99.9 there. */
                st->tide[j][i] = 99.9;
             }
-            whichCell++;
          }
       }
 
    } else if ((f_tide == 2) || (f_tide == 21) || (f_tide == 22) || (f_tide == -2) || (f_tide == 24)) {
       /* for f_tide = 3,4 (mode 2), Subtract old tide and add new tide */
-      for (j = 0; j < jmxb - 1; j++) {
-         for (i = 0; i < imxb - 1; i++) {
-           /* For TideV2.1 and depth >= 290 feet force it to tide value
-            * + inverted barometer? */
-           if (((f_tide == 21) || (f_tide == 22)) && (DUMB5.ZB[j][i] >= 290)) {
+      for (j = 0; j < FRANK.JSTOP - FRANK.JSTAR; j++) {
+         for (i = 0; i < FRANK.ISTOP - FRANK.ISTAR; i++) {
+            /* Determine whichCell. */
+            whichCell = (j + FRANK.JSTAR - 1) * (imxb - 1) + (i + FRANK.ISTAR - 1);
+
+            /* For TideV2.1 and depth >= 290 feet force it to tide value
+             * + inverted barometer? */
+            if (((f_tide == 21) || (f_tide == 22)) && (DUMB5.ZB[j][i] >= 290)) {
                /* Find new tide value. */
                /* Initial water level set to adjustment field.*/
                tide = -1 * tgrid->cells[whichCell].navd88_mtl;
@@ -882,63 +854,62 @@ if (k >= 37) {
                DUMB7.HB[j][i] = statHt + tide;
                st->tide[j][i] = tide;
 
-           /* Subtract old tide/add new tide if not TideV2.1 or cell is
-              < -10 feet. */
-           /* (f_tide != 21) || (DUMB5.ZB[j][i] > tideThresh)) { */
-           } else if (tgrid->cells[whichCell].f_usable) {
-            /* Calculate tide only on grid cells that are wet. */
-            if ((DUMB7.HB[j][i] + DUMB5.ZB[j][i]) != 0.0) {
-               /* Find new tide value. */
-               /* Initial water level set to adjustment field.*/
-               tide = -1 * tgrid->cells[whichCell].navd88_mtl;
-               for (k = 0; k < NUMT; k++) {
+            /* Subtract old tide/add new tide if not TideV2.1 or cell is
+               < -10 feet. */
+            /* (f_tide != 21) || (DUMB5.ZB[j][i] > tideThresh)) { */
+            } else if (tgrid->cells[whichCell].f_usable) {
+               /* Calculate tide only on grid cells that are wet. */
+               if ((DUMB7.HB[j][i] + DUMB5.ZB[j][i]) != 0.0) {
+                  /* Find new tide value. */
+                  /* Initial water level set to adjustment field.*/
+                  tide = -1 * tgrid->cells[whichCell].navd88_mtl;
+                  for (k = 0; k < NUMT; k++) {
 /* Added following if test for intel 12.1.5 compiler.
  * Avoids a segfault (presumably due to optimization). */
 if (k >= 37) {
    printf ("ERROR\n");
    fflush (stdout);
 }
-                  tide += (tgrid->cells[whichCell].xamp[k] *
-                            (CA[k] * tgrid->cells[whichCell].COS_vpu_phas[k] -
-                             SA[k] * tgrid->cells[whichCell].SIN_vpu_phas[k]));
-               }
-
-               /* Find old tide value. */
-               /* Determine if we know the old tide.  Don't test against
-                * 99.9 because of roundoff */
-               if (st->tide[j][i] < 99) {
-                  oldTide = st->tide[j][i];
-               } else {
-                  /* We don't know the old tide, so it is likely a newly wet
-                   * cell, so we compute it now. */
-                  oldTide = -1 * tgrid->cells[whichCell].navd88_mtl;
-                  for (k = 0; k < NUMT; k++) {
-                     oldTide += (tgrid->cells[whichCell].xamp[k] *
-                               (oldCA[k] * tgrid->cells[whichCell].COS_vpu_phas[k] -
-                                oldSA[k] * tgrid->cells[whichCell].SIN_vpu_phas[k]));
+                     tide += (tgrid->cells[whichCell].xamp[k] *
+                               (CA[k] * tgrid->cells[whichCell].COS_vpu_phas[k] -
+                                SA[k] * tgrid->cells[whichCell].SIN_vpu_phas[k]));
                   }
-               }
 
-               /* Subtract the old tide from the FORTRAN surge array and
-                * add the new tide.  Need to first test if the total change
-                * caused the cell to "dry up" (based on test in CONTTY) */
-               if ((DUMB7.HB[j][i] - oldTide + tide + DUMB5.ZB[j][i]) >= 0) {
-                  DUMB7.HB[j][i] = DUMB7.HB[j][i] - oldTide + tide;
-                  st->tide[j][i] = tide;
+                  /* Find old tide value. */
+                  /* Determine if we know the old tide.  Don't test against
+                   * 99.9 because of roundoff */
+                  if (st->tide[j][i] < 99) {
+                     oldTide = st->tide[j][i];
+                  } else {
+                     /* We don't know the old tide, so it is likely a newly wet
+                      * cell, so we compute it now. */
+                     oldTide = -1 * tgrid->cells[whichCell].navd88_mtl;
+                     for (k = 0; k < NUMT; k++) {
+                        oldTide += (tgrid->cells[whichCell].xamp[k] *
+                                  (oldCA[k] * tgrid->cells[whichCell].COS_vpu_phas[k] -
+                                   oldSA[k] * tgrid->cells[whichCell].SIN_vpu_phas[k]));
+                     }
+                  }
+
+                  /* Subtract the old tide from the FORTRAN surge array and
+                   * add the new tide.  Need to first test if the total change
+                   * caused the cell to "dry up" (based on test in CONTTY) */
+                  if ((DUMB7.HB[j][i] - oldTide + tide + DUMB5.ZB[j][i]) >= 0) {
+                     DUMB7.HB[j][i] = DUMB7.HB[j][i] - oldTide + tide;
+                     st->tide[j][i] = tide;
+                  } else {
+                     /* Tide caused cell to "dry up". */
+                     DUMB7.HB[j][i] = -1 * DUMB5.ZB[j][i];
+                     st->tide[j][i] = 99.9;
+                  }
+
                } else {
-                  /* Tide caused cell to "dry up". */
-                  DUMB7.HB[j][i] = -1 * DUMB5.ZB[j][i];
+                  /* Handle the dry cell by stating the tide is 99.9 there. */
                   st->tide[j][i] = 99.9;
                }
-
             } else {
-               /* Handle the dry cell by stating the tide is 99.9 there. */
                st->tide[j][i] = 99.9;
-            }
-           } else {
-              st->tide[j][i] = 99.9;
-           }
-           whichCell++;
+            } 
          }
       }
 
@@ -981,7 +952,11 @@ if (k >= 37) {
    return 0;
 }
 
-static int SpinUpTideGrid (char * bsnAbrev, int imxb, int jmxb,
+static int SpinUpTideGrid (int teamRank, int teamSize,
+#ifdef _MPI_
+                           MPI_Win win_HB7, MPI_Datatype dstType[9], MPI_Datatype srcType[9],
+#endif
+                           char * bsnAbrev, int imxb, int jmxb,
                            TideGridType *tgrid, double modelClock,
                            int f_tide, int spinUp, int f_saveSpinUp, double del_t,
                            rexType *rex, char f_wantRex, int rexSaveMin)
@@ -990,7 +965,7 @@ static int SpinUpTideGrid (char * bsnAbrev, int imxb, int jmxb,
    int i, j;                  /* Counter through grid cells. */
    double tide;               /* Astronomically driven water level. */
    double now;                /* The time in fractions of hours since the
-                               * begining of the year which the angles were
+                               * beginning of the year which the angles were
                                * loaded for to modelClock. */
    int k;                     /* Counts through tidal constituents. */
    static double CA[NUMT];    /* Cos of the angle(in radians) * now. */
@@ -1056,13 +1031,25 @@ static int SpinUpTideGrid (char * bsnAbrev, int imxb, int jmxb,
             /* Clock_Print (buffer, 100, myClock, "%D %T", 1);
                printf ("Saving to Rex ... The myClock is now -- %s\n", buffer);
              */
-            /* Fake a storm lat=10, lon=15, wspeed=5, wdirect=0, delp=10, size=10 */
-            RexSaveStep (rex, 10, 15, 5, 0, 10, 10, DUMB7.HB, DUMB5.ZB,
-                         imxb, jmxb, myClock);
+
+            /* Gather ... Ranks push to Rank 0 */
+           if (teamSize > 1) {
+#ifdef _MPI_
+               MPI_Win_fence(0,win_HB7);
+               if (teamRank != 0)
+                  MPI_Put(DUMB7.HB,1,srcType[8],0,0,1,dstType[8],win_HB7);
+               MPI_Win_fence(0,win_HB7);
+#endif
+            }
+            if (teamRank == 0) {
+               /* Fake a storm lat=10, lon=15, wspeed=5, wdirect=0, delp=10, size=10 */
+               RexSaveStep (rex, 10, 15, 5, 0, 10, 10, DUMB7.HB, DUMB5.ZB,
+                            imxb, jmxb, myClock);
+            }
             rextime += rexSaveMin * 60;
          }
       }
-/* Huiqing.Liu/MDL Adding and subtracting tide at every 6 mins for hsf1 basin */
+/* Huiqing.Liu/MDL Adding and subtracting tide at every 6 mins for HSF1 basin */
       if (strcmp (bsnAbrev, "hsf1") == 0 || 
           strcmp (bsnAbrev, "hsfa") == 0 || 
           strcmp (bsnAbrev, "hsfb") == 0 || 
@@ -1140,8 +1127,8 @@ if (k >= 37) {
    INTLHTADD ();
 /*
    fp = fopen ("dumpAdd.txt", "wt");
-   for (j = 0; j < jmxb - 1; j++) {
-      for (i = 0; i < imxb - 1; i++) {
+   for (j = 0; j < jmxb - 1; j++) { 
+      for (i = 0; i < imxb - 1; i++)  {
          fprintf (fp, "Depth = %d %d %f \n", i, j, DUMB7.HB[j][i]);
       }
    }
@@ -1236,11 +1223,16 @@ void MaxStatUpdateGrid (slosh_type *st, int imxb, int jmxb, int f_tide, int f_ma
 /*****************************************************************************
  * modelClock is seconds since 1970 of the current timestep.
 *****************************************************************************/
-void RunLoopStep (char * bsnAbrev, slosh_type * st, int imxb, int jmxb,
+void RunLoopStep (int teamSize,
+#ifdef _MPI_
+                  MPI_Win win_HB7, MPI_Datatype dstType[9], MPI_Datatype srcType[9],
+                  topoType *topo,
+#endif
+                  char * bsnAbrev, slosh_type * st, int imxb, int jmxb,
                   int *itime, int *mhalt,
-                  short csflag, short f_smooth,
                   short f_wantRex, double *modelClock, double rextime,
-                  int f_first, TideGridType *tgrid, int f_tide, int f_stat, int envSave2Min, double tidetime, short restart)
+                  int f_first, TideGridType *tgrid, int f_tide, int f_stat,
+                  int envSave2Min, double tidetime, short restart)
 {
 #ifdef DOUBLE_FORTRAN
    static double del_t = 0;
@@ -1290,13 +1282,30 @@ void RunLoopStep (char * bsnAbrev, slosh_type * st, int imxb, int jmxb,
 
    /* for tide only (f_tide == -1) avoid calling model at all. */
    if (f_tide != -1) {
-/*  Fortran call
+/*  FORTRAN call
  **************************/
-      TMSTEP (itime, mhalt, st->hb, &del_t, &(st->storm_lat), &(st->storm_lon),
+      /* Continuity and Smoothing stages. */
+      TMSTPC (st->hb, &f_pass, &restart);
+      /* Communicate between DUMB7.HB borders here. */
+
+/* 4=89 */
+      if (teamSize > 1) {
+#ifdef _MPI_
+         MPI_Win_fence(0,win_HB7);
+         for (i=0; i < 8; i++) {
+            if (topo->r[i] != -1) {
+               MPI_Get(DUMB7.HB,1,dstType[i],topo->r[i],0,1,srcType[i],win_HB7);
+            }
+         }
+         MPI_Win_fence(0,win_HB7);
+#endif
+      }
+      /* Momentum stage */
+      TMSTPM (itime, mhalt, &del_t, &(st->storm_lat), &(st->storm_lon),
               &(st->delp), &(st->size2), &(st->wspeed), &(st->wdirect),
-              &csflag, &f_pass, modelClock, &restart);
+              modelClock, &restart);
  /**************************
-  *  Fortran call */
+  * FORTRAN call */
    } else {
       *itime = *itime + 1;
       del_t = EGTH.DELT;
@@ -1313,7 +1322,7 @@ void RunLoopStep (char * bsnAbrev, slosh_type * st, int imxb, int jmxb,
 
    if ((f_tide == 1) || (f_tide == -1)) {
       /* This loops over the grid doing the tide calculation. */
-      CalcTideGrid (imxb, jmxb, st, tgrid, *modelClock, f_tide);
+      CalcTideGrid (imxb, st, tgrid, *modelClock, f_tide);
    } else if ((f_tide == 2) || (f_tide == 21) || (f_tide == 22) || (f_tide == 24) || (f_tide == 3)) {
       int f_first = 0;
       /* Huiqing.Liu /MDL Every 6 mins to call tide */
@@ -1327,10 +1336,10 @@ void RunLoopStep (char * bsnAbrev, slosh_type * st, int imxb, int jmxb,
 
          if(*modelClock >= tidetime) {
          /*printf("Calling Tide in Every 6 mins\n");*/
-           CalcTideGrid2 (imxb, jmxb, st, tgrid, *modelClock, f_tide, f_first);
+           CalcTideGrid2 (imxb, st, tgrid, *modelClock, f_tide, f_first);
          }
       } else {
-         CalcTideGrid2 (imxb, jmxb, st, tgrid, *modelClock, f_tide, f_first);
+         CalcTideGrid2 (imxb, st, tgrid, *modelClock, f_tide, f_first);
       }
    }
 
@@ -1361,13 +1370,13 @@ void RunLoopStep (char * bsnAbrev, slosh_type * st, int imxb, int jmxb,
 }
 
 #ifdef DOUBLE_FORTRAN
-static int EnvSave (char *filename, int imxb, int jmxb, char envComment[161],
-                    double hb[BAS_Y][BAS_X], double zb[BAS_Y][BAS_X],
-                    float ht1, float ht2)
+int EnvSave (char *filename, int imxb, int jmxb, char envComment[161],
+             double hb[BAS_Y][BAS_X], double zb[BAS_Y][BAS_X],
+             float ht1, float ht2)
 #else
-static int EnvSave (char *filename, int imxb, int jmxb, char envComment[161],
-                    float hb[BAS_Y][BAS_X], float zb[BAS_Y][BAS_X],
-                    float ht1, float ht2)
+int EnvSave (char *filename, int imxb, int jmxb, char envComment[161],
+             float hb[BAS_Y][BAS_X], float zb[BAS_Y][BAS_X],
+             float ht1, float ht2)
 #endif
 {
    FILE *fp;            /* Opened pointer to the envelope file. */
@@ -1424,9 +1433,8 @@ static int EnvSave (char *filename, int imxb, int jmxb, char envComment[161],
 /*****************************************************************************
 *****************************************************************************/
 /* f_envSave is 1 if we want to save the envelope, otherwise 0. */
-int CleanUp (slosh_type * st, int imxb, int jmxb,
-             int f_saveEnv, int f_tide, char *envName, char envComment[161],
-             float ht1, float ht2, TideGridType *tgrid)
+int CleanUp (slosh_type * st, int imxb, int jmxb, int f_tide,
+             TideGridType *tgrid)
 {
    int i, j;
    int fort_SaveEnv;
@@ -1458,27 +1466,24 @@ int CleanUp (slosh_type * st, int imxb, int jmxb,
       }
    }
 
-   /* Save envelope */
-   if (f_saveEnv) {
-      if (EnvSave (envName, imxb, jmxb, envComment, st->hb, st->zb, ht1, ht2) != 0) {
-         printf ("Problems saving the envelope!\n");
-         return -1;
-      }
-   }
    return 0;
 }
 /*****************************************************************************
- * adjDatumName = Filename to open for reading datum adjment.
+ * adjDatumName = Filename to open for reading datum adjustment.
 *****************************************************************************/
-int RunInit (char * bsnAbrev, slosh_type * st, char trkName[MY_MAX_PATH],
-             char dtaName[MY_MAX_PATH], char envName[MY_MAX_PATH],
-             char ft40Name[MY_MAX_PATH], int *mhalt, double *modelClock,
-             int f_tide, int tideThresh, char *ft03Name, char *tideName,
-             TideGridType *tgrid, char *adjDatumName, int spinUp,
-             int f_saveSpinUp, rexType *rex, char f_wantRex, int rexSaveMin,
-             short wave)
+int RunInit (int teamRank, int teamSize,
+#ifdef _MPI_
+             MPI_Win win_HB7, MPI_Datatype dstType[9], MPI_Datatype srcType[9],
+#endif
+             char * bsnAbrev, slosh_type * st,
+             char trkName[MY_MAX_PATH], char dtaName[MY_MAX_PATH],
+             char envName[MY_MAX_PATH], char ft40Name[MY_MAX_PATH], int *mhalt,
+             double *modelClock, int f_tide, int tideThresh, char *ft03Name,
+             char *tideName, TideGridType *tgrid, char *adjDatumName,
+             int spinUp, int f_saveSpinUp, rexType *rex, char f_wantRex,
+             int rexSaveMin, int istar, int istop, int jstar, int jstop,
+             int imxb, int jmxb, short wave)
 {
-   int imxb, jmxb;
    int day, hour, min, month, year;
    FILE *fp;
    hdrType hdr;
@@ -1491,7 +1496,9 @@ int RunInit (char * bsnAbrev, slosh_type * st, char trkName[MY_MAX_PATH],
    static float del_t = 0;
    static float mclock = 0;
 #endif
-   int len_trk,len_dta,len_env,len_ft40;
+   int len_trk,len_dta,len_env,len_ft40,len_bsn;
+   int lcl_imxb, lcl_jmxb;   /* INITAL changes the values based on the subgrid
+                              * If we're dealing with teamSize > 1 */
 
    for (i = 0; i < 5; i++) {
       bsnn[i] = (char) toupper (bsnAbrev[i]);
@@ -1508,11 +1515,19 @@ int RunInit (char * bsnAbrev, slosh_type * st, char trkName[MY_MAX_PATH],
    len_dta=strlen(dtaName);
    len_env=strlen(envName);
    len_ft40=strlen(ft40Name);
+   len_bsn=strlen(bsnn);
 
-   /* SLOSH fortran initialize call :: ******************************** */
-   INITAL (mhalt, &imxb, &jmxb, st->zb, &hour, &min, &day, &month, &year,
+   /* SLOSH FORTRAN initialize call :: ******************************** */
+   FRANK.IRANK=teamRank;
+   FRANK.ISTAR=istar;
+   FRANK.ISTOP=istop;
+   FRANK.JSTAR=jstar;
+   FRANK.JSTOP=jstop;
+   lcl_imxb = imxb;
+   lcl_jmxb = jmxb;
+   INITAL (mhalt, &lcl_imxb, &lcl_jmxb, st->zb, &hour, &min, &day, &month, &year,
            trkName, &len_trk, dtaName, &len_dta, envName, &len_env, ft40Name,
-           &len_ft40, &del_t, bsnn, &mclock, &wave);
+           &len_ft40, &del_t, bsnn, &len_bsn, &mclock, &wave);
    /******************************
     * Slosh fortran calls End ::
     */
@@ -1568,7 +1583,7 @@ int RunInit (char * bsnAbrev, slosh_type * st, char trkName[MY_MAX_PATH],
       /* Close binary files. */
       fclose (fp);
 
-      /*Open files for reading in datum adjustments (MTL->NAVD88) */
+      /* Open files for reading in datum adjustments (MTL->NAVD88) */
       if ((fp = fopen (adjDatumName, "rt")) == NULL) {
          /* Print error if an adjustment file other than eok3.adj is not found. */
          if (strstr (adjDatumName, "/eok3.adj") == NULL) {
@@ -1592,21 +1607,31 @@ int RunInit (char * bsnAbrev, slosh_type * st, char trkName[MY_MAX_PATH],
    if ((f_tide == 2) || (f_tide == 21) || (f_tide == 22) || (f_tide == 24)) {
       int f_first = 1;
 
-      SetTideUsableFlag (imxb, jmxb, tgrid, f_tide, tideThresh);
+      SetTideUsableFlag (imxb, tgrid, f_tide, tideThresh);
 
       /* Spin up the transport values. */
       if (spinUp != 0) {
-         SpinUpTideGrid (bsnAbrev, imxb, jmxb, tgrid, *modelClock, f_tide, spinUp, f_saveSpinUp,
-                         (double) del_t, rex, f_wantRex, rexSaveMin);
+         SpinUpTideGrid (teamRank, teamSize,
+#ifdef _MPI_
+                         win_HB7, dstType, srcType,
+#endif
+                         bsnAbrev, imxb, jmxb, tgrid, *modelClock, f_tide,
+                         spinUp, f_saveSpinUp, (double) del_t, rex, f_wantRex,
+                         rexSaveMin);
       }
-      /* After spining up the transport values, reset the tide to our
+      /* After spinning up the transport values, reset the tide to our
        * best approximation of the tide. */
       /* Need to add the tide field at time=clock to the initial water
        * level in grid that SLOSH sees */
-      CalcTideGrid2 (imxb, jmxb, st, tgrid, *modelClock, f_tide, f_first);
+      CalcTideGrid2 (imxb, st, tgrid, *modelClock, f_tide, f_first);
    } if (f_tide == 3) {
       /* Spin up the transport values. */
-      SpinUpTideGrid (bsnAbrev, imxb, jmxb, tgrid, *modelClock, f_tide, spinUp, f_saveSpinUp,
+      SpinUpTideGrid (teamRank, teamSize,
+#ifdef _MPI_
+                      win_HB7, dstType, srcType,
+#endif
+                      bsnAbrev, imxb, jmxb, tgrid, *modelClock, f_tide,
+                      spinUp, f_saveSpinUp,
                       (double) del_t, rex, f_wantRex, rexSaveMin);
    }
    return 0;
@@ -1763,7 +1788,12 @@ int ExtendEnvName2 (char envName2[MY_MAX_PATH], char extendName[MY_MAX_PATH + 10
 /*****************************************************************************
 *****************************************************************************/
 
-int PerformRun (char *bsnAbrev, char dtaName[MY_MAX_PATH], char trkName[MY_MAX_PATH],
+int PerformRun (int teamRank, int teamSize,
+#ifdef _MPI_
+                MPI_Comm teamComm,
+#endif
+                char *bsnAbrev, char dtaName[MY_MAX_PATH],
+                char trkName[MY_MAX_PATH],
                 char envName[MY_MAX_PATH], char envName2[MY_MAX_PATH], char *rexName,
                 char *tideDir, int imxb, int jmxb, int bsnStatus, int rexSaveMin,
                 int envSave2Min, sChar verbose, int f_tide, int tideThresh,
@@ -1784,9 +1814,6 @@ int PerformRun (char *bsnAbrev, char dtaName[MY_MAX_PATH], char trkName[MY_MAX_P
    int itime;           /* Interval time. */
    int f_first;
    rexType rex;
-   short int csflag = 0; /* Flag to do CS computations. */
-   short int f_passdata = 1;  /* Pass the surge level grid from fortran to C*/
-   short int f_smooth = 1;
    sChar f_wantRex = (rexName != NULL);
    sChar f_wantEnv = (envName[0] != '\0');
    float ht1, ht2;
@@ -1807,6 +1834,15 @@ int PerformRun (char *bsnAbrev, char dtaName[MY_MAX_PATH], char trkName[MY_MAX_P
    char subfolder[10];
    FILE *fp;
    int f_foundVDEF = 0;
+#ifdef _MPI_
+   int hWid = 10;
+   topoType topo;
+   MPI_Win win_HB7, win_hb, win_hb_max, win_hb_max2;
+   MPI_Win win_zb;
+   MPI_Datatype dstType[9];
+   MPI_Datatype srcType[9];
+#endif
+   int istar, istop, jstar, jstop;
 
    /* Handle f_tide == 99 (-VDEF) */
    if (f_tide == 99) {
@@ -1932,8 +1968,8 @@ int PerformRun (char *bsnAbrev, char dtaName[MY_MAX_PATH], char trkName[MY_MAX_P
       fclose (fp);
 
       if (verbose >= 2) {
-         printf("You are asking to use %s harm const. file\n", bhcName);
-         printf("You are asking to use %s datum adjustment file\n", adjName);
+         printf("\tHarm const. file: %s\n", bhcName);
+         printf("\tAdjustment file: %s\n", adjName);
       }
 
    } else {
@@ -1950,22 +1986,66 @@ int PerformRun (char *bsnAbrev, char dtaName[MY_MAX_PATH], char trkName[MY_MAX_P
    InitWater_TideModeOverride (&ht1, f_tide, &ht2);
 
    /* Set up Rex file. */
-   if (f_wantRex) {
+   if (f_wantRex && (teamRank == 0)) {
       /* Always create Rex Version 2. */
       if (RexOpen (&rex, rexName, 2) != 0) {
          return -1;
       }
       RexSaveHeader (&rex, imxb, jmxb, rexComment, bsnAbrev);
    }
-
    if (verbose >= 2) {
-      printf ("3b :: %f\n", clock () / (double)(CLOCKS_PER_SEC));
+      printf ("teamRank = %d, teamSize = %d\n", teamRank, teamSize);
       fflush (stdout);
    }
-   if (RunInit (bsnAbrev, &st, trkName, dtaName, envName, f40Name, &mhalt,
+   istar = 1;
+   istop = imxb;
+   jstar = 1;
+   jstop = jmxb;
+#ifdef _MPI_
+   if (teamSize > 1) {
+      int bigsizes[2] = {BAS_Y, BAS_X};
+      int isCylinder = 0;
+
+#ifdef DOUBLE_FORTRAN
+      int sod = sizeof (double);
+#else
+      int sod = sizeof (float);
+#endif
+      /* Split up the domain */
+      topology (teamRank, teamSize, hWid, imxb, jmxb, isCylinder, 1, &topo);
+      printf ("IMXB=%d ; JMXB=%d\n", imxb, jmxb);
+      printf ("%d : %d %d %d %d :: %d %d %d %d %d %d %d %d\n", teamRank, topo.offx,
+              topo.nx, topo.offy, topo.ny, topo.r[0], topo.r[1], topo.r[2], 
+              topo.r[3], topo.r[4], topo.r[5], topo.r[6], topo.r[7]);
+      printf ("teamRank %d offx,offy %d,%d hOffx,hOffy %d,%d nx,ny %d,%d hnx,hny %d,%d\n",
+              teamRank, topo.offx, topo.offy, topo.hOffx, topo.hOffy, topo.nx, topo.ny,
+              topo.hnx, topo.hny);
+
+      /* Create data types... */
+      winBuffer (hWid, &topo, bigsizes, srcType, dstType);
+
+      /* Create Window */
+      MPI_Win_create(DUMB7.HB, sod*BAS_Y*BAS_X, sod, MPI_INFO_NULL, teamComm, &win_HB7);
+      MPI_Win_create(st.zb, sod*BAS_Y*BAS_X, sod, MPI_INFO_NULL, teamComm, &win_zb);
+      MPI_Win_create(st.hb, sod*BAS_Y*BAS_X, sod, MPI_INFO_NULL, teamComm, &win_hb);
+      MPI_Win_create(st.hb_max, sod*BAS_Y*BAS_X, sod, MPI_INFO_NULL, teamComm, &win_hb_max);
+      MPI_Win_create(st.hb_max2, sod*BAS_Y*BAS_X, sod, MPI_INFO_NULL, teamComm, &win_hb_max2);
+
+      istar = topo.hOffx + 1;
+      istop = topo.hOffx + topo.hnx;
+      jstar = topo.hOffy + 1;
+      jstop = topo.hOffy + topo.hny;
+   }
+#endif
+   if (RunInit (teamRank, teamSize,
+#ifdef _MPI_
+                win_HB7, dstType, srcType,
+#endif
+                bsnAbrev, &st, trkName, dtaName, envName, f40Name, &mhalt,
                 &modelClock, f_tide, tideThresh, ft03Name, bhcName, &tgrid,
                 adjName, spinUp, f_saveSpinUp, &rex, f_wantRex, rexSaveMin,
-                wave) != 0) {
+                istar, istop, jstar, jstop, imxb, jmxb, wave) != 0) {
+      printf ("RunInit failed\n");
       exit (1);
    }
    if (f_tide != 0) {
@@ -1973,10 +2053,18 @@ int PerformRun (char *bsnAbrev, char dtaName[MY_MAX_PATH], char trkName[MY_MAX_P
       free (bhcName);
       free (ft03Name);
    }
+   /* Gather ... ranks push to teamRank 0 */
+#ifdef _MPI_
+   if (teamSize > 1) {
+      MPI_Win_fence(0,win_zb);
+      if (teamRank != 0)
+         MPI_Put(st.zb,1,srcType[8],0,0,1,dstType[8],win_zb);
+      MPI_Win_fence(0,win_zb);
+   }
+#endif
 
    if (verbose >= 2) {
-      printf ("3c :: %f\n", clock () / (double)(CLOCKS_PER_SEC));
-      printf ("Finished initializing\n");
+      printf ("%f :: Finished Initializing\n", clock () / (double)(CLOCKS_PER_SEC));
       fflush (stdout);
    }
 
@@ -2016,32 +2104,22 @@ int PerformRun (char *bsnAbrev, char dtaName[MY_MAX_PATH], char trkName[MY_MAX_P
       MaxStatInitGrid (&st, imxb, jmxb, 3);
    }
 
+   /***************************************************************************
+    * Main Loop
+    **************************************************************************/
    while (itime < mhalt) {
       if (verbose >= 2) {
-         printf ("Starting RunLoopStep Timestep %d\n", itime);
+         printf ("%f :: %d :: modelClock %f rexClock %f\n", clock()/(double)(CLOCKS_PER_SEC), itime, modelClock, rexClock);
          fflush (stdout);
       }
 
-      if (verbose >= 2) {
-         printf ("Before RunLoopStep -- f_wantRex %d Passdata %d\n",
-                 f_wantRex, f_passdata);
-         printf ("modelClock %f rexClock %f\n", modelClock, rexClock);
-         fflush (stdout);
-      }
-
-      if (verbose >= 2) {
-         printf ("3d :: %f\n", clock () / (double)(CLOCKS_PER_SEC));
-         fflush (stdout);
-      }
-      RunLoopStep (bsnAbrev, &st, imxb, jmxb, &itime, &mhalt, csflag, f_smooth,
+      RunLoopStep (teamSize,
+#ifdef _MPI_
+                   win_HB7, dstType, srcType, &topo,
+#endif
+                   bsnAbrev, &st, imxb, jmxb, &itime, &mhalt,
                    f_wantRex, &modelClock, rexClock, f_first, &tgrid,
                    f_tide, f_stat, envSave2Min, tideClock, restart);
-      if (verbose >= 2) {
-         printf ("3f :: %f\n", clock () / (double)(CLOCKS_PER_SEC));
-         fflush (stdout);
-         printf ("Done with a loop step. Timestep %d\n", itime);
-         fflush (stdout);
-      }
       if (f_first) {
          f_first = 0;
       }
@@ -2056,10 +2134,24 @@ int PerformRun (char *bsnAbrev, char dtaName[MY_MAX_PATH], char trkName[MY_MAX_P
             /* (1) If modelClock == asOf_Clock... skip save, set Init grid. */
             /* (2) If modelClock > asOf_Clock.... save, set Init grid. */
             if (modelClock > asOf_Clock) {
+               if ((f_wantRex) || (f_wantEnv)) {
+                  /* Gather ... Ranks push to teamRank 0 */
+#ifdef _MPI_
+                  if (teamSize > 1) {
+                     MPI_Win_fence(0,win_hb_max);
+                     if (teamRank != 0)
+                        MPI_Put(st.hb_max,1,srcType[8],0,0,1,dstType[8],win_hb_max);
+                     MPI_Win_fence(0,win_hb_max);
+                  }
+#endif
+               }
+
                if (f_wantRex) {
-                  RexSaveStep (&rex, st.storm_lat, st.storm_lon, st.wspeed,
-                               st.wdirect, st.delp, st.size2, st.hb_max,
-                               st.zb, imxb, jmxb, modelClock);
+                  if (teamRank == 0) {
+                     RexSaveStep (&rex, st.storm_lat, st.storm_lon, st.wspeed,
+                                  st.wdirect, st.delp, st.size2, st.hb_max,
+                                  st.zb, imxb, jmxb, modelClock);
+                  }
                }
                if (f_wantEnv) {
                   if (asOf_Clock == 0) {
@@ -2067,19 +2159,32 @@ int PerformRun (char *bsnAbrev, char dtaName[MY_MAX_PATH], char trkName[MY_MAX_P
                   } else {
                      ExtendEnvName (envName, extendName, modelClock - asOf_Clock);
                   }
-                  if (EnvSave (extendName, imxb, jmxb, envComment, st.hb_max, st.zb, ht1, ht2) != 0) {
-                     return -1;
+                  if (teamRank == 0) {
+                     if (EnvSave (extendName, imxb, jmxb, envComment, st.hb_max, st.zb, ht1, ht2) != 0) {
+                        return -1;
+                     }
                   }
 
                   /* Check if it is time to save to the envDir2 */
                   if ((envSave2Min != 0) && (modelClock >= envClock2)) {
+                     /* Gather ... Ranks push to teamRank 0 */
+#ifdef _MPI_
+                     if (teamSize > 1) {
+                        MPI_Win_fence(0,win_hb_max2);
+                        if (teamRank != 0)
+                           MPI_Put(st.hb_max2,1,srcType[8],0,0,1,dstType[8],win_hb_max2);
+                        MPI_Win_fence(0,win_hb_max2);
+                     }
+#endif
                      if (asOf_Clock == 0) {
                         ExtendEnvName2 (envName2, extendName2, modelClock - startClock);
                      } else {
                         ExtendEnvName2 (envName2, extendName2, modelClock - asOf_Clock);
                      }
-                     if (EnvSave (extendName2, imxb, jmxb, envComment, st.hb_max2, st.zb, ht1, ht2) != 0) {
-                        return -1;
+                     if (teamRank == 0) {
+                        if (EnvSave (extendName2, imxb, jmxb, envComment, st.hb_max2, st.zb, ht1, ht2) != 0) {
+                           return -1;
+                        }
                      }
                   }
                }
@@ -2098,10 +2203,23 @@ int PerformRun (char *bsnAbrev, char dtaName[MY_MAX_PATH], char trkName[MY_MAX_P
          }
       } else {
          if ((modelClock >= rexClock) && (f_wantRex)) {
-            RexSaveStep (&rex, st.storm_lat, st.storm_lon, st.wspeed,
-                         st.wdirect, st.delp, st.size2, st.hb,
-                         st.zb, imxb, jmxb, modelClock);
+            /* Gather ... Ranks push to teamRank 0 */
+#ifdef _MPI_
+            if (teamSize > 1) {
+               MPI_Win_fence(0,win_hb);
+               if (teamRank != 0)
+                  MPI_Put(st.hb,1,srcType[8],0,0,1,dstType[8],win_hb);
+               MPI_Win_fence(0,win_hb);
+            }
+#endif
+            if (teamRank == 0) {
+               RexSaveStep (&rex, st.storm_lat, st.storm_lon, st.wspeed,
+                            st.wdirect, st.delp, st.size2, st.hb,
+                            st.zb, imxb, jmxb, modelClock);
+            }
             rexClock += rexSaveMin * 60;
+
+
          }
       }
 /* Huiqing.Liu/MDL For reference time to adding and subtracting tide default 6 mins*/
@@ -2109,14 +2227,10 @@ int PerformRun (char *bsnAbrev, char dtaName[MY_MAX_PATH], char trkName[MY_MAX_P
 /*            tideClock += 10 * 60; */
             tideClock += 6 * 60;
       }
-
-      if (verbose >= 2) {
-         printf ("3h :: %f\n", clock () / (double)(CLOCKS_PER_SEC));
-      }
    }
-   if (verbose >= 2) {
-      printf ("3i :: %f\n", clock () / (double)(CLOCKS_PER_SEC));
-   }
+   /***************************************************************************
+    * End of main loop
+    **************************************************************************/
 
    /* Added here because with Maximums as opposed to instantaneous
     * saves, we may have some trailing hours.  (e.g. save every 3 hours
@@ -2125,10 +2239,23 @@ int PerformRun (char *bsnAbrev, char dtaName[MY_MAX_PATH], char trkName[MY_MAX_P
       /* Could end up with two saves if storm is 0 .. 27. */
       /* Second part of conditional should protect? */
       if ((rexClock >= asOf_Clock) && (rexClock != modelClock + rexSaveMin * 60)) {
+         if ((f_wantRex) || (f_wantEnv)) {
+            /* Gather ... ranks push to teamRank 0 */
+#ifdef _MPI_
+            if (teamSize > 1) {
+               MPI_Win_fence(0,win_hb_max);
+               if (teamRank != 0)
+                  MPI_Put(st.hb_max,1,srcType[8],0,0,1,dstType[8],win_hb_max);
+               MPI_Win_fence(0,win_hb_max);
+            }
+#endif
+         }
          if (f_wantRex) {
-            RexSaveStep (&rex, st.storm_lat, st.storm_lon, st.wspeed,
-                         st.wdirect, st.delp, st.size2, st.hb_max,
-                         st.zb, imxb, jmxb, rexClock);
+            if (teamRank == 0) {
+               RexSaveStep (&rex, st.storm_lat, st.storm_lon, st.wspeed,
+                            st.wdirect, st.delp, st.size2, st.hb_max,
+                            st.zb, imxb, jmxb, rexClock);
+            }
          }
          if (f_wantEnv) {
             if (asOf_Clock == 0) {
@@ -2136,20 +2263,33 @@ int PerformRun (char *bsnAbrev, char dtaName[MY_MAX_PATH], char trkName[MY_MAX_P
             } else {
                ExtendEnvName (envName, extendName, rexClock - asOf_Clock);
             }
-            if (EnvSave (extendName, imxb, jmxb, envComment, st.hb_max, st.zb, ht1, ht2) != 0) {
-               return -1;
+            if (teamRank == 0) {
+               if (EnvSave (extendName, imxb, jmxb, envComment, st.hb_max, st.zb, ht1, ht2) != 0) {
+                  return -1;
+               }
             }
          }
       }
       if ((envSave2Min != 0) && (envClock2 >= asOf_Clock) && (envClock2 != modelClock + envSave2Min * 60)) {
          if (f_wantEnv) {
+            /* Gather ... Ranks push to teamRank 0 */
+#ifdef _MPI_
+            if (teamSize > 1) {
+               MPI_Win_fence(0,win_hb_max2);
+               if (teamRank != 0)
+                  MPI_Put(st.hb_max2,1,srcType[8],0,0,1,dstType[8],win_hb_max2);
+               MPI_Win_fence(0,win_hb_max2);
+            }
+#endif
             if (asOf_Clock == 0) {
                ExtendEnvName2 (envName2, extendName2, envClock2 - startClock);
             } else {
                ExtendEnvName2 (envName2, extendName2, envClock2 - asOf_Clock);
             }
-            if (EnvSave (extendName2, imxb, jmxb, envComment, st.hb_max2, st.zb, ht1, ht2) != 0) {
-               return -1;
+            if (teamRank == 0) {
+               if (EnvSave (extendName2, imxb, jmxb, envComment, st.hb_max2, st.zb, ht1, ht2) != 0) {
+                  return -1;
+               }
             }
          }
       }
@@ -2162,28 +2302,58 @@ int PerformRun (char *bsnAbrev, char dtaName[MY_MAX_PATH], char trkName[MY_MAX_P
    }
 
    /* f_wantEnv to CleanUp is 0 since we handle it later in this procedure. */
-   CleanUp (&st, imxb, jmxb, f_wantEnv, f_tide, envName, envComment, ht1,
-            ht2, &tgrid);
-
-   if (verbose >= 2) {
-      printf ("3k :: %f\n", clock () / (double)(CLOCKS_PER_SEC));
+   CleanUp (&st, imxb, jmxb, f_tide, &tgrid);
+   if (f_wantRex || f_wantEnv) {
+      /* Gather ... Ranks push to teamRank 0 */
+#ifdef _MPI_
+      if (teamSize > 1) {
+         MPI_Win_fence(0,win_hb);
+         if (teamRank != 0)
+            MPI_Put(st.hb,1,srcType[8],0,0,1,dstType[8],win_hb);
+         MPI_Win_fence(0,win_hb);
+      }
+#endif
+   }
+   /* Save envelope */
+   if (f_wantEnv) {
+      if (teamRank == 0) {
+         if (EnvSave (envName, imxb, jmxb, envComment, st.hb, st.zb, ht1, ht2) != 0) {
+            printf ("Problems saving the envelope!\n");
+            return -1;
+         }
+      }
    }
 
-   if (verbose >= 2) {
-      printf ("Done with clean up\n");
-      fflush (stdout);
-   }
    if (f_wantRex) {
-      RexSaveEnv (&rex, trkName, st.hb, st.zb, imxb, jmxb, f_tide);
-      RexClose (&rex);
+      if (teamRank == 0) {
+         RexSaveEnv (&rex, trkName, st.hb, st.zb, imxb, jmxb, f_tide);
+         RexClose (&rex);
+      }
       if (verbose >= 2) {
          printf ("Finished saving rex file\n");
          fflush (stdout);
       }
    }
-   if (verbose >= 2) {
-      printf ("3l :: %f\n", clock () / (double)(CLOCKS_PER_SEC));
+   /* Free the type */
+#ifdef _MPI_
+   if (teamSize > 1) {
+      int i;
+
+      for (i=0; i < 8; i++)
+         if (topo.r[i] != -1) {
+            MPI_Type_free(&(dstType[i]));
+            MPI_Type_free(&(srcType[i]));
+         }
+
+      MPI_Type_free(&(dstType[8]));
+      MPI_Type_free(&(srcType[8]));
+      /* Free up our window */
+      MPI_Win_free(&win_HB7);
+      MPI_Win_free(&win_hb);
+      MPI_Win_free(&win_hb_max);
+      MPI_Win_free(&win_hb_max2);
    }
+#endif
    CLN_HS ();
 
    return 0;

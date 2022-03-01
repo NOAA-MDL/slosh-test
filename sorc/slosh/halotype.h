@@ -71,6 +71,13 @@ typedef struct {
   unsigned char red, green, blue;
 } Small_XColor;
 
+/* MY_MAX_PATH is 256 + 1 (null character) */
+#ifndef MY_MAX_PATH
+ #define MY_MAX_PATH 257
+#endif
+/* Typically defined in /MinGW-3.4.2/include/windef.h as 260. */
+/* Needs to agree between C and intrface.f so easier to set at 257. */
+
 #include "type.h"
 /* A data structure to contain latitude, and longitude values. */
 /*

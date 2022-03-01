@@ -4,7 +4,7 @@ C        PURPOSE
 C           TO SMOOTH THE SURGE HEIGHTS ONCE AN HOUR TO ELIMINATE
 C           2-INTERVAL NOISES IN THE FIELDS.
 C
-C           IVERSION=1 means use original version for backward compat.
+C           IVERSION=1 means use original version for backward compatibility
 C           IVERSION=2 means use current correct version.
 C
 C        DATA SET USE
@@ -12,9 +12,10 @@ C           NONE
 C
 C        VARIABLES
 C       HSUB(  ,  )  =  SCRATCH SPACES
-C       IP(4) JP(4)  =  SHIFTS OF I J FROM HEIGHT PT TO 4 MOMNTN CORNERS
+C       IP(4) JP(4)  =  SHIFTS OF I J FROM HEIGHT POINT TO 4 MOMENTUM CORNERS
 C          IBB(6,M)  =  RANGES AND INCREMENTS FOR 3 DO-LOOPS OF I,J
-C                     M = 1 INTERIOR,M = 2 HORZNTL BNDY,M = 3 VERTICAL BNDY
+C                     M = 1 INTERIOR, M = 2 HORIZONTAL BOUNDARY,
+C                     M = 3 VERTICAL BOUNDARY
 C                     RANGES ON THREE BASIN SEGMENTS ARE:
 C
 C                              222222222........2222222
@@ -30,7 +31,7 @@ C          J2(J) JC  =  SHIFT J-SUBSCRIPT TO PRESENT TIME OF SURGE FIELD
 C        HB(  ,   )  =  SURGE FIELD
 C         ZB(  ,  )  =  DEPTH FIELD
 C     IIH(4) JJH(4)  =  I/J-SHIFT SUBSCRIPTS FOR SURGE POINTS
-C       IP(4) JP(4)  =  I/J-SHIFT SUBSCRPTS FOR MOMNTM PTS, IN 'BLCKDT'
+C       IP(4) JP(4)  =  I/J-SHIFT SUBSCRIPTS FOR MOMENTUM POINTS, IN 'BLCKDT'
 C
 C           THE (I,J) SHIFTS TO MOMENTUM POINTS, VIA IP(4) AND JP(4),
 C           ON CORNER POINTS K = 1 TO 4 ARE:
@@ -52,8 +53,8 @@ C           BY BARRIERS. SHIFTS OF (I,J) TO ADJACENT SQUARES ARE SET
 C           VIA IIH(4) AND JJH(4). IIH/0,1,0,-1/,JJH/-1,0,1,0/
 C
 C                    I-1     I      I+1
-C                        .-----.             +HMX,HB,ZB HEIGHT PTS
-C                  I+IIH I I+0 I             .ZBM BARRIER PTS
+C                        .-----.             +HMX,HB,ZB HEIGHT POINTS
+C                  I+IIH I I+0 I             .ZBM BARRIER POINTS
 C             J+1    +   I 3+  I
 C                  J+JJH I J+1 I             EXAMPLE 0.INTERIOR POINTS
 C                  .-----.-----.-----.        I  1  I        I  0  I
@@ -69,7 +70,7 @@ C                    I-1     I      I+1
 C
 C                        .-----.
 C                        I     I
-C             J+1        I 3+  I       EXAMPLE 1. SUQARE 2 EXCLUDED
+C             J+1        I 3+  I       EXAMPLE 1. SQUARE 2 EXCLUDED
 C                        I     I
 C                  .-----.-----.          I  1  I        I  0  I
 C                  I     I     I          I     I        I     I
@@ -111,7 +112,7 @@ C                                             implemented masks for coast-
 C                                             lines, barriers, boundaries,
 C                                             and included averaging.
 C                                             Recoded the DO loop and GO TO
-C                                             logic to make code more efficient.
+C                                             logic to make code more efficient
 C  A. Taylor                 August    2011   Allowed user to choose different
 C                                             HCRT values. (0.5 or 0.1)
 C
@@ -127,7 +128,6 @@ C    barotropic mode of a free-surface world ocean model.
 C    Annales Geophysicae, 13, 675-688.
 C
 C ======================================================================
-      USE PARM2
       INCLUDE 'parm.for'
 
 C     IMPLICIT REAL(A-H, O-Z), INTEGER(I-N)
@@ -159,7 +159,7 @@ C      REAL             GAMFX(NP)
 
 C     DATA HCRT /0.1/  ! Water surface height difference that determines
 C     DATA HCRT /0.5/  ! Water surface height difference that determines
-C     DATA HCRT /1.0/  ! whether water spills over a barrier
+C     DATA HCRT /1.0/  ! Whether water spills over a barrier
 
       DATA IBB(1,1), IBB(1,2), IBB(1,3) /2, 1, 2/,
      1     IBB(3,1),           IBB(3,3) /1,    1/,
@@ -299,17 +299,17 @@ C                 |---------|---------|---------|
 C                 -------------------------
 C                 Initialize mask variables
 C                 -------------------------
-C                 Mask for II cells according to height   (+ filter) (0 no flow, 1 flow)
+C                 Mask(height)   for II cells (+ filter) 0=no, 1=yes flow
                   MASKII(K) = 0
-C                 Mask for II cells according to barrier  (+ filter) (1 no flow, 0 flow)
+C                 Mask(barrier)  for II cells (+ filter) 1=no, 0=yes flow
                   MBARRI(K) = 0
-C                 Mask for II cells according to boundary (+ filter) (1 no flow, 0 flow)
+C                 Mask(boundary) for II cells (+ filter) 1=no, 0=yes flow
                   MBOUNI(K) = 0
-C                 Mask for IX cells according to height   (x filter) (0 no flow, 1 flow)
+C                 Mask(height)   for IX cells (x filter) 0=no, 1=yes flow
                   MASKIX(K) = 0
-C                 Mask for IX cells according to barrier  (x filter) (1 no flow, 0 flow)
+C                 Mask(barrier)  for IX cells (x filter) 1=no, 1=yes flow
                   MBARRX(K) = 0
-C                 Mask for IX cells according to boundary (x filter) (1 no flow, 0 flow)
+C                 Mask(boundary) for IX cells (x filter) 1=no, 0=yes flow
                   MBOUNX(K) = 0
 
 C                 --------------------------

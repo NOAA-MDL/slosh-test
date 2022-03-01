@@ -1,5 +1,7 @@
       SUBROUTINE INTLHTSUB
-      USE PARM2
+C For tidal spinup, we needed to remove the static heights (pressure
+C gradient rise) from the ocean cells before the spin-up.  We want to
+C reintroduce that value after the spin up.
       INCLUDE 'parm.for'
 C
       COMMON /DUMB3/  IMXB,JMXB,IMXB1,JMXB1,IMXB2,JMXB2

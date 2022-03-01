@@ -1,268 +1,312 @@
---> 2019-11-13  v4.20
-   * 2019-11-13 - Packaged 2019-11-13 slosh 4.20.
+-------------------------------------------------------------------------------
+2020-01-08  v4.21   !! GITHUB-TAG
+   * BSNDEV
+     - Minor updates to HCH2, HMS8, HOR3, HPA2, HSFD, HSFE, HSFF defin
+     - Minor updates to bnt-file for  PN2,  PV2,  NY3,  DE3,  CP5,
+       HOR3,  HT3,  IL3, HCH2, ESV4, EJX3, EOK3, ETP3,  CD2,  AP3,
+       HPA2, EPN3, EMO2, HMS8,  LF2, EBP3, EGL3,  PS2,  CR3, EBR3,
+        BHA, EVI2,  HNL,  EXM, EGLC, EGOA
+     - Removed 'dos format' from evi2dta, hms8dta, hnldta, hsfddta, hsfedta,
+       hsffdta, hsjudta
+     - Rename a1404.esv4 -> a1405.esv4 ; i0301.evi2 -> i0302.evi2
+   * TIDY - Update make 'clean' to remove all *.o files.
+   * TIDY - Removing some compiler warnings for C code and extraneous
+     diagnostics.  Also improve how version numbers are handled.
+   * REGRESSION - Updating regression tests and answers.
+   * BUG - Removing possibility of segfault due to undefined length of BSNABBREV
+     to inital.f
+   * SPEED - Change back to static allocate (common block) vs dynamic array
+     -- Remove 'USE PARM2', calls to alloc and dealloc, adjust parm.for
 
-   * 2019-11-12
-     - [BUG] Get GUI to run by removing wave memory.
-     - Updating GUI version info
-     - relabeled btmstr_cyg to btmstr_gnu
-     - Changed default tide database from 2012 to 2014
+-------------------------------------------------------------------------------
+2019-11-13  v4.20   !! GITHUB-TAG
+   * Packaged 2019-11-13 slosh 4.20.
 
-* 2019-10-30 - Merge branch 'master' of gerrit:SLOSH
+2019-11-12  ======
+   * [BUG] Get GUI to run by removing wave memory.
+   * Updating GUI version info
+   * relabeled btmstr_cyg to btmstr_gnu
+   * Changed default tidal database from 2012 to 2014
 
-   * 2019-08-21
-     - [BUG] Correcting how btmstr in CYGWIN calculates complex number 'C1'
-     - [TEST] Adding regression check-sum answers for 2004-Charley-FMY.
+2019-08-21  ======
+   * [BUG] Correcting how btmstr in CYGWIN calculates complex number 'C1'
+   * [TEST] Adding regression check-sum answers for 2004-Charley-FMY.
 
---> 2019-08-15 - Merged in origin/slosh_wave_curv branch
+2019-08-15  ======  !! Merged in origin/slosh_wave_curv branch
+   * Checking in version with testing output files and run time messages muted.
 
-   * 2019-08-15 - Checking in a version with testing output files and run time
-     messages muted.
+2019-07-31  ======
+   * [BUG] Enabling GUI code to run (w/o wave).  Compilation problems (stack
+     space?) exist with full wave code, so commented out part of wave.f->WVCMPT().
 
-   * 2019-07-31 - [BUG] Enabling GUI code to run (w/o wave).  Compilation
-     problems (stack space?) exist with full wave code, so commented out part of
-     wave.f->WVCMPT().
-
-   * 2019-07-26
-     - [WAVE] Checking in mechanics of uniform-wave code along with a command
+2019-07-26  ======
+   * [WAVE] Checking in mechanics of uniform-wave code along with a command
        line selection option (-wave)
-     - [HOT-START] Adding some extra hot-start logic.
-     - Updating inputn() to use TRKHRS common block (inputn is dead-code)
-     - [MODULE] Moving HMX back to common blocks for use in slosh2.c()
-     - Expanding supported number of banks by 1000
+   * [HOT-START] Adding some extra hot-start logic.
+   * Updating inputn() to use TRKHRS common block (inputn is dead-code)
+   * [MODULE] Moving HMX back to common blocks for use in slosh2.c()
+   * Expanding supported number of banks by 1000
 
-   * 2019-07-10 [MODULES]
-     - Removing HSUB from initalcommon.f  Concern about P-Surge code.
-     - Moving KSHP, IMHX, HSUB, HMX to the parm2.f module (from common blocks)
-       so they can be allocated (vs stack).
+2019-07-10  ======  !! Trying out Modules (2 of 2)
+   * Removing HSUB from initalcommon.f  Concern about P-Surge code.
+   * Moving KSHP, IMHX, HSUB, HMX to the parm2.f module (from common blocks)
+     so they can be allocated (vs stack).
 
-   * 2019-07-08 [MODULES]
-     - using modules with ITREE to dynamically allocate memory
-     - Using modules with IMANN to dynamically allocate memory
+2019-07-08  ======  !! Trying out Modules (1 of 2)
+   * Using modules with ITREE to dynamically allocate memory
+   * Using modules with IMANN to dynamically allocate memory
 
-   * 2019-07-05 [HOT-START]
-     - Prevent restart file corruption by saving to a temp file, then moving
-       that file to the restart file.
-     - adding -restart flag for creating (or not) restart files.
-     - Removing restart files after successful run.
-     - adding save state every 1 hour.
-     - allow model clock to be set by INITAL()
+2019-07-05  ======  !! HOT-START
+   * Prevent restart file corruption by saving to a temp file, then moving
+     that file to the restart file.
+   * Adding -restart flag for creating (or not) restart files.
+   * Removing restart files after successful run.
+   * Adding save state every 1 hour.
+   * Allow model clock to be set by INITAL()
 
---> 2019-07-01 - Start in on adding Manning-n
+2019-07-01  ======  !! Start in on adding Manning-n
+   * Passing in bsnAbrev to Inital() to help with hot-start files.
+   * Reading new (2019-03) dta-file format (with manning-N values)
+   * Adjusting the basin size to 1655x999 (from 1550x700) for HW4 (340x1650)
+     and SCP (999x1425).
+   * Adding some wave, hot-start and Manning-N data structures.
+   * Adjusting allocated size of input track data to 999 (vs 160)
 
-   * 2019-07-01
-     - Passing in bsnAbrev to Inital() to help with hot-start files.
-     - Reading new (2019-03) dta-file format (with manning-N values)
-     - Adjusting the basin size to 1655x999 (from 1550x700) for HW4 (340x1650)
-       and SCP (999x1425).
-     - Adding some wave, hot-start and Manning-N data structures.
-     - Adjusting allocated size of input track data to 999 (vs 160)
+2019-06-14  ======
+   * Updating allocated basin dimension to 999x1655 (vs 700x1550)
+   * Setting NT_ to 999 (vs 160)
+   * Setting NBCPTS to 12,000 (vs 4,500 or 2,300)
 
-   * 2019-06-14
-     - Updating allocated basin dimension to (999x1655)
-     - Setting NT_ to 999 (vs 160)
-     - Setting NBCPTS to 12,000 (vs 4,500 or 2,300)
+2019-06-13  ======
+   * Adding a draft man page for SLOSH.
 
-   * 2019-06-13 - Adding a draft man page for SLOSH.
+2019-05-31  ======
+   * Switching to using a parameter for track arrays.  Using 160 (vs 999)
 
-   * 2019-05-31 - Switching to using a parameter for track arrays.
-     Using 160 (vs 999)
+2019-05-17  ======
+   * Added SLOSH+waves source code w/ hot start functionality
 
-   * 2019-05-17 - Added SLOSH+waves source code w/ hot start functionality
+2018-12-11  ======  !! Start of HALO and Wave merge
+   * Removing segfault by declaring lengths of dynamically allocated strings.
 
---> 2018-12-11 - Start of HALO and Wave merge
+2018-10-20  ======  !! Switch from svn to git repo
+   * Switched from svn repo to git repo
 
-   * 2018-12-11 - Removing a segfault by declaring the lengths of dynamically
-     allocated strings.
+2018-10-05  ======
+   * Increasing the grid dimension to 700x1550 (vs 500x1550) to allow for
+     hMS8 (655x852) and hSF1 (425x1500).
 
-   * 2018-10-20 - Switched from svn repo to git repo
+2018-10-02  ======
+   * Updating the Author list and how it is presented.
+   * Updating the defaults for the GUI
 
-   * 2018-10-05 - Increasing the grid dimension to 700x1550 (from 500x1550)
-     to allow for hMS8 (655x852) and hSF1 (425x1500).
+2018-09-20  ======
+  * Adjusting the libhalo.dll BAS_Y x BAS_X grids to 1550x500 (from 400x400)
 
-   * 2018-10-02
-     - Updating the Author list and how it is presented.
-     - Updating the defaults for the GUI
+2018-09-14  ======
+  * Updating tclslosh to use MY_MAX_PATH (vs MAX_PATH) and pass the bsnAbrev
+    into RunLoopStep() and RunInit().  Also had to add a timer to the call
+    to RunLoopStep().
+  * Updating the NSIS install scripts based on new directory tree and moving
+    runGUI.bat to the top level so NSIS shortcuts will work.
 
-   * 2018-09-20 - Adjusting the libhalo.dll BAS_Y x BAS_X grids to 1550x500
-     (from 400x400)
+2018-09-10  ======
+   * Consolidating tcl scripts into /ush and moving the kickoff scripts and GUI
+     config file to DEV.  Also updating start4.tcl to work with new structure.
+   * Introducing the dev/DATA folder.
 
-   * 2018-09-14
-     - Updating tclslosh to use MY_MAX_PATH (vs MAX_PATH) and pass the bsnAbrev
-       into RunLoopStep() and RunInit().  Also had to add a timer to the call
-       to RunLoopStep().
-     - Updating the NSIS install scripts based on new directory tree and moving
-       runGUI.bat to the top level so NSIS shortcuts will work.
+2018-08-28  v4.19   !! P-Surge v2.7.2
+   * Synchronized with P-Surge v2.7.2
 
-   * 2018-09-10 - Consolidating tcl scripts into /ush and moving the kickoff
-     scripts and GUI config file to DEV.  Also introducing the dev/DATA folder
-     and updating start4.tcl to work with new directory structure.
+2018-05-08  v4.18   !! P-Surge v2.7.1
+   * Finished synchronizing with P-Surge v2.7.1
+   * Correcting the MAPIN data array to fill the array with 1000 (vs 100).
+     This is due to the number of hours in a run expanding to 1000 (from 100)
 
-   2018-08-28 v4.19
-   * 2018-08-28 - Synchronized with P-Surge v2.7.2
+2017-12-14  ======
+   * Reducing grid dimension to 500x1550 (from 999x1699) as the largest basins
+     in P-Surge are HSF1 (425x1500) and CP5 (481x524); and we were getting
+     segfaults with "-check bounds" "-traceback"
 
-   2018-06-01 v4.18
-   * 2018-06-01
-     - Finished synchronizing with P-Surge v2.7.1
-     - Correcting the MAPIN data array to fill the array with 1000 (vs 100).
-       This is due to the number of hours in a run expanding to 1000 (from 100)
+2017-12-11  ======
+   * Adding a check (for LF2) to make sure init dry indexes are inside the array
 
-   * 2017-12-14 - Reducing grid dimension to 500x1550 (from 999x1699) as the
-     largest basins in P-Surge are HSF1 (425x1500) and CP5 (481x524); and we
-     were getting segfaults with the -check bounds -traceback.
+2017-11-22  ======
+   * Correcting where the iFrict term is calculated in flw1dm2 and flw1dm
 
-   * 2017-12-11 - Adding a check (for LF2) to make sure init dry indexes are
-     inside the array bounds.
+2017-11-21  ======  !! New source code structure
+   * Splitting FORTRAN code into one routine per files to match MDL file conventions.
 
-   * 2017-11-22 - Correcting where the iFrict term is calculated in flw1dm2
-     and flw1dm
+2017-07-24  v4.17   !! P-Surge v2.6.2
+   * Synchronized with P-Surge v2.6.2
 
---> New source code structure
-   * 2017-11-21 - Splitting FORTRAN code into one routine per files to match
-     MDL file conventions.
+2017-04-06  v4.16   !! P-Surge v2.6.1
+   * Synchronized with P-Surge v2.6.1
+   * Running EOK3 before LF2 is causing interference.  Placing LF2 and CP5 on
+    the odd threads and HCH2 and EOK3 on the even threads.
 
-   2017-07-24 v4.17
-   * 2017-07-24 - Synchronized with P-Surge v2.6.2
+2017-02-06  ======
+   * Update runslhg.f to allow longitude values (-180 to 180) to match nhctrk
 
-   2017-04-06 v4.16
-   * 2017-04-06
-     - Synchronized with P-Surge v2.6.1
-     - running EOK3 before LF2 is causing interference.  Placing LF2
-       and CP5 on the odd threads and HCH2 and EOK3 on the even threads.
+2016-11-10  ======
+   * Checking in an update to the NBCPTS parameter.  It is the array for the
+     boundary points and currently only needs 1300 or so for HSF1; however for
+     Nesting, it needed to be larger.
 
-   * 2017-02-06 - Update runslhg.f to allow longitude values (-180 to 180) to
-     match nhctrk
+2016-03-24  ======  !! Updated precision of PI and E
+   * Increased the precision of PI and E by 6 more decimal places
+   * Correcting how the envelope files see the datums for OKE
 
-   * 2016-11-10 - Checking in an update to the NBCPTS parameter.  It is the
-     array for the boundary points and currently only needs 1300 or so for HSF1;
-     however for Nesting, it needed to be larger.
-
---> The precision of PI and E likely impacts test results
-   * 2016-03-24
-     - Increased the precision of PI and E by 6 more decimal places
-     - Correcting how the envelope files see the datums for OKE
-
-   * 2016-02-29
-     - Update the new 100hr track file format read to
+2016-02-29  ======
+   * Update the new 100hr track file format read to
        a) allow landfall-date/time hour outside the simulation hours and
        b) use 999 for the end of the file.
-     - Update the Rex file save to interact with new track format
+   * Update the Rex file save to interact with new track format
 
-   * 2016-02-10 - Checking in the latest version of the code with Huiqing's
-     bug fix for bottom friction calculations.
+2016-02-10  ======
+   * Checking in the latest version of the code with Huiqing's bug fix for
+     bottom friction calculations.
 
-   * 2016-02-09 - Adding the ability to read the HSF1 basin (new format) and
-     use the extended track (new format).
+2016-02-09  ======  !! New input track format
+   * Adding ability to read the HSF1 basin (new format)
+   * Adding ability to use the extended track (new format).
 
-   2015-11-04 v4.15
-   * 2015-11-04 - Synchronized with P-Surge v2.5.6
+2015-11-04  v4.15   !! P-Surge v2.5.6
+   * Synchronized with P-Surge v2.5.6
 
-   * 2015-04-28 - Checking in a fix for the tideOnly run inundated levee
-     system bug.
+2015-04-28  ======
+   * Checking in a fix for the tideOnly run inundated levee system bug.
 
-   * 2015-04-08 - Checking in a more targeted initialcommon.f until we can
-     determine why the broader approach caused non-repeatability in other runs.
-     Possible reason is that certain variables (const etc) are calculated once
-     in the program?
+2015-04-08  ======
+   * Checking in a more targeted initialcommon.f until we can determine why the
+     broader approach caused non-repeatability in other runs.  Possible reason
+     is that certain variables (const etc) are calculated once in the program?
 
-   * 2015-04-06 - Removing .adj file diagnostic errors for missing EOK3 .adj
-     file.
+2015-04-06  ======
+   * Removing .adj file diagnostic errors for missing EOK3 .adj file.
 
-   * 2015-04-03 - Checking in new logic for the Leader() routine.
+2015-04-03  ======
+   * Checking in new logic for the Leader() routine.
 
-   * 2015-01-22 - Enabling f_tide -1 (tideOnly version 1) to bypass TMSTEP
+2015-01-22  ======
+   * Enabling f_tide -1 (tideOnly version 1) to bypass TMSTEP
 
-   * 2014-12-13 - Allowing SLOSH to read the 1-hrly and 6-hrly ensemble inputs
-     from different files (-envDir2, -envSave2)
-
+2014-12-13  ======
+   * Allowing SLOSH to read the 1-hrly and 6-hrly ensemble inputs from different
+     files (-envDir2, -envSave2)
    * Merged in P-Surge version of code which had tideOnly runs default to V1
 
-   2014-10-27 v4.14
-   * 2014-10-27 - Fixed a formatting bug when reading in initial dry cells
-     in new dta format.
+2014-10-27  v4.14
+   * Fixed a formatting bug when reading in initial dry cells in new dta format.
 
-   2014-10-17 v4.13
-   * 2014-10-17 - Increasing BAS_Y dimensions to 1,699 (from 1,399) for
-     for Hawaii big island
+2014-10-17  v4.13
+   * Increasing BAS_Y dimensions to 1,699 (from 1,399) for Hawaii big island
 
-2014-09-03  v4.12
-   * 2014-09-03 - Updating the BAS_Y dimension to 1,399 (from 1,400).
+-------------------------------------------------------------------------------
+2014-09-03  v4.12   !! GITHUB-TAG
+   * Updating the BAS_Y dimension to 1,399 (from 1,400).
 
-   * 2014-09-02 - Updated code to handle the new DTA file formats
-     (GRS80, Depths below 9999, large index)
-     - Updated grid dimension to 999x1400 (from 999x999)
+2014-09-02  ======  !! New Basin DTA File format
+   * Updated code for new DTA file (GRS80, Depths below 9999, large index)
+   * Updated grid dimension to 999x1400 (from 999x999)
 
-   * 2014-08-13 - Correcting the 'V1 tide only' bug.
+2014-08-13  ======
+   * Correcting the 'V1 tide only' bug.
 
-   * 2014-03-12 - Updated number of cuts and 1d flows to 39,999 (from 37,000)
+2014-03-18  v4.11c
+2014-03-12  ======
+   * Updated number of cuts and 1d flows to 39,999 (from 37,000)
 
-   * 2014-03-11 - adding new tide version V2.4.x option to SLOSH
+2014-03-11  ======
+   * Adding new tide version V2.4.x option
 
-   * 2014-03-05 - Updated grid dimension to 999x999 (from 800x800) and
-     - Updated number of cuts and 1d flows to 37,000 (from 27,000)
+2014-03-05  ======
+   * Updated grid dimension to 999x999 (from 800x800)
+   * Updated number of cuts and 1d flows to 37,000 (from 27,000)
 
-   * 2013-08-19 - Adding ability to handle 6,999 barriers (from 5,999)
+2013-08-19  ======
+   * Adding ability to handle 6,999 barriers (from 5,999)
 
-   * 2013-06-13
-     - Handed code to P-Surge revision r1555
-     - Cleaned up the arguments passed to run_C_LoopStep.
-     - Moved to EC2012 (from EC2001) for binary harmonic constituent files
+2013-06-13  v4.11a  !! "P-Surge r1555"
+   * Moved to EC2012 (from EC2001) for binary harmonic constituent files
 
-   * 2013-06-05 - Updated number of cuts and 1d flows to 27,000 (from 20,000)
+2013-06-05  ======
+   * Updated number of cuts and 1d flows to 27,000 (from 20,000)
 
-   * 2013-05-31 - Memory leak - 'retired/' is 8 char, but needs 1 for the \0
+2013-05-31  ======
+   * Memory leak - 'retired/' is 8 char, but needs 1 for the \0
 
-   * 2013-05-30 - Preventing fall through in the case of the -TideDatabase
-     option.
+2013-05-30  ======
+   * Preventing fall through in the case of the -TideDatabase option.
 
-2013-05-24  v4.11
-   * 2013-05-15 - Switch to using double precision gcc 4.50 as default compiler
+-------------------------------------------------------------------------------
+2013-05-24  v4.11   !! GITHUB-TAG - Defaults to double precision.
+   * Switch to using double precision gcc 4.50 as default compiler
 
-   * 2013-04-03 - Handed code to P-Surge revision r1415
+2013-03-21  v3.98c  !! "P-Surge r1415"
+   * Allowing MEOW track generation to use rhumb lines vs great circles
 
-   * 2013-03-21 - Allowing MEOW track generation to use rhumb lines vs great
-     circles
+2013-02-15  v3.98b
+   * Implemented SLOSH + Tide V2 and the beginning of V3.
 
-   * 2013-02-01 - Implemented SLOSH + Tide V2 and the beginning of V3.
-
+2013-01-30  ======
    * Added a Tidesh (static-height) to common block BCPTS to contain the tide
      value on the static boundary.
 
+2013-01-25  ======
    * Cleaned up allocation of names (adj,bhc,ft03), and removed YLT,YLG passing
 
-   * 2013-01-23 - Correcting the way dry cells are indicated when computing
-     with tide version 1 (had set to 99.9 rather than -ZB)
+2013-01-23  ======
+   * Correcting the way dry cells are indicated when computing with tide
+     version 1 (had set to 99.9 rather than -zb)
+   * Moving -bsnDir to -rootDir and assuming that ./bnt ./dta and ./tidefile
+     are subdirectories of -rootDir.  This gets us away from having the bnt
+     files in the dta folder and resolves the location of the tidefiles without
+     bothering the user.
 
+2013-01-18  ======
    * Updated grid dimension to 800x800 (from 600x600)
+   * Updating the order of [BAS_Y][BAS_X] because C and FORTRAN swap the order
+     of 2-d arrays.
 
-   * 2013-01-18 - Updating the order of [BAS_Y][BAS_X] because C and FORTRAN
-     swap the order of 2-d arrays.
+2012-09-10  "v3.98"
+   * Updated the initialize dry routine and the number of initialize dry cells
+     to handle the new EOK3 basin.
 
-   * 2012-09-10 - Updated the init dry routine and the number of init dry
-     cells to handle the new EOK3 basin.
+2012-08-27  ======
+   * Correcting the way that the .stm file date/time is read in.
 
-   * 2012-07-12 - Switching from 'tide' to 'tidefile'
+2012-08-14  ======
+   * Made it more graceful if the import rexfile directory does not exist.
+   * Switched GUI to using tk_getOpenFile.
+   * Un-hiding channel level datum of oke3.  Also allowing the user to select
+     0.0 to cause trk-file to exclude 3rd datum since 0 is default channel level.
+   * Updating GUI's t0/t1 button to reflect being unable to run tide modes.
 
-   * 2012-06-29 - Adding datum values to the envelopes.  This allows the SDP
-     to properly display whether they were tideV0, tideV1, surgeOnly, etc.
-     Also correcting the code to auto determine the datum, so user can specify
-     anomaly vs tide.
+2012-07-13  "v3.98"
+   * Checking in some corrections to the meta-data used to define whether
+     this was a tide, surge, tide + surge, etc, run.
+   * Switching from 'tide' to 'tidefile'
 
+2012-06-29  ======
+   * Adding datum values to the envelopes.  This allows the SDP to display
+     whether they were tideV0, tideV1, surgeOnly, etc.  Also correcting the
+     code to auto determine the datum, so user can specify anomaly vs tide.
    * Added f_tide to saveRex, so it can properly label the tide method used
-
-   * 2012-06-29 - Aborted having the FORTRAN code create the envelopes, so it
-     correctly reflects surge+tide.  In the case of Surge-Only, the envelope
-     filter in the FORTRAN code will still work.
-
+   * Aborted having the FORTRAN code create the envelopes, so it correctly
+     reflects surge+tide.  In the case of Surge-Only, the envelope filter in
+     the FORTRAN code will still work.
    * Correcting initialization of the hb_max[][] so it can detect dry cells.
 
-   * 2012-06-28 - Adjusting the timing so it doesn't take an extra step at
-     the beginning in SETCMP (with NHRAD), but rather corrects the time at
-     which to switch to a different time-step with a -1 in STMVAL
+2012-06-28  ======
+   * Adjusting the timing so it doesn't take an extra step at the beginning in
+     SETCMP (with NHRAD), but rather corrects the time at which to switch to a
+     different time-step with a -1 in STMVAL
 
+2012-06-08  ======  !! Changing NHRAD creates an extra time-step
    * Recalculating MHALT (stop computations) based on changes to NHRAD
-
-   * 2012-06-08 - SETCMP() was doing a time-step advance.  Since STMVAL() also
-     did a time-step advance, there was a double step for delp,rmax,x,y during
+   * SETCMP() was doing a time-step advance.  Since STMVAL() also did a
+     time-step advance, there was a double step for delp,rmax,x,y during
      the first time-step.
         The delp,rmax are reset every hour based on the value from file, so they
      recovered after the first hour; however the position information doesn't
@@ -271,83 +315,172 @@
      hour, so the storm would follow a slightly different track.
         The result is that Rmax/Delp after the first hour is correct, but the
      position is off by about a DT.  Not much, but enough to impact the results.
-
-   * 2012-06-08 - Adjusting how the NHRAD is initialized so the switch in
-     time-steps occurs on the hour rather than 1 time-step before the hour.
-     This will make the model run 1 time-step longer before switching (both
-     times) and 1 time-step longer overall.
-         --> This likely impacts test results
-
+   * Adjusting how NHRAD is initialized so the switch in time-steps occurs on
+     the hour rather than 1 time-step before the hour.  This will make the
+     model run 1 time-step longer before switching (both times) and 1 time-step
+     longer overall.
    * Shifting f_tide calculation into CleanUp routine.
-
    * Moving the data passing logic for the tide + surge grids into slosh2.c.
 
+2012-06-01  ======
    * Moving from clock1 + etime to modelClock.
-
    * Moving time and tide manipulation into RunLoopStep routine.
 
-   * 2012-05-21 - Merging in changes needed to get SLOSH + Tide.
+2012-05-21  ======
+   * Merging in changes need to get SLOSH + Tide.
 
+2012-04-20  ======
    * Turning on enhanced output for stm2trk to provide users with more help.
 
-   * 2012-01-24 - Allow HCH2 to use the incorrect formulation of the XFILTER
-     code for backward compatibility
+2012-01-24  v3.97b
+   * Allow HCH2 to use the incorrect formulation of XFILTER for backward
+     compatibility
 
-2012-01-20  v3.97
-   * Updated the number of cuts and 1d flows to 20,000 (from 13,000)
+-------------------------------------------------------------------------------
+2012-01-20  v3.97   !! GITHUB-TAG
+2011-11-09  ======
+   * Updated version of XFILTER with a reformulation of the XSM2 term.
 
-   * Set critical threshold for smoothing to 0.1 (vs 0.5) feet
-        --> This likely impacts test results
+2011-09-01  v3.96i
+   * '*' in the X-filter column (21) indicates HCHT=epsilon (1.E-5) and uses
+     that for the include cells as well.  That way both select grid cells and
+     barriers are the same.
 
-   * Added XFILTER smoothing routine.  Originally did smoothing in a + Laplacian
-     pattern.  Now we added the corners for the X Laplacian.
+2011-08-23  v3.96h
+   * Increase the number of cuts to 20,000 (from 13,000)
 
-   * 2011-04-05 - Adjusted high terrain to 56 feet (from 36 feet) at request of
-     Nuclear Regulatory Commission.  Done by Narayanaswamy S Muthukumar (NSM).
+2011-08-16  v3.96g  !! Adjusted critical threshold for considering wet/dry
+   * Added more options for the cross filter smooth.
+   * Added options to allow HCRT to range between 0.1 and 0.5
+   * Switch HCRT to 0.1 (from 0.5 feet) - can't go to 0.0 or floods whole basin.
+
+2011-07-28  v3.96f
+2011-06-14  v3.96e
+   * Updating XFILTER to match Cristina's latest version.  Concerns about
+     boundary checks, and the lack of computation for xdif, hdif.  Also
+     the rewrite of the bottom needs further thought.
+
+2011-06-10  v3.96d
+   * Modified GUI to display Vmax graph in knots (1 min) rather than mph (1 min).
+
+2011-04-27  ======  !! Added hybrid Laplacian filter
+   * Added XFILTER smoothing routine (a modification of the filter routine to
+     get the X Laplacian as well as the + Laplacian.  Works well except near
+     barriers (see Ike in egm3 near the Texas border)
+
+2011-04-08  ======
+   * Detect and handle whether a basin can have high terrain at 56 vs 35 feet.
+   * Column 20='+' indicates it is safe to treat 56 (vs 36) as high terrain
+
+2011-04-05  v3.96c  !! Adjusted high terrain
+   * Adjusted high terrain to 56 feet (from 36 feet) at request of Nuclear
+     Regulatory Commission.  Done by Narayanaswamy S Muthukumar (NSM).
      Use a '+' in column 20 to denote it is safe to treat 56 (vs 36) as high
      terrain.
 
+2011-04-04  v3.96b  !! Adjusted critical threshold for considering wet/dry
+   * Adjusting critical threshold for barriers to 0.5 feet (from 1 foot).
    * Added more smoothing options (to first line of the DTA file).  Now uses the
      following symbols... '^', '*', '=', '+', '!', '@', '&', '#', '%'
 
-2011-02-17  v3.96 (originally - FOIA_4.00)
-   * 2011-02-09 - SLOSH release officially switched to MinGW 4.5.0 (from 3.4.2)
+-------------------------------------------------------------------------------
+2011-02-17  v3.96   !! GITHUB-TAG - (originally - FOIA_4.00)
+2011-02-09  "v4.00"
+   * Switch to MinGW 4.5.0 (from 3.4.2)
 
-   * Updating number of cuts and 1d flows to 13,000 (from 12,000)
+2011-01-12  "v3.96"
+   * Updating # of cuts and 1d flows to 13,000 (from 12,000) to support HCH2
 
-2010-10-19  v3.95
+-------------------------------------------------------------------------------
+2010-10-19  v3.95   !! GITHUB-TAG
    * HCHS changed time step (20s to 10s) which impacted 1989-Hugo (in HCHS)
-
    * HMI3 replaced HMIA, so 1992-Andrew now uses HMI3
 
-   * Set default REX version to 2.0 (vs 1.0)
+2010-06-27  "v3.95"
+   * Updated basin grid dimension to 600x600 (from 500x500)
 
-   * Updated initialized dry dimension to 1000 (vs 500)
+2010-06-09  ======
+   * Updated basin grid dimension to 500x500 (from 400x400)
 
-   * Updated grid dimension to 600x600 (vs 400x400)
-
-   * Set critical threshold for smoothing to 0.5 (vs 1.0) feet
-
+2010-05-22  ======
    * Adjusted trk-file format so that ocean type of 150-250 indicates pure
      anomaly, while 350-450 indicates anomaly + gridded tide.
 
-2009-10-08  v3.94
+2010-04-29  v3.94a
+   * Adjusted dimension of initialize dry to 1000 (from 500)
+   * Adjusted critical threshold for smoothing to 0.5 feet (from 1 foot)
+   * Updated tests (use Rex-file type 2, hmi3 (instead of hmia)
+
+2010-04-20  ======
+   * Default to Rex-file type 2
+
+-------------------------------------------------------------------------------
+2009-10-08  v3.94   !! GITHUB-TAG
    * Start of GitHub repository
 
+2009-05-29  v3.93
+   * Envelope and rex frames had values < 0.05 feet, but last frame of rex-file
+     didn't.  Now adjusted so no cells are < 0.05 feet deep.
+
+2009-05-16  v3.92
+   * Remove cosmetic smoothing, but only allow wet cells in rex-file which
+     are >= 0.05 feet deep (e.g., slightly wet)
+
+2009-05-13  v3.91
+   * Putting cosmetic smoothing back in (to resolve disconnected cells issue)
+
 2009-04-17  v3.90
+   * HMXSV does smoothing, so last rex Frame != envelop (so use min (hmx, hb)
+   * Removing cosmetic smoothing in last step
+
 2009-03-18  v3.89
+   * Increasing dimensions of BCPTS for evi2dta
+
 2009-02-17  v3.88
 2008-11-25  v3.87
+   * Fix to savellx routine to remove a stair step.
+
 2008-09-04  v3.86
+   * Upgraded to Tcl/Tk v8.5.3
+
 2007-12-18  v3.85
+   * Increased dimensions of 1d flow and 1d flow with cuts for hch2dta
+
 2007-12-05  v3.84
+2007-10-09  "v3.83"
+   * Introduced bnt and dta subdirectories to replace /sloshbsn
+   * Checks to intwnd to make sure kpres stays in bounds.
+   * Removed .llx, .trk, .dta copying dependencies.
+
 2006-10-11  P-Surge-r1
 2006-08-15  v3.82
+   * Order matters when dealing with Andrew / Hugo test case?
+   * Bug fix in FLW1DM where we divide by dph * dph with dph == 0.
+   * Command line - now option based (vs argument order)
+
 2006-04-19  v3.81
+   * Updated epn2dta (time-steps)
+
+2006-03-30  "v3.80"
+2006-03-27  "v3.80"
+   * Introduced BP2e, PN2e
+   * Updated "JX3e" to have the correct number of grid cells to
+ JX2e JACKSONVILLE(new) 29.52000   81.33000   29.17000   81.20000  93.0 185.0  13.00  1.0332.0  1.0380.0  1.0  1.0332.0380.0
+     from
+ JX2e JACKSONVILLE(new) 29.52000   81.33000   29.17000   81.20000  93.0 185.0  13.00  1.0333.0  1.0381.0  1.0  1.0333.0381.0
+
+2005-05-10  ======
+   * Switched to IDRY(ND_) from IDRY(N_).  ND_ is 500, N_ is 400.  This
+     resolved extra dry cells around New Orleans.
+
+2005-01-24  "v3.5"
+2005-01-21  "v3.5"
 2004-11-15  v1.1
 2004-09-17  v1.0
    * First FOIA Release
 
-===============================================================================
+2003-05-06 "v3.5"
+
+-------------------------------------------------------------------------------
 # \o starts a new change log entry
 vim:ft=changelog

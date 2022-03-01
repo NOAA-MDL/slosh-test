@@ -1,6 +1,6 @@
       SUBROUTINE INITAL (MMHALT,IIMXB,JJMXB,ZZB,MBHR,MMIN,MBDY,MBNT,
      1                   MYR,FFLE5,as1,FFLE9,as2,FFLE91,as3,FFLE40,
-     2                   as4,DDELT,BSNABREV,MCLOCK,MWAVE)
+     2                   as4,DDELT,BSNABREV,as5,MCLOCK,MWAVE)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C THIS SUBROUTINE CALLS ALL THE FORTRAN SUBROUTINES WHICH ARE NEEDED TO
 C INITIALIZE THE FORTRAN VARIABLES BEFORE WE ENTER INTO THE COMPUTE LOOP.
@@ -24,12 +24,13 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ! Declare a dynamic assigned character arrays to avoid -check bound
 ! error passing from c language procedure (slosh2.c) 
 !
-      integer as1,as2,as3,as4
+      integer as1,as2,as3,as4,as5
 
       CHARACTER(len=as1),intent(in):: FFLE5
       CHARACTER(len=as2),intent(in):: FFLE9
       CHARACTER(len=as3),intent(in):: FFLE91
       CHARACTER(len=as4),intent(in):: FFLE40
+      CHARACTER(len=as5),intent(in):: BSNABREV
 !----------------------------------------------------------------------
 !
 
@@ -45,7 +46,6 @@ C STIME interferes with C code, so switched to STIME2
       COMMON /FLES/ FLE5,FLE9,FLE8,FLE91,FLE99,FLE10,FLE20,FLE30,FLE1
       CHARACTER*256 FLE5,FLE9,FLE8,FLE91,FLE99,FLE10,FLE20,FLE30,FLE1
       CHARACTER*256 FLE40
-      CHARACTER*5 BSNABREV
       common /landfl/ lftime
       CHARACTER*80   lftime
       CHARACTER*3 CMNT,TMNT(12)
@@ -79,7 +79,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     ADDED FOR HOT START FILE NAMES
 c      CALL CASENAME1(CSNM,FFLE91,LCS)
       WAVE=MWAVE
-      CALL CASENAME(CSNM,FFLE5,as1,BSNABREV,LCS)
+      CALL CASENAME(CSNM,FFLE5,as1,BSNABREV,AS5,LCS)
       HTMAIN = 'SLOSH_restart_'//CSNM(1:LCS-1)//'.txt'
       HTHB = 'SLOSH_restart_HB_'//CSNM(1:LCS-1)//'.txt'
       HTUV = 'SLOSH_restart_UV_'//CSNM(1:LCS-1)//'.txt'
@@ -197,11 +197,11 @@ C      WRITE(30) AIDENT
       WRITE(15) AIDENT
       ENDIF
 C
-C     End of compute and initall... return stuff to C.
+C     End of compute and inital... return stuff to C.
 C     CODE TO RETURN VALUES TO C CODE
 C
       MMHALT = MHALT
-C start of time parse in fortran
+C start of time parse in FORTRAN
       IF ( Flag_TrkFile == 1992) THEN
         READ(LFTIME,2020) MHR,MMIN,MDAY,CMNT,MYR
  2020 FORMAT(2X,2I2.2,1X,I2.2,1X,A3,1X,I4)
@@ -245,7 +245,7 @@ C Arthur Added... 5/26/2005
           MBNT=MBNT-12
         ENDIF
       ENDIF
-C end of time parse in fortran
+C end of time parse in FORTRAN
 
       IIMXB = IMXB
       JJMXB = JMXB
@@ -261,7 +261,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     ADDED FOR WAVE MODEL INITIALIZATION
 C     4/2017 D.Y.
       IF (WAVE.EQ.1) THEN
-        CALL INITWV(BSNABREV) ! SET CONSTANTS, PARAMETERS, READ INPUTS
+        CALL INITWV(BSNABREV,AS5) ! SET CONSTANTS, PARAMETERS, READ INPUTS
         CALL WVCMPT
         IF(.NOT. HTSTRT)CALL WINDX2            ! GET FIRST WIND INPUTS
       ENDIF

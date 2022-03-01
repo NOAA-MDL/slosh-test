@@ -79,7 +79,7 @@ static sInt4 Data_WriteTrk (FILE * fp2, const char *trkName, int f_tide)
    rewind (fp);
 
    if (strncmp(buff2, "FileVersion=", 12) == 0) {
-      printf ("New format of trk file %s\n", buff2);
+      /* printf ("New format of trk file %s\n", buff2); */
  /* skip the header file */
       for (i = 0; i < 16; i++) {
           fgets (buff2, 200, fp);
@@ -109,14 +109,14 @@ static sInt4 Data_WriteTrk (FILE * fp2, const char *trkName, int f_tide)
 /* read the landfall,begin and end hour */
       fgets (buff2, 200, fp);
       k = (int) atoi (buff2 + 13);
-      printf("landful=%s\n",buff2+13);
+      /* printf("landfall=%s\n",buff2+13); */
 
       fgets (buff2, 200, fp);
-      printf("begin=%s\n",buff2+10);
+      /* printf("begin=%s\n",buff2+10); */
       i = (int) atoi (buff2 + 10);
- 
+
       fgets (buff2, 200, fp);
-      printf("ending=%s\n",buff2+8);
+      /* printf("ending=%s\n",buff2+8); */
       j = (int) atoi (buff2 + 8);
 
       c_temp = (char) i;
@@ -130,9 +130,9 @@ static sInt4 Data_WriteTrk (FILE * fp2, const char *trkName, int f_tide)
 /* read the datum ht1 and ht2 */
       fgets (buff2, 200, fp);
       ht1 = (float) atof (buff2 + 11);
-      printf("ht1=%s\n",buff2+11);
+      /* printf("ht1=%s\n",buff2+11); */
       fgets (buff2, 200, fp);
-      printf("ht2=%s\n",buff2+10);
+      /* printf("ht2=%s\n",buff2+10); */
       ht2 = (float) atof (buff2 + 10);
 
    /* Tide mode of program run should over-ride the initWater. */

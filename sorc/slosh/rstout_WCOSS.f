@@ -1,20 +1,20 @@
       SUBROUTINE RSTOUT(DMCLOCK)
-c     This subroutine output necessary variables for a later hotstart
-c     Output Variables:
-c     Storm position/time: 
-c       AX,AY: Position of storm center
-c       ITIME: Cumulative model computational steps counter
-c       ITMADV: Cumulative model hours counter
-c       ETIME1: Cumulative model computational time in seconds
-c       NHRAD: 
-c       ZDELP:
-c       ZC24:
-c       PNN:
-c       WMAX:
-c     Hydrodynamic variables:
-c       HB(IMXB1,JMXB1): Water level at the most recent output time
-c       UB/VB(IMSB,JMXB): Transport at the most recent output time
-c     Created by D.Y 01/2018
+C     This subroutine output necessary variables for a later hot-start
+C     Output Variables:
+C     Storm position/time: 
+C       AX,AY: Position of storm center
+C       ITIME: Cumulative model computational steps counter
+C       ITMADV: Cumulative model hours counter
+C       ETIME1: Cumulative model computational time in seconds
+C       NHRAD: 
+C       ZDELP:
+C       ZC24:
+C       PNN:
+C       WMAX:
+C     Hydrodynamic variables:
+C       HB(IMXB1,JMXB1): Water level at the most recent output time
+C       UB/VB(IMSB,JMXB): Transport at the most recent output time
+C     Created by D.Y 01/2018
       include 'parm.for'
       COMMON /STRMSB/ C1,C2,C21,C22,AX,AY,PTENCY,RTENCY
       COMMON /FFTH/   ITIME,MHALT
@@ -41,7 +41,7 @@ c     Created by D.Y 01/2018
       OPEN(1003,FILE=HTUV)
       OPEN(1004,FILE=HTHMX)
 
-c     Storm position, time steps
+C     Storm position, time steps
       WRITE(1001,'(I12)')ITIME
       WRITE(1001,'(I12)')ITMADV
       WRITE(1001,'(I12)')NHRAD
@@ -71,7 +71,7 @@ c     Storm position, time steps
       WRITE(1001,'(F20.4)')X12(49)
       WRITE(1001,'(F20.4)')X12(50)
 
-c     Transportation
+C     Transportation
       DO I=1,IMXB
         DO J=1,JMXB
           UBB(I,J)=UB(I,J)
@@ -85,20 +85,20 @@ c     Transportation
         WRITE(1003,STRING1)(VBB(I,J),J=1,JMXB)
       END DO
 
-c     Water level
-c      DO I=1,IMXB
-c        DO J=1,JMXB
-c          IF ((I .EQ. IMXB) .OR. (J .EQ. JMXB))THEN
-c            HBB(I,J)=0.
-c          ELSE
-c            HBB(I,J)=HB(I,J)
-c            IF (ISNAN(HBB(I,J)))HBB(I,J)=0.
-c          ENDIF
-c        END DO
-c      END DO
-c      DO I=1,IMXB
-c        WRITE(1002,STRING2)(HBB(I,J),J=1,JMXB)
-c      END DO
+C     Water level
+C      DO I=1,IMXB
+C        DO J=1,JMXB
+C          IF ((I .EQ. IMXB) .OR. (J .EQ. JMXB))THEN
+C            HBB(I,J)=0.
+C          ELSE
+C            HBB(I,J)=HB(I,J)
+C            IF (ISNAN(HBB(I,J)))HBB(I,J)=0.
+C          ENDIF
+C        END DO
+C      END DO
+C      DO I=1,IMXB
+C        WRITE(1002,STRING2)(HBB(I,J),J=1,JMXB)
+C      END DO
       DO I=1,IMXB1
         WRITE(1002,STRING2)(HB(I,J),J=1,JMXB1)
       END DO

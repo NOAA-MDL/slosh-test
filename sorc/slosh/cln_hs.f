@@ -12,6 +12,5 @@ C     run.
       IF (ISTAT == 0) CLOSE(1003, STATUS='delete')
       OPEN(1004,IOSTAT=ISTAT,FILE=HTHMX,STATUS='old')
       IF (ISTAT == 0) CLOSE(1004, STATUS='delete')
-      CALL DEALLOC
       RETURN
       END

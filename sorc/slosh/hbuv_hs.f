@@ -11,7 +11,7 @@
       OPEN(1002,FILE=HTHB,STATUS='OLD')
       OPEN(1003,FILE=HTUV,STATUS='OLD')
 
-c     Transportation
+C     Transportation
       DO I=1,IMXB
         READ(1003,STRING1)(UB(I,J),J=1,JMXB)
       END DO

@@ -1,5 +1,4 @@
       SUBROUTINE FLTER2
-      USE PARM2
       INCLUDE 'parm.for'
 C
       COMMON /FFTH/   ITIME,MHALT

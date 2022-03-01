@@ -9,9 +9,10 @@ C           NONE
 C
 C        VARIABLES
 C       HSUB(  ,  ) = SCRATCH SPACES
-C       IP(4) JP(4) = SHIFTS OF I J FROM HEIGHT PT TO 4 MOMNTN CORNERS
+C       IP(4) JP(4) = SHIFTS OF I J FROM HEIGHT PT TO 4 MOMENTUM CORNERS
 C          IBB(6,M) = RANGES AND INCREMENTS FOR 3 DO-LOOPS OF I,J
-C                     M=1 INTERIOR,M=2 HORZNTL BNDY,M=3 VERTICAL BNDY
+C                     M=1 INTERIOR, M=2 HORIZONTAL BOUNDARY,
+C                     M=3 VERTICAL BOUNDARY
 C                     RANGES ON THREE BASIN SEGMENTS ARE:
 C
 C                              222222222........2222222
@@ -27,7 +28,7 @@ C          J2(J) JC = SHIFT J-SUBSCRIPT TO PRESENT TIME OF SURGE FIELD
 C        HB(  ,   ) = SURGE FIELD
 C         ZB(  ,  ) = DEPTH FIELD
 C     IIH(4) JJH(4) = I/J-SHIFT SUBSCRIPTS FOR SURGE POINTS
-C       IP(4) JP(4) = I/J-SHIFT SUBSCRPTS FOR MOMNTM PTS, IN 'BLCKDT'
+C       IP(4) JP(4) = I/J-SHIFT SUBSCRIPTS FOR MOMENTUM PTS, IN 'BLCKDT'
 C
 C           THE (I,J) SHIFTS TO MOMENTUM POINTS, VIA IP(4) AND JP(4),
 C           ON CORNER POINTS K=1 TO 4 ARE:
@@ -66,7 +67,7 @@ C                    I-1     I      I+1
 C
 C                        .-----.
 C                        I     I
-C             J+1        I 3+  I       EXAMPLE 1. SUQARE 2 EXCLUDED
+C             J+1        I 3+  I       EXAMPLE 1. SQUARE 2 EXCLUDED
 C                        I     I
 C                  .-----.-----.          I  1  I        I  0  I
 C                  I     I     I          I     I        I     I
@@ -90,7 +91,6 @@ C             J-1        I 1+  I
 C                        I     I
 C                        .-----.
 C
-      USE PARM2
       INCLUDE 'parm.for'
 C
       COMMON /FFTH/   ITIME,MHALT

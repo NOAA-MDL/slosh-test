@@ -2,7 +2,7 @@
 C     This procedure is to calculate SLOSH's wind field on a lat/lon
 C     grid.  Results are returned in MPH.
 C     This procedure is taken from Jye Chen's wind2.for (first 3pages).
-C     Inputed by Arthur Taylor 6/9/1997
+C     Inputted by Arthur Taylor 6/9/1997
 C     IU (O) MPH WIND IN U DIRECTION AT LOCATION I,J (MAX:200X200)
 C     IV (O) MPH WIND IN V DIRECTION AT LOCATION I,J
 C     IP (O)     PRESSURE AT LOCATION I,J
@@ -60,7 +60,7 @@ C     DIR=C22
 C     SET THE INTERVAL SPACING IN NAUTICAL MILES
 C     DELSNM=5.  PASSED BY CALLING PROCEDURE
       DELS=DELSNM*1.1508
-C     SET THE DIMMENSION, AND THE CENTER OF THE STORM.
+C     SET THE DIMENSION, AND THE CENTER OF THE STORM.
 C     N0=95 PASSED BY CALLING PROCEDURE
       N00=(N0-1)/2
 

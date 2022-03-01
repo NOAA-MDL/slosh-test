@@ -1,6 +1,6 @@
 #!/bin/make
 #------------------------------------------------------------------------------
-# makefile.linux                                        Last Change: 2021-07-27
+# makefile.linux                                        Last Change: 2022-02-28
 #                                                        Arthur.Taylor@noaa.gov
 #                                                              NWS/OSTI/MDL/DSB
 #
@@ -16,19 +16,27 @@
 SHELL=/bin/bash#              # Shell for script evaluations
 MPI=false#                    # Do we build with MPI?
 MINGW=false#                  # Allow MinGW specific functions
-B=gcc#                        # See usage.
+B?=gcc#                       # Set to default.  On WCOSS build.sh will set
+                              # to 'intel'.  On Cygwin, uname will determine
 DOUBLE=true#                  # Use double precision flags
+
+#------------------------------------------------------------------------------
+# Following assumes we're still using GCC 4.5.0 32-bit
 BIT=32#                       # Use 32 (vs 64) bit compilation
+COMPLEX_16=original#          # Use COMPLEX*16 (original) or COMPLEX(16) (new)
+#------------------------------------------------------------------------------
+VER=4.21#                     # Be compatible with 4.21 version (1/8/2020)
 
 #-------------------------------------------
 # Set up the called executables and version
 #-------------------------------------------
 CC=gcc
-VER:=$(shell $(CC) --version |head -n1 |cut -d' ' -f2,3 --output-delimiter='-')
+CC_VER:=$(shell $(CC) --version | head -n1 | cut -d' ' -f2,3 --output-delimiter='-')
 FC=gfortran
 ifeq ($(B),intel)
    CC=icc
    FC=ifort
+   COMPLEX_16=original
 endif
 MV=/bin/mv
 RM=/bin/rm
@@ -97,7 +105,6 @@ LIBS=-lgfortran
 # LIBS+=-Wl,-Bstatic
 # LIBS+=-lquadmath#           # Used for EMC's workstation (8/9/2019)
 
-
 LIBS+=-L/usr/lib -lm
 ifeq ($(B),intel)
    LIBS=-lifcore -limf
@@ -106,13 +113,12 @@ endif
 #-------------------------------------
 # Set up the command executable flags
 #-------------------------------------
-#CFLAGS+=-DCC_VER="\"$(VER)\""# Add compiler version.
-#CMDFLAGS1=$(CFLAGS)# Add compiler version.
-CMDFLAGS1=$(CFLAGS) -DCC_VER="\"$(VER)\""# Add compiler version.
+CMDFLAGS1=$(CFLAGS) -DPRG_VER="\"$(VER)\""# Set the program version
+CMDFLAGS1+=-DCC_VER="\"$(CC_VER)\""# Add compiler version.
 
-#--------------------------------------------------------
+#-------------------------
 # Set up the Linker flags
-#--------------------------------------------------------
+#-------------------------
 LDFLAGS=
 ifeq ($(B),intel)
    LDFLAGS=-xAVX#             # Avoid complaint about MOVBE, FMA, BMI, LZCNT,
@@ -137,19 +143,23 @@ CSRC+=tideutil.c
 CSRC+=tio3.c
 CSRC+=usrparse.c
 
-MPISRC=mpiutil.c
+MPISRC=leader.c
+MPISRC+=team.c
+MPISRC+=mstUtil.c
+MPISRC+=topology.c
+MPISRC+=winBuffer.c
+
+FSRC+=mapshift.f
 
 #----------------------------------
 # Intrface.f :: Was in this order.
 #----------------------------------
-FSRC=parm2.f#                 # Compile FORTRAN modules first.
-# FSRC+=inital.f
+# FSRC+=parm2.f#                 # Compile FORTRAN modules first.
 FSRC+=wind.f
 FSRC+=wav.f
-# FSRC+=tmstep.f
 FSRC+=clnup.f
 FSRC+=cln_hs.f
-FSRC+=dealloc.f
+# FSRC+=dealloc.f
 FSRC+=xy2llx.f
 FSRC+=staticht.f
 FSRC+=issubgrid.f
@@ -174,12 +184,11 @@ FSRC+=extrpt.f
 FSRC+=intdlt.f
 FSRC+=intval.f
 FSRC+=cnstnt.f
-# ifeq ($(FC),gfortran)
-#ifeq ($(BIT),64)
-#FSRC+=btmstr_gnu.f
-#else
+ifeq ($(COMPLEX_16),new)
+FSRC+=btmstr_gnu.f
+else
 FSRC+=btmstr.f
-#endif
+endif
 FSRC+=setcmp.f
 FSRC+=stmval.f
 FSRC+=cnsdlt.f
@@ -187,7 +196,7 @@ FSRC+=force1.f
 FSRC+=intwnd.f
 FSRC+=prtstm.f
 FSRC+=crdrd1.f
-FSRC+=alloc.f
+# FSRC+=alloc.f
 FSRC+=ttimer.f
 FSRC+=initlz.f
 FSRC+=inputn.f
@@ -197,11 +206,11 @@ FSRC+=depmsy.f
 FSRC+=intlht.f
 FSRC+=crdrd2.f
 FSRC+=crdrd2_n.f
-FSRC+=depsfc.f
 FSRC+=contty.f
 FSRC+=bdryht.f
-FSRC+=channl.f
 FSRC+=flw1dm_block.f#         # subblock and flw1dm combined.
+FSRC+=depsfc.f
+FSRC+=channl.f
 FSRC+=frcpnt.f
 FSRC+=momntm.f
 FSRC+=mntmbd.f
@@ -233,11 +242,13 @@ FSRC+=hbuv_hs.f
 #-------------------------------------
 FSRC1=wave.f
 FSRC1+=inital.f
-FSRC1+=tmstep.f
+FSRC1+=tmstpc.f#               # First part of tmstep.f
+FSRC1+=tmstpm.f#               # Second part of tmstep.f
 
 # FORTRAN code for GUI only.
 FSRC2=inital_GUI.f
-FSRC2+=tmstep_GUI.f
+FSRC2+=tmstpc_GUI.f
+FSRC2+=tmstpm_GUI.f
 
 #----------------
 # C header files
@@ -246,7 +257,9 @@ HEADERS=amyutil.h
 HEADERS+=clock.h
 HEADERS+=complex.h
 HEADERS+=halotype.h
-HEADERS+=mpiutil.h
+HEADERS+=leader.h
+HEADERS+=team.h
+HEADERS+=mstUtil.h
 HEADERS+=myassert.h
 HEADERS+=myutil.h
 HEADERS+=pack.h
@@ -257,8 +270,10 @@ HEADERS+=slosh2.h
 HEADERS+=tendian.h
 HEADERS+=tideutil.h
 HEADERS+=tio3.h
+HEADERS+=topology.h
 HEADERS+=type.h
 HEADERS+=usrparse.h
+HEADERS+=winBuffer.h
 
 #------------------------------------
 # FORTRAN include (aka header) files
@@ -273,7 +288,11 @@ FORT_HEADERS+=wav1.for
 OBJS1=$(CSRC:.c=.o)
 # Handle MPISRC
 ifeq ($(MPI),true)
-   OBJS1+=mpiutil.o
+   OBJS1+=leader.o
+   OBJS1+=team.o
+   OBJS1+=mstUtil.o
+   OBJS1+=topology.o
+   OBJS1+=winBuffer.o
 endif
 OBJS1+=$(FSRC:.f=.o)
 OBJS1+=$(FSRC1:.f=.o)
@@ -302,9 +321,10 @@ install: $(CMD1)
 .PHONY: clean
 clean:
 	-$(RM) -f $(OBJS1)
+	-$(RM) -f *.mod *.o
 	-$(RM) -f $(CMD1)
-	-$(RM) -f *.mod
 	-$(RM) -f *genmod.f90
+	-$(RM) -f parm2.mod
 
 #------------------------------------------------------------------------------
 # Suffixes
@@ -315,8 +335,14 @@ clean:
 .f.o: $(FORT_HEADERS)
 	$(FC) -c $(FFLAGS) $<
 
-mpiutil.o: mpiutil.c $(HEADERS)
-	$(CC) -c $(CFLAGS) mpiutil.c
+leader.o: leader.c $(HEADERS)
+	$(CC) -c $(CFLAGS) leader.c
+
+team.o: team.c $(HEADERS)
+	$(CC) -c $(CFLAGS) team.c
+
+mstUtil.o: mstUtil.c $(HEADERS)
+	$(CC) -c $(CFLAGS) mstUtil.c
 
 topology.o: topology.c $(HEADERS)
 	$(CC) -c $(CFLAGS) topology.c

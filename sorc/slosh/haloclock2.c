@@ -11,9 +11,10 @@
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
-#include "tcl.h"
 #include "haloclock2.h"
+
 #include <math.h>
+#include <tcl.h>
 
 /*
  * Possible compiler time #defines:
@@ -33,133 +34,127 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-long int TclpGetTimeZone(long int clock) {
-  struct tm time;
-  time_t ansTime;
-  struct tm *gmTime;
-  static int timeZone = 9999;
+long int TclpGetTimeZone (long int clock)
+{
+   struct tm time;
+   time_t ansTime;
+   struct tm *gmTime;
+   static int timeZone = 9999;
 
-  if (timeZone == 9999) {
-    /* Cheap method of getting global time_zone variable. */
-    memset (&time, 0, sizeof (struct tm));
-    time.tm_year = 70;
-    time.tm_mday = 2;
-    ansTime = mktime (&time);
-    gmTime = gmtime (&ansTime);
-    timeZone = gmTime->tm_hour;
-    if (gmTime->tm_mday != 2) {
-      timeZone -= 24;
-    }
-  }
-  return timeZone;
+   if (timeZone == 9999) {
+      /* Cheap method of getting global time_zone variable. */
+      memset (&time, 0, sizeof (struct tm));
+      time.tm_year = 70;
+      time.tm_mday = 2;
+      ansTime = mktime (&time);
+      gmTime = gmtime (&ansTime);
+      timeZone = gmTime->tm_hour;
+      if (gmTime->tm_mday != 2) {
+         timeZone -= 24;
+      }
+   }
+   return timeZone;
 }
-#ifdef TEST
-#ifndef _WINDOWS_
-    extern long int timezone;
-    return (timezone / 60);
-#else
-    extern long int _timezone;
-    return (_timezone / 60);
-#endif
-  }
-#endif
 
-  clock_t TclpGetClicks(void) {
-    return clock();
-  }
-  time_t TclpGetSeconds(void) {
-    return time(NULL);
-  }
+clock_t TclpGetClicks (void)
+{
+   return clock ();
+}
+
+time_t TclpGetSeconds (void)
+{
+   return time (NULL);
+}
 
 #define PERIOD_YEARS 146097L
 #define SEC_DAY 86400L
 
-static void Clock2_Epoch2YearDay (long int tot_day, int *Day, long int *Yr) {
-  int loop_num;
-  long int year;
+static void Clock2_Epoch2YearDay (long int tot_day, int *Day, long int *Yr)
+{
+   int loop_num;
+   long int year;
 
-  year = 1970;
-  if ((tot_day <= -PERIOD_YEARS) || (tot_day >= PERIOD_YEARS)) {
-    loop_num = (tot_day / PERIOD_YEARS);
-    year += 400 * loop_num;
-    tot_day -= PERIOD_YEARS * loop_num;
-  }
-  if (tot_day >= 0) {
-    while (tot_day >= 366) {
-      if ( ((year % 4) == 0) &&
-           (((year % 100) != 0) || ((year % 400) == 0))  ) {
-        if (tot_day >= 1461) {
-          year += 4;
-          tot_day -= 1461;
-        } else if (tot_day >= 1096) {
-          year += 3;
-          tot_day -= 1096;
-        } else if (tot_day >= 731) {
-          year += 2;
-          tot_day -= 731;
-        } else{
-          year++;
-          tot_day -= 366;
-        }
-      } else {
-        year++;
-        tot_day -= 365;
+   year = 1970;
+   if ((tot_day <= -PERIOD_YEARS) || (tot_day >= PERIOD_YEARS)) {
+      loop_num = (tot_day / PERIOD_YEARS);
+      year += 400 * loop_num;
+      tot_day -= PERIOD_YEARS * loop_num;
+   }
+   if (tot_day >= 0) {
+      while (tot_day >= 366) {
+         if (((year % 4) == 0) && (((year % 100) != 0) || ((year % 400) == 0))) {
+            if (tot_day >= 1461) {
+               year += 4;
+               tot_day -= 1461;
+            } else if (tot_day >= 1096) {
+               year += 3;
+               tot_day -= 1096;
+            } else if (tot_day >= 731) {
+               year += 2;
+               tot_day -= 731;
+            } else {
+               year++;
+               tot_day -= 366;
+            }
+         } else {
+            year++;
+            tot_day -= 365;
+         }
       }
-    }
-    if (tot_day == 365) {
-      if (((year % 4) == 0) &&
-          (((year % 100) != 0) || ((year % 400) == 0))) {
-      } else {
-        year++;
-        tot_day -= 365;
+      if (tot_day == 365) {
+         if (((year % 4) == 0) && (((year % 100) != 0) || ((year % 400) == 0))) {
+         } else {
+            year++;
+            tot_day -= 365;
+         }
       }
-    }
-  } else {
-    while (tot_day <= -366) {
-      year--;
-      if (((year % 4) == 0) &&
-          (((year %100) != 0) || ((year % 400) == 0))) {
-        if (tot_day <= -1461) {
-          year -= 3;
-          tot_day += 1461;
-        } else if (tot_day <= -1096) {
-          year -= 2;
-          tot_day += 1096;
-        } else if (tot_day <= -731) {
-          year--;
-          tot_day += 731;
-        } else {
-          tot_day += 366;
-        }
-      } else {
-        tot_day += 365;
+   } else {
+      while (tot_day <= -366) {
+         year--;
+         if (((year % 4) == 0) && (((year % 100) != 0) || ((year % 400) == 0))) {
+            if (tot_day <= -1461) {
+               year -= 3;
+               tot_day += 1461;
+            } else if (tot_day <= -1096) {
+               year -= 2;
+               tot_day += 1096;
+            } else if (tot_day <= -731) {
+               year--;
+               tot_day += 731;
+            } else {
+               tot_day += 366;
+            }
+         } else {
+            tot_day += 365;
+         }
       }
-    }
-    if (tot_day < 0) {
-      year--;
-      if (((year % 4) == 0) &&
-          (((year % 100) != 0) || ((year % 400) == 0))) {
-        tot_day += 366;
-      } else {
-        tot_day += 365;
+      if (tot_day < 0) {
+         year--;
+         if (((year % 4) == 0) && (((year % 100) != 0) || ((year % 400) == 0))) {
+            tot_day += 366;
+         } else {
+            tot_day += 365;
+         }
       }
-    }
-  }
-  *Day = (int) tot_day;
-  *Yr = year;
+   }
+   *Day = (int) tot_day;
+   *Yr = year;
 }
 
-static int Clock2_MonthNum (int day, long int year) {
-  if (day < 31)
-    return 1;
-  if (((year % 4) == 0) &&
-      (((year % 100) != 0) || ((year % 400) == 0))) {
-    day -= 1;
-  }
-  if (day < 59) return 2;
-  if (day <= 89) return 3;
-  if (day == 242) return 8;
-  return ((day+64)*5)/153-1;
+static int Clock2_MonthNum (int day, long int year)
+{
+   if (day < 31)
+      return 1;
+   if (((year % 4) == 0) && (((year % 100) != 0) || ((year % 400) == 0))) {
+      day -= 1;
+   }
+   if (day < 59)
+      return 2;
+   if (day <= 89)
+      return 3;
+   if (day == 242)
+      return 8;
+   return ((day + 64) * 5) / 153 - 1;
 }
 
 /*
@@ -170,83 +165,103 @@ static int Clock2_MonthNum (int day, long int year) {
 /*   f_tot        (I) 1 if we want total days from begining of year,
  *                    0 if we want total days in the month.
  */
-static int Clock2_NumDay (int month, int day, long int year, char f_tot) {
-  if (f_tot == 1) {
-    if (month > 2) {
-      if (((year % 4) == 0) &&
-          (((year % 100) != 0) || ((year % 400) == 0))) {
-        return ((month+1)*153)/5-63+day;
+static int Clock2_NumDay (int month, int day, long int year, char f_tot)
+{
+   if (f_tot == 1) {
+      if (month > 2) {
+         if (((year % 4) == 0) && (((year % 100) != 0) || ((year % 400) == 0))) {
+            return ((month + 1) * 153) / 5 - 63 + day;
+         } else {
+            return ((month + 1) * 153) / 5 - 64 + day;
+         }
       } else {
-        return ((month+1)*153)/5-64+day;
+         return (month - 1) * 31 + day - 1;
       }
-    } else {
-      return (month-1)*31+day-1;
-    }
-  } else {
-    if (month == 1) {
-      return 31;
-    } else if (month != 2) {
-      if ((((month -3) %5) %2) == 1) {
-        return 30;
+   } else {
+      if (month == 1) {
+         return 31;
+      } else if (month != 2) {
+         if ((((month - 3) % 5) % 2) == 1) {
+            return 30;
+         } else {
+            return 31;
+         }
       } else {
-        return 31;
+         if (((year % 4) == 0) && (((year % 100) != 0) || ((year % 400) == 0))) {
+            return 29;
+         } else {
+            return 28;
+         }
       }
-    } else {
-      if (((year % 4) == 0) &&
-          (((year % 100) != 0) || ((year % 400) == 0))) {
-        return 29;
-      } else {
-        return 28;
-      }
-    }
-  }
+   }
 }
 
-static void Clock2_Day2Char (char buffer[100], int day) {
-  switch (day) {
-    case 0: strcpy (buffer, "Sunday");
-            break;
-    case 1: strcpy (buffer, "Monday");
-            break;
-    case 2: strcpy (buffer, "Tuesday");
-            break;
-    case 3: strcpy (buffer, "Wednesday");
-            break;
-    case 4: strcpy (buffer, "Thursday");
-            break;
-    case 5: strcpy (buffer, "Friday");
-            break;
-    case 6: strcpy (buffer, "Saturday");
-            break;
-  }
+static void Clock2_Day2Char (char buffer[100], int day)
+{
+   switch (day) {
+      case 0:
+         strcpy (buffer, "Sunday");
+         break;
+      case 1:
+         strcpy (buffer, "Monday");
+         break;
+      case 2:
+         strcpy (buffer, "Tuesday");
+         break;
+      case 3:
+         strcpy (buffer, "Wednesday");
+         break;
+      case 4:
+         strcpy (buffer, "Thursday");
+         break;
+      case 5:
+         strcpy (buffer, "Friday");
+         break;
+      case 6:
+         strcpy (buffer, "Saturday");
+         break;
+   }
 }
 
-static void Clock2_Month2Char (char buffer[100], int month) {
-  switch (month) {
-    case 1: strcpy (buffer, "January");
-            break;
-    case 2: strcpy (buffer, "February");
-            break;
-    case 3: strcpy (buffer, "March");
-            break;
-    case 4: strcpy (buffer, "April");
-            break;
-    case 5: strcpy (buffer, "May");
-            break;
-    case 6: strcpy (buffer, "June");
-            break;
-    case 7: strcpy (buffer, "July");
-            break;
-    case 8: strcpy (buffer, "August");
-            break;
-    case 9: strcpy (buffer, "September");
-            break;
-    case 10: strcpy (buffer, "October");
-            break;
-    case 11: strcpy (buffer, "November");
-            break;
-    case 12: strcpy (buffer, "December");
-  }
+static void Clock2_Month2Char (char buffer[100], int month)
+{
+   switch (month) {
+      case 1:
+         strcpy (buffer, "January");
+         break;
+      case 2:
+         strcpy (buffer, "February");
+         break;
+      case 3:
+         strcpy (buffer, "March");
+         break;
+      case 4:
+         strcpy (buffer, "April");
+         break;
+      case 5:
+         strcpy (buffer, "May");
+         break;
+      case 6:
+         strcpy (buffer, "June");
+         break;
+      case 7:
+         strcpy (buffer, "July");
+         break;
+      case 8:
+         strcpy (buffer, "August");
+         break;
+      case 9:
+         strcpy (buffer, "September");
+         break;
+      case 10:
+         strcpy (buffer, "October");
+         break;
+      case 11:
+         strcpy (buffer, "November");
+         break;
+      case 12:
+         strcpy (buffer, "December");
+   }
 }
 
 static void Clock2_FormatParse (char buffer[100], long int sec, float float_sec,
@@ -1865,7 +1880,7 @@ static int Clock2Load_ObjCmd (ClientData clientData, Tcl_Interp *interp,
  */
 #ifdef HALO_CLOCK3
 int Util_GetOpt (int *Argc, const char **Argv, char *Opt, const char **result) {
-  int i, argc=*Argc;
+  int i, argc = *Argc;
   const char *ptr;
 
   *result = NULL;

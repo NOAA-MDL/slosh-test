@@ -34,15 +34,15 @@ C        RADII OF MAX WINDS IN ST MILES, ALL 1 HOURS APART
       READ (5,'(2f5.1,A1,F5.1)') SEADTM,DTMLAK,XOKE,DTMCHN
       CLOSE (5)
 C
-C ht1 < 99.9 implies init water was for tide + anomaly (so tide)
-C ht1 = 99.9 implies init water was missing (so surge)
+C ht1 < 99.9 implies initial water was for tide + anomaly (so tide)
+C ht1 = 99.9 implies initial water was missing (so surge)
 C 150 < ht1 or -250 > ht1 implies anomaly can be found by
 C    mod ((ht1 + 50), 100) - 50)
 C The exception would be 999.9, but that shouldn't be used anymore
 C   and I don't believe that was in any .trk files.
 C
       IF (INT(SEADTM * 10 + .5) == 999) THEN
-C ht1 = 99.9 implies init water was missing (so surge)
+C ht1 = 99.9 implies initial water was missing (so surge)
         SEADTM = 0
         DTMLAK = 0
       ENDIF

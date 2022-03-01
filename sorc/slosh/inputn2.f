@@ -34,12 +34,10 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       INTEGER i,jj,iError,iLine,iAdjustHour
       INTEGER iDateHr,iLandfallHr,iBegHr,iEndHr,iTrkLen
       INTEGER TrkFileLen,TrkHeadLen,iHour,interpTimes
-C      INTEGER iInterp,TrkFileLen,TrkHeadLen,iHour,interpTimes
       INTEGER Flag_Press,iNumDataHead
 
       !Declare character parms
       CHARACTER(LEN=100) chLine,chStorm,chDateTime,chFileVer
-C      CHARACTER(LEN=100) chLine,chDum,chStorm,chDateTime,chFileVer
       CHARACTER(LEN=100) chAuthor,chExtraInfo
       CHARACTER(LEN=100) Flag_Interp
 
@@ -67,7 +65,7 @@ C      CHARACTER(LEN=100) chLine,chDum,chStorm,chDateTime,chFileVer
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 !     Code to read in the new 2013 track file format
-!     This format provides more flexability for the user
+!     This format provides more flexibility for the user
 !     Up to 999 total hours (included interpolated) are allowed
 !
 !     Documentation for the new format can be found ...
@@ -152,7 +150,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       !Code block to find length of header block and store
       !the entire track file as a string (A100)
       !--Store track file as string in array TrkFileStr
-      !--Store header file lengh in TrkHeadLen 
+      !--Store header file length in TrkHeadLen 
       !--Store track file length in TrkFileLen
       TrkHeadLen = -999
       iLine = 0
@@ -466,7 +464,7 @@ C       Ignore comments, denoted by '#', provide check for extra spaces
 
 !     ----------------------
 
-      !Code block to set the houly data arrays needed to run SLOSH 
+      !Code block to set the hourly data arrays needed to run SLOSH 
       !Interpolate track file data to hourly (if necessary) 
       !Currently supports 'Linear' and 'Spline' interpolations
 
@@ -547,11 +545,11 @@ C       Ignore comments, denoted by '#', provide check for extra spaces
               CALL splint(REAL(iarrHour(1:iTrkLen)),farrLat(1:iTrkLen),
      1                    y2Lat(1:iTrkLen),iTrkLen,REAL(iHour),yLat)
               hrlyLat(iHour) = yLat
-              !Longtiude
+              !Longitude
               CALL splint(REAL(iarrHour(1:iTrkLen)),farrLon(1:iTrkLen),
      1                    y2Lon(1:iTrkLen),iTrkLen,REAL(iHour),yLon)
               hrlyLon(iHour) = yLon
-              !DeltaP
+              !Delta Pressure
               CALL splint(REAL(iarrHour(1:iTrkLen)),
      1                    farrDeltaP(1:iTrkLen),y2DeltaP(1:iTrkLen),
      2                    iTrkLen,REAL(iHour),yDeltaP)
@@ -614,7 +612,7 @@ C       Ignore comments, denoted by '#', provide check for extra spaces
 C     READ IN 2 TITLE CARDS
       READ (5,'(20a4)') AIDENT
 
-C     READ 100 STRM PSTNS IN LAT AND LONG, MM PRESSURE DROPS,
+C     READ 100 STORM POSITIONS IN LAT AND LONG, MM PRESSURE DROPS,
 C     RADII OF MAX WINDS IN ST MILES, ALL 1 HOURS APART
       DO 110 I=1,100
       READ (5,300) ITM,XLAT(I),YLONG(I),SPeed,DIRr,PT(I),R(I)
@@ -636,15 +634,15 @@ C     RADII OF MAX WINDS IN ST MILES, ALL 1 HOURS APART
         STOP
       END IF
 
-C ht1 < 99.9 implies init water was for tide + anomaly (so tide)
-C ht1 = 99.9 implies init water was missing (so surge)
+C ht1 < 99.9 implies initial water was for tide + anomaly (so tide)
+C ht1 = 99.9 implies initial water was missing (so surge)
 C 150 < ht1 or -250 > ht1 implies anomaly can be found by
 C    mod ((ht1 + 50), 100) - 50)
 C The exception would be 999.9, but that shouldn't be used anymore
 C   and I don't believe that was in any .trk files.
 C
       IF (INT(SEADTM * 10 + .5) == 999) THEN
-C ht1 = 99.9 implies init water was missing (so surge)
+C ht1 = 99.9 implies initial water was missing (so surge)
         SEADTM = 0
         DTMLAK = 0
       ENDIF

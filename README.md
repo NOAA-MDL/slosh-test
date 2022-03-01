@@ -1,6 +1,6 @@
-> *README.md*           SLOSH Model Help Pages          Last Change: 2021-10-22
+> *README.md*           SLOSH Model Help Pages          Last Change: 2022-03-01
 
-The intent of this file is to help the user start using the SLOSH model.
+The intent of this file is to help the user start to use the SLOSH model.
 
 -------------------------------------------------------------------------------
 ## ASSUMPTIONS
@@ -14,7 +14,7 @@ You have a git-hub Personal Access Token (PAT).  If not, see:
    [setup-cygwin](../master/docs/SETUP-cygwin.md)
 
 2. Your installation of 'Cygwin' includes git, curl, and python for the GitHub
-   interactions in /parm/getBasin.sh, /parm/getStorm.sh
+   interactions in /parm/getBasin.sh, /dev/getStorms.sh, /gui/getGuiLib.sh
 
 3. MinGW 4.5.0 has been installed.  If not, see:
    [setup-mingw](../master/docs/SETUP-mingw.md)
@@ -75,8 +75,7 @@ SLOSH's official compiler has evolved over time as follows:
 3. If you want the **SLOSH-GUI** (vs just the command line) then:
 ```bash
    cd ~/save/slosh/gui
-   token=$(cat ~/.ssh/gitHub_pat)
-   ./getGuiLib.sh $token v4.20
+   ./getGuiLib.sh PAT v4.21
 ```
 
 4. Build, install, and clean up - SLOSH model
@@ -107,7 +106,7 @@ SLOSH's official compiler has evolved over time as follows:
 ```
 
 -------------------------------------------------------------------------------
-## Get Public SLOSH basins
+## GET PUBLIC SLOSH BASINS
 
 These basins are provided primarily to validate the SLOSH model or a derivative
 model such as (P-Surge, P-ETSS, or ETSS).
@@ -117,8 +116,7 @@ model such as (P-Surge, P-ETSS, or ETSS).
    # Don't Panic.  In the following call, there will be a few 'Notes' and
    # 'Cautions' because some basins do not have all of the tide files (i.e.,
    # Binary Harmonic Constants, Datum Adjustments, or Tide-Flavor).
-   token=$(cat ~/.ssh/gitHub_pat)
-   ./getBasin.sh $token v4.20
+   ./getBasin.sh PAT v4.21
 ```
 
 * Note - If you have problems automatically downloading basin assets from
@@ -138,8 +136,7 @@ and place them in "~/save/slosh/tar/".  Then run expandBasin.sh via:
 1. Get the required storms for the tests:
 ```bash
    cd ~/save/slosh/dev
-   token=$(cat ~/.ssh/gitHub_pat)
-   ./getStorm.sh $token v4.20
+   ./getStorms.sh PAT v4.21
 ```
 
 * Note - If you have problems automatically downloading test cases from github,
@@ -148,7 +145,7 @@ you can manually download the .tar.gz files from:
 https://github.com/NOAA-MDL/slosh/releases (Click 'Assets')
 
 and place them in "~/save/slosh/tar/".  Then you'll need to look at the bottom
-of ~/save/slosh/dev/getStorm.sh for how to un-tar them.
+of ~/save/slosh/dev/getStorms.sh for how to un-tar them.
 
 2. Run the tests:
 ```bash
@@ -165,7 +162,7 @@ yourself via:
    diff ./work/andrew.env ./sample/andrew.env
 ```
 
-4. Compare the rex files (a time history at each grid cell):
+4. Compare the Rex-files (a time history at each grid cell):
 ```bash
    diff ./work/hugo.rex ./sample/hugo.rex
    diff ./work/andrew.rex ./sample/andrew.rex
@@ -183,13 +180,14 @@ If you decided you wanted the **SLOSH-GUI**, then you can start it via:
 You can now run Hugo in HCH2:
 ```bash
    # Step 1: Select a basin
-   > File->Select Basin
-     >> hch2dta
+   >> File->Select Basin >> hch2dta
+
    # Step 2: Select a storm
-   > File->Add 100pt Trk
-      >> ~/save2/slosh/dev/storms/hugo.trk
-   # Step 3: Press the green "G" button (middle control pannel)
-   #
+   >> File->Add 100pt Trk >> ~/save/slosh/dev/storms/hugo.trk
+
+   # Step 3: Go
+   >> Press the green "G" button (middle control pannel)
+
    # Note: It may ask about overwritting the rex-file in gui/../dev/work
 ```
 

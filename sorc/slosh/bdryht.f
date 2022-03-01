@@ -15,12 +15,12 @@ C                           D.8   .            *         *
 C                         | A*                 *         *
 C                         / R* +               *         *
 C                         / Y*                 *    +    * COSL,SINL
-C                         /  .6    .            *         *
+C                         / .6    .            *         *
 C                      DEEP  /    /            *         *
 C                     WATERS /    /            *         *
 C                         /  /    /            .*********.
 C                         /  /    /                 |
-C                         /  .6    .----.    .
+C                         / .6    .----.    .
 C                         /  *
 C                         /  * +         +
 C                         /  *
@@ -38,9 +38,9 @@ C        DATA SET USE
 C           NONE
 C
 C        VARIABLES
-C             AX AY = COMPS OF TOTAL STRM MOTION, ADVANCED IN 'STMVAL'
-C             C1 C2 = INITIAL COMPS OF STORM, SET IN 'INTVAL'
-C COSL(  ) SINL(  ) = CO-SINE OF ANGLE, RAYS TO X-AXIS, (HEIGHT POINTS
+C             AX AY = COMPONENTS OF TOTAL STORM MOTION, ADVANCED IN 'STMVAL'
+C             C1 C2 = INITIAL COMPONENTS OF STORM, SET IN 'INTVAL'
+C COSL(  ) SINL(  ) = CO-SINE OF ANGLE, RAYS TO X-AXIS, (HEIGHT POINTS)
 C             IMXB1 = MAX I-SUBSCRIPT FOR HEIGHT POINTS
 C            SEADTM = INITIAL HEIGHT OF THE SEA (NO STATIC HEIGHTS)
 C         DELP(800) = STATIC HEIGHTS AT MILE INTERVALS FROM STORM CENTER

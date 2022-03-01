@@ -2,7 +2,7 @@
 C        JELESNIANSKI    SEPTEMBER 1980 TDL   IBM 360/195
 C
 C        PURPOSE
-C           THIS SUBROUTINE (BTMSTR) COMPUTES BOTTOM STRESS COEFFCNTS
+C           THIS SUBROUTINE (BTMSTR) COMPUTES BOTTOM STRESS COEFFICIENTS
 C           AT 1 FOOT INTERVALS, FROM 1 TO 300 FEET.
 C           THE EQUATIONS ARE IN REFERENCE: JELESNIANSKI,
 C           "NUMERICAL COMPUTATIONS OF STORM SURGES WITH BOTTOM
@@ -14,13 +14,13 @@ C           NONE
 C
 C        VARIABLES
 C             ZLATO = LATITUDE IN DEGREES
-C               COR = CORIOLIS PARAMTER
+C               COR = CORIOLIS PARAMETER
 C                 E = EKMAN PARAMETER, DEPTH*SQRT(COR/2*C25)
 C               C25 = EDDY VISCOSITY COEFFICIENT, .25 FT**2/SEC
 C                C7 = SLIP COEFFICIENT, .006 FT/SEC
-C   AR(300) AI(300) = BOTTOM FRICTION COEFFS FOR CORIOLIS TERMS
-C   BR(300) BI(300) = BOTTOM FRICTION COEFFS FOR SFC GRAD TERMS
-C   CR(300) CI(300) = BOTTOM FRICTION COEFFS FOR SURFACE STRESS TERMS
+C   AR(300) AI(300) = BOTTOM FRICTION COEFFICIENTS FOR CORIOLIS TERMS
+C   BR(300) BI(300) = BOTTOM FRICTION COEFFICIENTS FOR SURFACE GRADIENT TERMS
+C   CR(300) CI(300) = BOTTOM FRICTION COEFFICIENTS FOR SURFACE STRESS TERMS
 C
 C        GENERAL COMMENTS
 C           THIS MEMBER 'BTMSTR' RESIDES IN OVERLAY 'INITLZ'. IT IS
@@ -34,7 +34,7 @@ C
 !-------------------------------------------------------
 ! Added Basin Name Variable by Huiqing.Liu/MDL Feb/2016
 ! for Modifying bottom coefficient parameter only
-! in south florida basin (hsf1)
+! in south Florida basin (HSF1)
 !-------------------------------------------------------
       COMMON /GPRT/   STA
       CHARACTER*16  STA
@@ -63,7 +63,7 @@ CC      PRINT   5
 !     Original Slip coefficient 
       C7=0.006
 
-!     Increased friction for water cells for south florida basin (hsf1)
+!     Increased friction for water cells for south Florida basin (HSF1)
 !     Huiqing.Liu /MDL Feb. 2016
 !
       if (STA(1:8) == 'SOUTH FL') then
@@ -71,7 +71,7 @@ CC      PRINT   5
             C7=0.009
          END IF
 
-!     Increased friction for land cells for south florida basin (hsf1)
+!     Increased friction for land cells for south Florida basin (HSF1)
          IF (JJ == 2 .AND. N < 57) THEN
             C7=0.25
          END IF
@@ -81,8 +81,8 @@ CC      PRINT   5
       E=A*SQRT(COR/(2.*C25))
       COR1=COR*A/C7
 C
-C        FSOHTH=-1. FOR SOUTHERN HEMIS, SIGMA=E*(1-I), I*SIGMA=E+I*E
-C              = 1. FOR NORTHERN HEMIS, SIGMA=E*(1+I), I*SIGMA=-E+I*E
+C        FSOUTH=-1. FOR SOUTHERN HEMISPHERE, SIGMA=E*(1-I), I*SIGMA=E+I*E
+C              = 1. FOR NORTHERN HEMISPHERE, SIGMA=E*(1+I), I*SIGMA=-E+I*E
 C
 C      SIGMAI=DCMPLX(-E*FSOUTH,E)
       SIGMAI=DCMPLX(-E,E)

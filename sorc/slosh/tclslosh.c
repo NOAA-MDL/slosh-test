@@ -11,16 +11,16 @@
 /*****************************************************************************
  * <SaveRexStepCmd> :: Arthur Taylor TDL  (run_SaveRexStep)
  * Purpose:
- *   This procedure saves a frame to a rex file.
+ *   This procedure saves a frame to a Rex file.
  *
  * Variables: (I=input) (O=output) (G=global)
  *   clientData  (I) A pointer to the basin data.
  *   interp      (I) The Tcl/Tk interpreter.
  *   argv:
- *     name            The name of the rex file to save to.
+ *     name            The name of the Rex file to save to.
  *     f_Offset        1 set Offset to 0, 0 leave alone.
  *     trk_name        Name of 100 point track file.
- *     bsn_abrev       The 3/4 letter abrev for the basin. (ie pns and hbix)
+ *     bsn_abrev       The 3/4 letter abbrev for the basin. (e.g. pns and hbix)
  *     f_env           1 if this is the envelope 0 otherwise.
  *     <hour> <min> <sec> Current Time
  *     <day> <month> <year> Current Date
@@ -52,7 +52,8 @@ int SaveRexStepCmd (ClientData clientData, Tcl_Interp * interp, int argc,
 
    if (argc != 14) {
       sprintf (interp->result, "Usage: %s <rex-name> <f_offset> <trk_name> "
-               "<bsn_abrev> <f_env> <hour> <min> <sec> <day> <month> <year> <f_type_of_rex> <f_tide>",
+               "<bsn_abbrev> <f_env> <hour> <min> <sec> <day> <month> <year> "
+               "<f_type_of_rex> <f_tide>",
                argv[0]);
       return TCL_ERROR;
    }
@@ -113,11 +114,11 @@ int SaveRexStepCmd (ClientData clientData, Tcl_Interp * interp, int argc,
  *     f_rude    (I) -2 no Tcl/Tk update, -1 polite update,
  *                   otherwise is padding for "rude" display of pixmap.
  *     f_graphics (I) 1 draw stuff, 2 copy stuff, 0 don't do anything with data.
- *     f_passdata (I) 1 pass data from fortran to c, 0 don't.
+ *     f_passdata (I) 1 pass data from FORTRAN to c, 0 don't.
  *
  * Returns: TCL_ERROR or TCL_OK
  *     itime, mhalt,
- *     del_t,          The change in time per timestep
+ *     del_t,          The change in time per time step
  *     storm_lat, lon  The position of the storm
  *     delp            The change in pressure
  *     size2           The radius of max wind
@@ -128,7 +129,7 @@ int SaveRexStepCmd (ClientData clientData, Tcl_Interp * interp, int argc,
  *   4/1999 Arthur Taylor RSIS/TDL Created
  *
  * Notes:
- *   I broke up the old loopstep significantly.  Refrence it.
+ *   I broke up the old loopstep significantly.  Reference it.
  ****************************************************************************/
 int RunLoopStepCmd (ClientData clientData, Tcl_Interp * interp, int argc,
 #if (TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION <= 3)
@@ -183,9 +184,10 @@ int RunLoopStepCmd (ClientData clientData, Tcl_Interp * interp, int argc,
    f_first = atoi (argv[16]);
    f_stat = atoi (argv[17]);
 
-   RunLoopStep (gt->bsnAbrev, &(gt->st), gt->bt->i, gt->bt->j, &itime,
-                &mhalt, csflag, f_smooth, f_wantRex,
-                &(gt->modelClock), rextime, f_first, &(gt->tgrid), f_tide, f_stat, envSave2Min, gt->tideClock, restart);
+   RunLoopStep (1, gt->bsnAbrev, &(gt->st), gt->bt->i, gt->bt->j, &itime,
+                &mhalt, f_wantRex,
+                &(gt->modelClock), rextime, f_first, &(gt->tgrid), f_tide, f_stat,
+                envSave2Min, gt->tideClock, restart);
 
 /* Huiqing.Liu/MDL For reference time to adding and subtracting tide default 6 mins*/
    if ((gt->modelClock >= gt->tideClock)) {
@@ -258,9 +260,14 @@ static int CleanUpCmd (ClientData clientData, Tcl_Interp * interp, int argc,
       return TCL_ERROR;
    }
 
-   if (CleanUp (&(gt->st), gt->bt->i, gt->bt->j, f_saveEnv, f_tide,
-                gt->xxx_name, envComment, ht1, ht2, &(gt->tgrid)) != 0) {
+   if (CleanUp (&(gt->st), gt->bt->i, gt->bt->j, f_tide, &(gt->tgrid)) != 0) {
       return TCL_ERROR;
+   }
+   if (f_saveEnv) {
+      if (EnvSave (gt->xxx_name, gt->bt->i, gt->bt->j, envComment, gt->st.hb, gt->st.zb, ht1, ht2) != 0) {
+         printf ("Problems saving the envelope!\n");
+         return -1;
+      }
    }
    /* Compute the grid for the GUI. */
 /*
@@ -319,7 +326,7 @@ static int RunInitCmd (ClientData clientData, Tcl_Interp * interp, int argc,
    int f_tide;
    char ft03_name[MY_MAX_PATH]; /* Name of annular constituent file. */
    char bhc_name[MY_MAX_PATH]; /* Name of Binary Harmonic Constituent file */
-   char adj_name[MY_MAX_PATH]; /* Name of Datum Adjust. File (eg. MTL->NAVD88)*/
+   char adj_name[MY_MAX_PATH]; /* Name of Datum Adjust. File (e.g. MTL->NAVD-88)*/
    int spinUp;              /* Seconds of tidal spinUp. */
    int f_saveSpinUp;
    int imxb, jmxb;
@@ -345,7 +352,7 @@ static int RunInitCmd (ClientData clientData, Tcl_Interp * interp, int argc,
    if (argc != 17) {
       sprintf (interp->result, "Usage: %s <trk> <dta> <xxx>"
                "<ft40> <f_tide> <ft03> <bhc>"
-               "<adj> <Hrs of spinUp> <f_saveSpinUp> <Abrev ' bos', 'ehat'> <bntDir> "
+               "<adj> <Hrs of spinUp> <f_saveSpinUp> <Abbrev ' bos', 'ehat'> <bntDir> "
                "<rex> <rexVer> <f_wantRex> <rexSaveMin>\n", argv[0]);
       return TCL_ERROR;
    }
@@ -379,10 +386,10 @@ static int RunInitCmd (ClientData clientData, Tcl_Interp * interp, int argc,
    }
    RexSaveHeader (&(gt->rex), imxb, jmxb, rexComment, gt->bsnAbrev);
 
-   if (RunInit (gt->bsnAbrev, &(gt->st), gt->trk_name, dta_name, gt->xxx_name, f40_name,
+   if (RunInit (0, 1, gt->bsnAbrev, &(gt->st), gt->trk_name, dta_name, gt->xxx_name, f40_name,
                 &mhalt, &(gt->modelClock), f_tide, tideThresh, ft03_name, bhc_name, &(gt->tgrid),
                 adj_name, spinUp, f_saveSpinUp, &(gt->rex), f_wantRex, rexSaveMin,
-                wave) != 0) {
+                1, imxb, 1, jmxb, imxb, jmxb, wave) != 0) {
       sprintf (interp->result, "ERROR: Problems initializing the model.\n");
       return TCL_ERROR;
    }

@@ -57,11 +57,21 @@ int Tcl_AppInit (Tcl_Interp * interp)
 
 void SloshAbout (char *buffer)
 {
+   char PRG_DATE[11];
+
+   if (strcmp (PRG_VER, "4.20") == 0) {
+      strcpy (PRG_DATE, "2019-11-13");
+   } else if (strcmp (PRG_VER, "4.21") == 0) {
+      strcpy (PRG_DATE, "2020-01-08");
+   } else {
+      strcpy (PRG_DATE, "2020-01-08");
+   }
+
    sprintf (buffer, "\nVersion: %s\nDate: %s\nAuthors: "
               "Chester Jelesnanski, Albion Taylor, Jye Chen, Wilson Shaffer,\n"
               "   Arthur Taylor, Cristina Forbes, Amy Haase, Brian Zachry, Jindong Wang,\n"
               "   Huiqing Liu, Dongming Yang, Tatiana Gonzalez\n\n",
-            PROGRAM_VERSION, PROGRAM_DATE);
+            PRG_VER, PRG_DATE);
    sprintf (buffer, "%sCompiled by: %s\n", buffer, CC_VER);
    sprintf (buffer, "%s         on: %s\n", buffer, __DATE__);
    #ifdef DOUBLE_FORTRAN

@@ -1476,7 +1476,7 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
    int lastWordType;
    sInt4 TimeZone = Clock_GetTimeZone (); /* Initialize it to local time */
    char f_dayLight = 0;
-   int month;
+   int month = -1;
    int day;
    sInt4 year;
    char f_year = 0;
@@ -1816,6 +1816,9 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
       if (!f_year) {
          *clock = Clock_Seconds ();
          Clock_Epoch2YearDay ((sInt4) (floor (*clock / SEC_DAY)), &i, &year);
+      }
+      if (month == -1) {
+         month = 1;
       }
       /* Deal with relative adjust by year and month. */
       for (i = 0; i < lenRel; i++) {

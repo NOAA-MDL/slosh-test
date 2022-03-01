@@ -6,7 +6,8 @@
 #include "savellx.h"
 #include "complex.h"
 #include "tendian.h"
-#include "slosh2.h"
+/* #include "slosh2.h" */
+#include "halotype.h"
 
 /* RADPDG is radians per degree. */
 /* ECCEN is the Ecentricity of the Earth. */

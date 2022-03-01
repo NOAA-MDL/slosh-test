@@ -9,7 +9,7 @@ C        DATA SET USE
 C           FT09F001
 C
 C        VARIABLES
-C               STA = ALPHAMERIC NAME OF A BASIN (10 LETTERS)
+C               STA = ALPHANUMERIC NAME OF A BASIN (10 LETTERS)
 C              EBSN =  '$' INDICATES TYPE I ELLIPTIC COORDINATES,
 C                      '+' INDICATES TYPE II ELLIPTIC COORDINATES,
 C                          OTHERWISE, POLAR COORDINATES
@@ -76,11 +76,11 @@ C                          OTHERWISE, POLAR COORDINATES
 C        AT COLUMN 13, '$ ' INDICATES FOR CLOSED ISLAND (PERIODIC B.C.)
 C                      '2$' INDICATES FOR MSY BASIN
 C        AT COLUMN 15, '&' INDICATES NO CORNER SMOOTHING
-C                      '+' INDICATES GLOBAL SMOOTHING EVERY DELT
+C                      '+' INDICATES GLOBAL SMOOTHING EVERY DELTA-T
 C        AT COLUMN 16, '+' INDICATES OUTPUT OPTION (J-I). DEFAULT (I-J)
 c                  17, '&' SOUTHERN HEMISPHERE
 C                      '$' XOKE = 'X'
-c                  18, '+' noflooding and overtopping of barriers
+c                  18, '+' no flooding or over-topping of barriers
 c                  19, '+' no 1d flow allowed
 C                  20, '+' allow between 35 and 56 feet to flood.
 C                  21, '+' x-filter smoothing method. (HCRT=0.5) 
@@ -88,12 +88,12 @@ C                      '-' x filter smoothing method. (HCRT=0.1)
 C                      '@' x filter smoothing method. (HCRT=0.2)
 C                      '#' x filter smoothing method. (HCRT=0.3)
 C                      '$' x filter smoothing method. (HCRT=0.4)
-C                      '*' xfilter exclusion of cells by Epsilon. (HCRT=0.1) 
+C                      '*' x filter exclusion of cells by Epsilon. (HCRT=0.1) 
 C                      '*'                       redefined as (HCRT=Epsilon) 
-C                      '%' xfilter exclusion of cells by Epsilon. (HCRT=0.2)
-C                      '^' xfilter exclusion of cells by Epsilon. (HCRT=0.3)
-C                      '&' xfilter exclusion of cells by Epsilon. (HCRT=0.4)
-C                      '=' xfilter exclusion of cells by Epsilon. (HCRT=0.5)
+C                      '%' x filter exclusion of cells by Epsilon. (HCRT=0.2)
+C                      '^' x filter exclusion of cells by Epsilon. (HCRT=0.3)
+C                      '&' x filter exclusion of cells by Epsilon. (HCRT=0.4)
+C                      '=' x filter exclusion of cells by Epsilon. (HCRT=0.5)
 C---------------------------------------------------------------------------
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -146,8 +146,8 @@ C      write (*,*) 'ebsn (type of basin)', ebsn
 C      write (*,*) 'dollar (closed basin or msy)', dollar
 C      write (*,*) 'ebsn1 (smoothing types)', ebsn1
 C      write (*,*) 'ebsn2 (j-i vs i-j for output)', ebsn2
-C      write (*,*) 'isouth (southern hemi)', isouth
-C      write (*,*) 'nofld (no flood and overtop barriers)', nofld
+C      write (*,*) 'isouth (southern hemisphere)', isouth
+C      write (*,*) 'nofld (no flood or over-topping barriers)', nofld
 C      write (*,*) 'nof1d (no 1d flow)', nof1d
 C      write (*,*) 'High Terr (35 - 56 feet to flood)', HTER
 C      write (*,*) 'Smooth Method (smoothing type)', ISMTH
@@ -206,12 +206,12 @@ C        FORMULATE CORIOLIS, SEC-1
       ALT1C=1.74532925199433E-2*(90.-ALTO)
       ALN1=1.74532925199433E-2*ALNO
 C
-C        READ IN DELTS FOR 3 CATAGORIES OF STORM
+C        READ IN DELTA-T FOR 3 CATEGORIES OF STORM
       READ (9,100) (DLTIN(I),I=1,3)
  100  FORMAT(3F10.6)
 C
       IF (EBSN.NE.'+') READ (9,580) XMOUTH,YMOUTH
-C         DEFINE AAXIS=BAXIS= DISATANCE FROM POLE TO TANGENT POINT
+C         DEFINE AAXIS=BAXIS= DISTANCE FROM POLE TO TANGENT POINT
 C         FOR POLAR GRIDS
       IF (EBSN.NE.'$'.AND.EBSN.NE.'+') THEN
          AAXIS=XMOUTH

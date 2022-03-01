@@ -1,6 +1,6 @@
 #!/bin/bash
 #------------------------------------------------------------------------------
-# getMinGW-450.sh                                       Last Change: 2021-08-12
+# getMinGW-450.sh                                       Last Change: 2021-11-24
 #                                                        Arthur.Taylor@noaa.gov
 #                                                              NWS/OSTI/MDL/DSD
 #------------------------------------------------------------------------------
@@ -19,6 +19,18 @@ fi
 if [[ $1 != "go" ]] ; then
    $0 help
 fi
+
+#----------------------------------
+# Validate required commands exist
+#----------------------------------
+f_bad=0
+for c in tar wget ; do
+   if [[ $(which $c > /dev/NULL 2>&1 ; echo $?) == 1 ]] ; then
+      echo "Please install $c"
+      f_bad=1
+   fi
+done
+if [[ $f_bad != 0 ]] ; then exit ; fi
 
 #------------------------------------------------------------------ CONFIG ----
 URL=http://prdownloads.sourceforge.net/mingw

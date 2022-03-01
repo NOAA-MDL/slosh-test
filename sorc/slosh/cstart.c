@@ -11,7 +11,9 @@
 #include <math.h>
 #ifdef _MPI_
   #include <mpi.h>
-  #include "mpiutil.h"
+/*  #include "mpiutil.h" */
+  #include "leader.h"
+  #include "team.h"
 #endif
 #include "slosh2.h"
 #include "myutil.h"
@@ -30,7 +32,7 @@
 
 /*****************************************************************************
 *****************************************************************************/
-int DoOneStorm (userType *usr)
+static int DoOneStorm (int wRank, int wSize, userType *usr)
 {
    int imxb = 0, jmxb = 0;
    char dtaName[MY_MAX_PATH] = "basin";
@@ -43,10 +45,6 @@ int DoOneStorm (userType *usr)
    char bsnAbrev[5] = "";
    int bsnStatus;
 
-   if (usr->verbose >= 2) {
-      printf ("2a :: %f\n", clock () / (double)(CLOCKS_PER_SEC));
-   }
-
    /* Setup the local copy of the dta file, and trk file */
    if (setFileNames (usr, bsnAbrev, dtaName, trkName, envName, envName2, &rexName,
                      &imxb, &jmxb, &bsnStatus)) {
@@ -57,26 +55,22 @@ int DoOneStorm (userType *usr)
    }
 
    if (usr->verbose >= 2) {
-      printf ("2c :: %f\n", clock () / (double)(CLOCKS_PER_SEC));
-      printf ("Dimmensions %d %d\n", imxb, jmxb);
-      printf ("dta: %s\n", dtaName);
-      printf ("trk: %s\n", trkName);
-      printf ("env: %s\n", envName);
-      printf ("env: %s\n", envName2);
-      printf ("rex: %s\n", rexName);
+      printf ("\tDimensions %d %d\n", imxb, jmxb);
+      printf ("\tdta: %s\n", dtaName);
+      printf ("\ttrk: %s\n", trkName);
+      printf ("\tenv: %s\n", envName);
+      printf ("\tenv: %s\n", envName2);
+      printf ("\trex: %s\n", rexName);
       fflush (stdout);
    }
-   PerformRun (bsnAbrev, dtaName, trkName, envName, envName2, rexName, usr->tideDir,
+   PerformRun (wRank, wSize, 
+#ifdef _MPI_
+               MPI_COMM_WORLD,
+#endif
+               bsnAbrev, dtaName, trkName, envName, envName2, rexName, usr->tideDir,
                imxb, jmxb, bsnStatus, usr->rexSaveMin, usr->envSave2Min, usr->verbose,
-               usr->f_tide, usr->tideThresh, usr->f_stat, usr->spinUp, usr->f_saveSpinUp,
-               usr->asOf, usr->f_restart, usr->f_wave);
-/*
-   PerformRun (usr, bsnAbrev, dtaName, trkName, envName, rexName,
-               imxb, jmxb, grid);
-*/
-   if (usr->verbose >= 2) {
-      printf ("2e :: %f\n", clock () / (double)(CLOCKS_PER_SEC));
-   }
+               usr->f_tide, usr->tideThresh, usr->f_stat, usr->spinUp, usr->f_saveSpinUp, usr->asOf,
+               usr->f_restart, usr->f_wave);
 
    free (rexName);
    return 0;
@@ -206,7 +200,7 @@ int DoStormListV0 (userType *usr)
 
       if (usr->verbose >= 1) {
          printf ("2c :: %f\n", clock () / (double)(CLOCKS_PER_SEC));
-         printf ("Dimmensions %d %d\n", imxb, jmxb);
+         printf ("Dimensions %d %d\n", imxb, jmxb);
          printf ("dta: %s\n", dtaName);
          printf ("trk: %s\n", trkName);
          printf ("env: %s\n", envName);
@@ -214,7 +208,11 @@ int DoStormListV0 (userType *usr)
          printf ("rex: %s\n", rexName);
          fflush (stdout);
       }
-      PerformRun (bsnAbrev, dtaName, trkName, envName, envName2, rexName, usr->tideDir,
+      PerformRun (0, 1, 
+#ifdef _MPI_
+                  MPI_COMM_WORLD,
+#endif
+                  bsnAbrev, dtaName, trkName, envName, envName2, rexName, usr->tideDir,
                   imxb, jmxb, bsnStatus, usr->rexSaveMin, usr->envSave2Min, usr->verbose,
                   usr->f_tide, usr->tideThresh, usr->f_stat, usr->spinUp, usr->f_saveSpinUp,
                   usr->asOf, usr->f_restart, usr->f_wave);
@@ -257,7 +255,7 @@ int DoStormListV1 (userType *usr)
    char bsnList[100][5]; /* List of basins for which we've created ans/<bsn>
                           * directories. */
    int j;               /* loop counter over already created ans/<bsn> */
-   char bsn[5];         /* The basin abreviation. */
+   char bsn[5];         /* The basin abbreviation. */
    int cnt = 0;
    int wait = 20;
    int imxb, jmxb;
@@ -316,7 +314,7 @@ int DoStormListV1 (userType *usr)
          if (GetBasinAbrev (trkList[cur], bsn) != 0) {
             printf ("Couldn't determine the basin for '%s'\n", trkList[cur]);
          } else {
-            /* Check whether we've already created this basin subdirectory. */
+            /* Check whether we've already created this basin sub-directory. */
             for (j = 0; j < numBsn; ++j) {
                if (strcmp (bsnList[j], bsn) == 0) {
                   break;
@@ -369,11 +367,11 @@ int DoStormListV1 (userType *usr)
              return -1;
          }
 
-         PerformRun (bsnAbrev, dtaName, trkName, envName, envName2, rexName, usr->tideDir, imxb, jmxb, bsnStatus, usr->rexSaveMin, usr->envSave2Min, usr->verbose, usr->f_tide, usr->tideThresh, usr->f_stat, usr->spinUp, usr->f_saveSpinUp, usr->asOf, usr->f_restart, usr->f_wave);
-/*
-   PerformRun (usr, bsnAbrev, dtaName, trkName, envName, rexName,
-               imxb, jmxb, grid);
-*/
+         PerformRun (0, 1, 
+#ifdef _MPI_
+                     MPI_COMM_WORLD,
+#endif
+                     bsnAbrev, dtaName, trkName, envName, envName2, rexName, usr->tideDir, imxb, jmxb, bsnStatus, usr->rexSaveMin, usr->envSave2Min, usr->verbose, usr->f_tide, usr->tideThresh, usr->f_stat, usr->spinUp, usr->f_saveSpinUp, usr->asOf, usr->f_restart, usr->f_wave);
 
          free (rexName);
 /* Follower Routine done... */
@@ -395,9 +393,25 @@ int main (int argc, char **argv)
    userType usr;
    int ans;
 #ifdef _MPI_
-   int size;
-   int rank;
+   int wSize;
+   int wRank;
+   MPI_Comm teamComm;         /* A communication channel for a team */
+   int teamID;                /* Which team is this */
+   int teamSize = 2;          /* How big are the teams. */
+   int teamRank;              /* Which member of the team is this? */
+   int *teamLeadRay;          /* Which processes are team leaders and for which
+                               * teamIDs? */
+   int P;                     /* Loop index over the world of processes. */
 #endif
+   char PRG_DATE[11];
+
+   if (strcmp (PRG_VER, "4.20") == 0) {
+      strcpy (PRG_DATE, "2019-11-13");
+   } else if (strcmp (PRG_VER, "4.21")) {
+      strcpy (PRG_DATE, "2020-01-08");
+   } else {
+      strcpy (PRG_DATE, "2020-01-08");
+   }
 
    UserInit (&usr);
    if (ParseCmdLine (&usr, argc - 1, argv + 1) != 0) {
@@ -412,10 +426,10 @@ int main (int argc, char **argv)
    }
    if (usr.cmd == 1) {
       printf ("\nVersion: %s\nDate: %s\nAuthors: "
-              "Chester Jelesnanski, Albion Taylor, Jye Chen, Wilson Shaffer,\n"
+              "Chester Jelesnianski, Albion Taylor, Jye Chen, Wilson Shaffer,\n"
               "   Arthur Taylor, Cristina Forbes, Amy Haase, Brian Zachry, Jindong Wang,\n"
-              "   Huiqing Liu, Dongming Yang, Tatiana Gonzalez\n\n", 
-              PROGRAM_VERSION, PROGRAM_DATE);
+              "   Huiqing Liu, Dongming Yang, Tatiana Gonzalez\n\n",
+              PRG_VER, PRG_DATE);
       printf ("Compiled by: %s\n", CC_VER);
       printf ("         on: %s\n", __DATE__);
       #ifdef DOUBLE_FORTRAN
@@ -453,22 +467,62 @@ int main (int argc, char **argv)
          UserFree (&usr);
          return 0;
       }
-      ans = DoOneStorm (&usr);
+#ifdef _MPI_
+      MPI_Init (&argc, &argv);
+      MPI_Comm_size (MPI_COMM_WORLD, &wSize);
+      MPI_Comm_rank (MPI_COMM_WORLD, &wRank);
+      ans = DoOneStorm (wRank, wSize, &usr);
+      MPI_Finalize ();
+#else
+      ans = DoOneStorm (0, 1, &usr);
+#endif
    } else if (usr.lstType == 0) {
       ans = DoStormListV0 (&usr);
    } else {
 #ifdef _MPI_
       MPI_Init (&argc, &argv);
-      MPI_Comm_size (MPI_COMM_WORLD, &size);
-      MPI_Comm_rank (MPI_COMM_WORLD, &rank);
-      if (size <= 1) {
+      MPI_Comm_size (MPI_COMM_WORLD, &wSize);
+      MPI_Comm_rank (MPI_COMM_WORLD, &wRank);
+      if (wSize <= 1) {
          ans = DoStormListV1 (&usr);
+      } else if (wSize < 1 + 2 * teamSize) {
+         printf ("Need at least two teams of size %d and one group leader\n",
+                 teamSize);
+         ans = 0;
       } else {
-         if (rank == 0) {
-            ans = Leader (&usr, size);
+         /* Set up teamID (e.g. color) for sub-teams */
+         if (wRank == 0) {
+            teamID = 0;
+            teamRank = 0;
+            teamLeadRay = (int *) malloc (wSize * sizeof (int));
+            for (P = 0; P < wSize; P++) {
+               if ((P > 0) && (((P - 1) % teamSize) == 0)) {
+                  teamLeadRay[P] = 1 + ((P - 1) / teamSize);
+               } else {
+                  teamLeadRay[P] = 0;
+               }
+            }
          } else {
-            Follower (&usr, rank);
+            teamID = 1 + ((wRank - 1) / teamSize);
+            teamRank = (wRank - 1) % teamSize;
+         }
+
+         /* Create team Communicators. */
+         MPI_Comm_split (MPI_COMM_WORLD, teamID, wRank, &teamComm);
+
+         /* Shift into roles */
+         if (wRank == 0) {
+            if (leader (wSize, teamLeadRay, usr.lstFile, usr.doneFile,
+                        usr.verbose) != 0) {
+               MPI_Abort (MPI_COMM_WORLD, -1);
+               return -1;
+            }
+            free (teamLeadRay);
             ans = 0;
+         } else if (teamRank == 0) {
+            ans = teamLead (teamSize, teamID, teamComm, &usr);
+         } else {
+            ans = teamMember (teamRank, teamSize, teamID, teamComm, &usr);
          }
       }
       MPI_Finalize ();

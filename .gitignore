@@ -25,7 +25,6 @@
 /gui/geodata
 /gui/include
 /gui/lib
-/gui/work
 /gui/basin?*
 # Ignore the downloads
 /tar

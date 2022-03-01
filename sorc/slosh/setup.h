@@ -1,6 +1,6 @@
 #ifndef SETUP_H
 #define SETUP_H
-#include "slosh2.h"
+#include "halotype.h"
 #include "usrparse.h"
 
 int SetBsnLatLon (const char *bntDir, char bsnAbrev[5], int *imxb, int *jmxb);
