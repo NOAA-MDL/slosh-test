@@ -37,7 +37,7 @@ C        GENERAL COMMENTS
 C           THIS SUBROUTINE RESIDES IN OVERLAY 'INITLZ'. IT IS
 C           CALLED IN SUBROUTINE 'INITLZ'.
 C
-       INCLUDE 'parm.for'
+      INCLUDE 'parm.for'
 C
       PARAMETER (NBCPTS=12000)
       common /opts/   nofld,nof1d
@@ -70,52 +70,50 @@ C
       DO 401 I=2,IMXB
       ZMX=AMAX1(-ZB(I-1,J-1),-ZB(I,J-1),-ZB(I-1,J),-ZB(I,J))
       IF (ZMX.LT.-1499.) ITREE(I,J)='6'
-c       IF (ZMX.LE.-799.) ITREE(I,J)='6'
+c     IF (ZMX.LE.-799.) ITREE(I,J)='6'
  401  CONTINUE
-C      IF (DOLLAR.EQ.'$') THEN
-C      DO  I=2,IMXB
-C      ZMX=AMAX1(-ZB(I-1,JMXB),-ZB(I,JMXB),-ZB(I-1,1),-ZB(I,1))
-C      IF (ZMX.LE.-289.) ITREE(I,1)='6'
-C      ENDDO
-C      ENDIF
+C     IF (DOLLAR.EQ.'$') THEN
+C     DO I=2,IMXB
+C     ZMX=AMAX1(-ZB(I-1,JMXB),-ZB(I,JMXB),-ZB(I-1,1),-ZB(I,1))
+C     IF (ZMX.LE.-289.) ITREE(I,1)='6'
+C     ENDDO
+C     ENDIF
 C
 C      DETERMINE THE ACTIVE/NONACTIVE SQUARES FOR HEIGHT COMPUTATIONS
-       DO 400 J=1,JMXB1
-       DO 400 I=1,IMXB1
+      DO 400 J=1,JMXB1
+      DO 400 I=1,IMXB1
 C     CHANGED BY NSM TO -HTER FROM -35 11/20/2010 : Accepted 4/4/2011
-       IF (ZB(I,J).LE.-HTER) GOTO 1417
-       KSKP(I,J)='1'
-       KCT=1
+      IF (ZB(I,J).GT.-HTER) THEN
+        KSKP(I,J)='1'
+        KCT=1
 C       SPECIAL TRUNCATED SQUARES IN DEEP OCEAN
-       IF (ITREE(I,J).EQ.'6') KCT=KCT+1
-       IF (ITREE(I+1,J).EQ.'6') KCT=KCT+1
-       IF (ITREE(I,J+1).EQ.'6') KCT=KCT+1
-       IF (ITREE(I+1,J+1).EQ.'6') KCT=KCT+1
-       GOTO (400,415,415,415,417),KCT
-c 415   KCT=0
-c       IF (ITREE(I,J).EQ.'4') KCT=KCT+1
-c       IF (ITREE(I+1,J).EQ.'4') KCT=KCT+1
-c       IF (ITREE(I,J+1).EQ.'4') KCT=KCT+1
-c       IF (ITREE(I+1,J+1).EQ.'4') KCT=KCT+1
-c       IF (KCT.GE.3) GOTO 417
-  415  KSKP(I,J)='2'
-       GOTO 400
- 417   ZB(I,J)=-67.
- 1417  KSKP(I,J)='0'
- 400   CONTINUE
-       DO 421 J=1,JMXB
- 421   KSKP(IMXB,J)='0'
-       DO 420 I=1,IMXB
- 420   KSKP(I,JMXB)=KSKP(I,1)
+        IF (ITREE(I,J).EQ.'6') KCT=KCT+1
+        IF (ITREE(I+1,J).EQ.'6') KCT=KCT+1
+        IF (ITREE(I,J+1).EQ.'6') KCT=KCT+1
+        IF (ITREE(I+1,J+1).EQ.'6') KCT=KCT+1
+        IF(KCT.NE.1.AND.KCT.LT.5) THEN
+          KSKP(I,J)='2'
+        ELSE IF(KCT.EQ.5) THEN
+          ZB(I,J)=-67.
+          KSKP(I,J)='0'
+        ENDIF
+      ELSE
+        KSKP(I,J)='0'
+      ENDIF
+ 400  CONTINUE
+      DO 421 J=1,JMXB
+ 421  KSKP(IMXB,J)='0'
+      DO 420 I=1,IMXB
+ 420  KSKP(I,JMXB)=KSKP(I,1)
 C
-C      WRITE(*,3334)
-C      DO 3333 JJ=2,JMXB
-C      J=JMXB-JJ+1
-C      WRITE (*,3332) J,(KSKP(I,J),I=1,IMXB1)
-C3332  FORMAT(1X,I3,1X,126A1)
-C3333  CONTINUE
-C      WRITE(*,3334)
-C 3334  FORMAT(/5X,12('1234567890')/)
+C     WRITE(*,3334)
+C     DO 3333 JJ=2,JMXB
+C     J=JMXB-JJ+1
+C     WRITE (*,3332) J,(KSKP(I,J),I=1,IMXB1)
+C3332 FORMAT(1X,I3,1X,126A1)
+C3333 CONTINUE
+C     WRITE(*,3334)
+C 3334 FORMAT(/5X,12('1234567890')/)
 C
 C        ISOLATE HIGHEST LAND SQUARE ABOUT A TRANSPORT POINT
 C        FOR ISLAND ZB( ,JMXB)=ZB( ,1)
@@ -124,20 +122,20 @@ C        FOR ISLAND ZB( ,JMXB)=ZB( ,1)
       DO 130 I=2,IMXB
       DO 130 J=2,J2
       ZMX=AMAX1(-ZB(I-1,J-1),-ZB(I,J-1),-ZB(I-1,J),-ZB(I,J))
-      IF (ZBM(I,J).GE.ZMX) GO TO 130
-      IF (ZBM(I,J).NE.-300.) GO TO 110
-      ZBM(I,J)=ZMX
-      GO TO 130
- 110  WRITE(*,120)I,J,ZBM(I,J)
+      IF (ZBM(I,J).LT.ZMX) THEN
+        IF (ZBM(I,J).NE.-300.) THEN
+          WRITE(*,120)I,J,ZBM(I,J)
  120  FORMAT ('   ERROR IN BARRIER HEIGHT AT POSITION I=',I5,' J=',I5,
      1 '  HW=',F5.0)
-      ZBM(I,J)=ZMX
+        ENDIF
+        ZBM(I,J)=ZMX
+      ENDIF
  130  CONTINUE
       IF (DOLLAR.EQ.'$') THEN
         DO 132 I=1,IMXB
         ZBM(I,1)=ZBM(I,JMXB)
  132    CONTINUE
-        ENDIF
+      ENDIF
 C
       DO 1401 J=2,JMXB
       DO 1401 I=2,IMXB
@@ -146,18 +144,18 @@ C     ADDED BY AAT 4/8/2011 : This should cause what used to be high
 C     terrain (> 35 feet) that was marked with a '4' to have friction
 C     winds and be able to be inundated.
       IF (HTER.GT.35.) THEN
-      IF (ITREE(I,J).EQ.'4'.AND.ZBM(I,J).LT.HTER) ITREE(I,J)='1'
+        IF (ITREE(I,J).EQ.'4'.AND.ZBM(I,J).LT.HTER) ITREE(I,J)='1'
       ENDIF
- 1401  CONTINUE
+ 1401 CONTINUE
 C
 C        IF ZBM GREATER THAN 35 FT IN INTERIOR POINTS, MOMENTUM PTS
 C        ARE NONACTIVE.
-       DO 40 J=2,J2
-       DO 40 I=2,IMXB1
+      DO 40 J=2,J2
+      DO 40 I=2,IMXB1
 C     CHANGED BY NSM TO HTER FROM 35 11/20/2010 : Accepted 4/4/2011
-       IF (ZBM(I,J).GE.HTER) ITREE(I,J)='4'
-       IF (ITREE(I,J).EQ.'5') ITREE(I,J)='2'
- 40    CONTINUE
+      IF (ZBM(I,J).GE.HTER) ITREE(I,J)='4'
+      IF (ITREE(I,J).EQ.'5') ITREE(I,J)='2'
+ 40   CONTINUE
 C
 C       REDEFINE MS(J). FOR EACH J, FIRST I THE COMPUTATION
 C       STARTS IN MOMNTM (ZBM LESS THAN 35 FT).
@@ -165,40 +163,32 @@ C       STARTS IN MOMNTM (ZBM LESS THAN 35 FT).
       MS(J)=1
       DO 60 I=1,IMXB
 C    CHANGED BY NSM TO HTER FROM 35 11/20/2010 : Accepted 4/4/2011
-      IF (ZBM(I,J).LT.HTER) GOTO 55
+      IF (ZBM(I,J).LT.HTER) GO TO 55
  60   CONTINUE
       I=I-1
  55   MS(J)=I
  50   CONTINUE
       IF (DOLLAR.EQ.'$') THEN
-         MS(1)=MS(JMXB)
-         ELSE
-         MS(1)=MS(2)
-         ENDIF
+        MS(1)=MS(JMXB)
+      ELSE
+        MS(1)=MS(2)
+      ENDIF
 c
-      nxx=(jmxb-1)/15+1
-      do n=1,nxx
-      j1=(n-1)*15+1
-      j2=MIN(JMXB,j1+14)
-CC      write (*,'(15i3)') (ms(j),j=j1,j2)
-      enddo
-c
-
 C       DEFINE IS(J). FOR EACH J, FIRST I THE COMPUTATION
 C       STARTS IN CONTINUITY.
       DO 10 J=1,JMXB1
       IS(J)=1
       DO 20 I=1,IMXB1
-      IF (KSKP(I,J).EQ.'1') GOTO 15
+      IF (KSKP(I,J).EQ.'1') GO TO 15
  20   CONTINUE
       I=I-1
  15   IS(J)=I
  10   CONTINUE
       IF (DOLLAR.EQ.'$')THEN
-         IS(JMXB)=IS(1)
-         ELSE
-         IS(JMXB)=IS(JMXB1)
-         ENDIF
+        IS(JMXB)=IS(1)
+      ELSE
+        IS(JMXB)=IS(JMXB1)
+      ENDIF
 C
 C        DEFINE LOWER LIMIT OF I FOR MOMENTUM POINTS
       DO 450 J=2,JMXB1
@@ -206,8 +196,8 @@ C        DEFINE LOWER LIMIT OF I FOR MOMENTUM POINTS
       DO 460 II=2,IMXB1
       I=IMXB-II+1
 C    CHANGED BY NSM TO HTER FROM 35 11/20/2010 : Accepted 4/4/2011
-      IF (ZBM(I,J).GE.HTER) GOTO 460
-      IF (ITREE(I,J).NE.'6') GOTO 455
+      IF (ZBM(I,J).GE.HTER) CYCLE
+      IF (ITREE(I,J).NE.'6') GO TO 455
  460  CONTINUE
       I=I+1
  455  ME(J)=I
@@ -220,7 +210,7 @@ C
       IE(J)=IMXB1
       DO 620 II=1,IMXB1
       I=IMXB1-II+1
-      IF (KSKP(I,J).EQ.'1') GOTO 615
+      IF (KSKP(I,J).EQ.'1') GO TO 615
  620  CONTINUE
       I=I+1
  615  IE(J)=I
@@ -237,182 +227,183 @@ C
       MF(J)=IMXB
       DO 45 II=1,IMXB1
       I=IMXB-II
-      IF (ITREE(I,J).EQ.'1'.OR.ITREE(I,J).EQ.'3') GOTO 48
+      IF (ITREE(I,J).EQ.'1'.OR.ITREE(I,J).EQ.'3') EXIT
  45   CONTINUE
- 48   MF(J)=I
+      MF(J)=I
  42   CONTINUE
       IF (DOLLAR.EQ.'$') THEN
         MF(1)=MF(JMXB)
-        ELSE
+      ELSE
         MF(1)=MF(2)
-        ENDIF
+      ENDIF
 C     IF NO BANKS, THEN SET BANK HEIGHTS TO BARRIER HEIGHT
-      IF (NSQRWC.EQ.0) GO TO 250
-      DO 200 L=1,NSQRWC
-      IF (BANK(L,1).NE.0.) GO TO 190
-      I=ISQR(L)
-      J=JSQR(L)
+      IF (NSQRWC.NE.0) THEN
+        DO 200 L=1,NSQRWC
+        IF (BANK(L,1).EQ.0.) THEN
+          I=ISQR(L)
+          J=JSQR(L)
 !          IF (I.LE.0.OR.J.LE.0.OR.I.GE.IMXB.OR.J.GE.JMXB) CYCLE
-      ISS=1
- 180  BANK(L,ISS)=AMIN1(ZBM(I,J),ZBM(I,J+1),ZBM(I+1,J),ZBM(I+1,J+1))
-       GO TO (190,200),ISS
- 190  IF (BANK(L,2).NE.0.) GO TO 200
-      K=ISIDE(L)
-      I=ISQR(L)+IHH(K)
-      J=JSQR(L)+JHH(K)
+          BANK(L,1)=AMIN1(ZBM(I,J),ZBM(I,J+1),ZBM(I+1,J),ZBM(I+1,J+1))
+        ENDIF
+        IF (BANK(L,2).NE.0.) CYCLE
+        K=ISIDE(L)
+        I=ISQR(L)+IHH(K)
+        J=JSQR(L)+JHH(K)
 !        IF (I.LE.0.OR.J.LE.0.OR.I.GE.IMXB.OR.J.GE.JMXB) CYCLE
-      ISS=2
-      GO TO 180
- 200  CONTINUE
+        BANK(L,2)=AMIN1(ZBM(I,J),ZBM(I,J+1),ZBM(I+1,J),ZBM(I+1,J+1))
+ 200    CONTINUE
 C
 C        SET UP DEPTHS AND SIDE HEIGHTS FOR 1-DIM FLOW AND RIVER BANKS
 C        SET UP SPECIAL RAISED WEIRS OR SILLS FOR 1-DIM FLOW
 C        AND ZBMIN FOR FLOW CUTS IN SUBROUTINE CRDRD2.
-      IF (NSQRW.EQ.NSQRS) GOTO 2333
-      N1=NSQRS+1
-      DO 232 L=N1,NSQRW
-      I=ISQR(L)
-      J=JSQR(L)
+        IF (NSQRW.NE.NSQRS) THEN
+          N1=NSQRS+1
+          DO 232 L=N1,NSQRW
+          I=ISQR(L)
+          J=JSQR(L)
 !          IF (I.LE.0.OR.J.LE.0.OR.I.GE.IMXB.OR.J.GE.JMXB) CYCLE
-      K=ISIDE(L)
-      I1=I+IZ1(K)
-      I2=I+IZ2(K)
-      J1=J+JZ1(K)
-      J2=J+JZ2(K)
-      IF (HWEIR(L).EQ.0.) HWEIR(L)=AMIN1(ZBM(I1,J1),ZBM(I2,J2))
- 232  CONTINUE
-      DO 1232 N=N1,NSQRW
-      I=ISQR(N)
-      J=JSQR(N)
+          K=ISIDE(L)
+          I1=I+IZ1(K)
+          I2=I+IZ2(K)
+          J1=J+JZ1(K)
+          J2=J+JZ2(K)
+          IF (HWEIR(L).EQ.0.) HWEIR(L)=AMIN1(ZBM(I1,J1),ZBM(I2,J2))
+ 232      CONTINUE
+          DO 1232 N=N1,NSQRW
+          I=ISQR(N)
+          J=JSQR(N)
 !          IF (I.LE.0.OR.J.LE.0.OR.I.GE.IMXB.OR.J.GE.JMXB) CYCLE
-      K=ISIDE(N)
-      I1=I+IZ1(K)
-      I2=I+IZ2(K)
-      J1=J+JZ1(K)
-      J2=J+JZ2(K)
-      ITREE(I1,J1)='Q'
-      ITREE(I2,J2)='Q'
- 1232 CONTINUE
- 2333 CONTINUE
-      DO 3222 J=2,JMXB1
-      DO 3222 I=2,IMXB1
-      IF (ITREE(I,J).EQ.'Q') THEN
+          K=ISIDE(N)
+          I1=I+IZ1(K)
+          I2=I+IZ2(K)
+          J1=J+JZ1(K)
+          J2=J+JZ2(K)
+          ITREE(I1,J1)='Q'
+          ITREE(I2,J2)='Q'
+ 1232     CONTINUE
+        ENDIF
+        DO 3222 J=2,JMXB1
+        DO 3222 I=2,IMXB1
+        IF (ITREE(I,J).EQ.'Q') THEN
 C     COMMENTED BY NSM 11/20/2010 : Should it be HTER or HTER + 1?
 C      ZBM(I,J)=36.
-      ZBM(I,J)=HTER+1
-      ITREE(I,J)='4'
-      ENDIF
- 3222 CONTINUE
-      DO 240 L=1,NSQRWC
-      I=ISQR(L)
-      J=JSQR(L)
+          ZBM(I,J)=HTER+1
+          ITREE(I,J)='4'
+        ENDIF
+ 3222   CONTINUE
+        DO 240 L=1,NSQRWC
+        I=ISQR(L)
+        J=JSQR(L)
 !        IF (I.LE.0.OR.J.LE.0.OR.I.GE.IMXB.OR.J.GE.JMXB) CYCLE
-      ZINT=-ZB(I,J)
-      K=ISIDE(L)
-      II=I+IHH(K)
-      JJ=J+JHH(K)
+        ZINT=-ZB(I,J)
+        K=ISIDE(L)
+        II=I+IHH(K)
+        JJ=J+JHH(K)
 !        IF (II.LE.0.OR.JJ.LE.0.OR.II.GE.IMXB.OR.JJ.GE.JMXB) CYCLE
-      ZEXT=-ZB(II,JJ)
+        ZEXT=-ZB(II,JJ)
 C      FOR WEIR HEIGHTS NOT A SILL
-      IF (HWEIR(L).NE.0.) GO TO 230
- 220  HWEIR(L)=AMAX1(ZINT,ZEXT)
- 230  I1=I+IZ1(K)
-      I2=I+IZ2(K)
-      J1=J+JZ1(K)
-      J2=J+JZ2(K)
+        IF (HWEIR(L).EQ.0.) THEN
+          HWEIR(L)=AMAX1(ZINT,ZEXT)
+        ENDIF
+        I1=I+IZ1(K)
+        I2=I+IZ2(K)
+        J1=J+JZ1(K)
+        J2=J+JZ2(K)
 !        IF (I1.LE.0.OR.J1.LE.0.OR.I1.GE.IMXB.OR.J1.GE.JMXB) CYCLE
 !        IF (I2.LE.0.OR.J2.LE.0.OR.I2.GE.IMXB.OR.J2.GE.JMXB) CYCLE
-      IZBX=AMIN1(ZBM(I1,J1),ZBM(I2,J2))
-      ZBMIN(L)=IZBX
- 240  CONTINUE
+        IZBX=AMIN1(ZBM(I1,J1),ZBM(I2,J2))
+        ZBMIN(L)=IZBX
+ 240    CONTINUE
 C
-      IF (NSQRW.EQ.NSQRS) GOTO 250
-      DO 2221 N=N1,NSQRW
-      I=ISQR(N)
-      J=JSQR(N)
-      K=ISIDE(N)
-      I1=I+IZ1(K)
-      I2=I+IZ2(K)
-      J1=J+JZ1(K)
-      J2=J+JZ2(K)
-C     WRITE(*,2222) I,J,K,HWEIR(N),ZBMIN(N),ZBM(I1,J1),ZBM(I2,J2)
+        IF (NSQRW.NE.NSQRS) THEN
+          DO 2221 N=N1,NSQRW
+          I=ISQR(N)
+          J=JSQR(N)
+          K=ISIDE(N)
+          I1=I+IZ1(K)
+          I2=I+IZ2(K)
+          J1=J+JZ1(K)
+          J2=J+JZ2(K)
+C       WRITE(*,2222) I,J,K,HWEIR(N),ZBMIN(N),ZBM(I1,J1),ZBM(I2,J2)
 C 2222 FORMAT(3I5,4F6.1)
- 2221 CONTINUE
+ 2221     CONTINUE
+        ENDIF
+      ENDIF
 C
- 250  CONTINUE
 C      DEFINE GRID COORDINATES FOR STATIC BOUNDARY CONDITION.
       N=0
       DO 1200 I=1,IMXB1
       DO 1200 J=1,JMXB1
-      IF (KSKP(I,J).NE.'2') GOTO 1200
-      N=N+1
-      IF (N.GT.NBCPTS) THEN
-        WRITE (*,*) 'Number of boundary points exceeded', N, NBCPTS
-        STOP
+      IF (KSKP(I,J).EQ.'2') THEN
+        N=N+1
+        IF (N.GT.NBCPTS) THEN
+          WRITE (*,*) 'Number of boundary points exceeded', N, NBCPTS
+          STOP
+        ENDIF
+        ISH(N)=I
+        JSH(N)=J
+        KSKP(I,J)='0'
       ENDIF
-      ISH(N)=I
-      JSH(N)=J
-      KSKP(I,J)='0'
  1200 CONTINUE
       NBCPT=N
 C     WRITE(*,225) NBCPT
 C 225  FORMAT(I5,'     TOTAL POINTS FOR STATIC BOUNDARY CONDITION')
-C        NNN=(NBCPT-1)/15+1
-C        DO 223 K=1,NNN
-C        N1=1+(K-1)*15
-C        N2=MIN(N1+14,NBCPT)
-C      WRITE(*,222) K,(ISH(N),N=N1,N2)
-C      WRITE(*,224) K,(JSH(N),N=N1,N2)
-C 222   FORMAT(T62,'I-B.C.',I2,T1,15I4)
-C 224   FORMAT(T62,'J-B.C.',I2,T1,15I4)
-C 223   CONTINUE
-c          no flooding option
-        if (nofld.eq.'+') then
-        do 1234 j=2,jmxb1
-        do 1234 i=2,imxb1
-        if (zbm(i,j).gt.0.) then
-           itree(i,j)='4'
+C     NNN=(NBCPT-1)/15+1
+C     DO 223 K=1,NNN
+C     N1=1+(K-1)*15
+C     N2=MIN(N1+14,NBCPT)
+C     WRITE(*,222) K,(ISH(N),N=N1,N2)
+C     WRITE(*,224) K,(JSH(N),N=N1,N2)
+C 222 FORMAT(T62,'I-B.C.',I2,T1,15I4)
+C 224 FORMAT(T62,'J-B.C.',I2,T1,15I4)
+C 223 CONTINUE
+c        no flooding option
+      IF (NOFLD.EQ.'+') THEN
+        DO 1234 J=2,JMXB1
+        DO 1234 I=2,IMXB1
+        IF (ZBM(I,J).GT.0.) THEN
+          ITREE(I,J)='4'
 C         COMMENTED BY NSM 11/20/2010 : Should it be HTER or HTER+1?
 C          zbm(i,j)=36.
-           zbm(i,j)=HTER+1
-           endif
- 1234  continue
-        endif
+          ZBM(I,J)=HTER+1
+        ENDIF
+ 1234 CONTINUE
+      ENDIF
 C
 C        REDUCED PRINTOUT FOR OPERATIONAL MODE.
-C      IF(IOPERL(1).EQ.2) GO TO 350
-C     WRITE(6,290)
-C      WRITE(6,300)
-C      NGRP=(JMXB1-1)/25+1
+C     IF(IOPERL(1).NE.2) THEN
+C       WRITE(6,290)
+C       WRITE(6,300)
+C       NGRP=(JMXB1-1)/25+1
 C
-C      DO 270 NN=1,NGRP
-C      J1=1+(NN-1)*25
-C      J2=J1+MIN0(24,JMXB1-J1)
-C      WRITE(6,340)(J,J=J1,J2)
-C      DO 260 I=1,IMXB1
+C       DO 270 NN=1,NGRP
+C       J1=1+(NN-1)*25
+C       J2=J1+MIN0(24,JMXB1-J1)
+C       WRITE(6,340)(J,J=J1,J2)
+C       DO 260 I=1,IMXB1
 C       WRITE(6,320)I,(ZB(I,J),J=J1,J2)
-C 260  CONTINUE
-C 270  CONTINUE
+C 260   CONTINUE
+C 270   CONTINUE
 C
 C        PRINT OUT HIGHEST LAND VALUE AT MOMENTUM GRID POINTS
-C      WRITE(6,290)
-C      WRITE(6,310)
+C       WRITE(6,290)
+C       WRITE(6,310)
 C
-C      DO  280 NN=1,NGRP
-C      J1=2+(NN-1)*25
-C      J2=J1+MIN0(24,JMXB1-J1)
-C      WRITE(6,340)(J,J=J1,J2)
-C      DO 280 I=2,IMXB1
-C      WRITE(6,320)I,(ZBM(I,J),J=J1,J2)
-C 280  CONTINUE
+C       DO 280 NN=1,NGRP
+C       J1=2+(NN-1)*25
+C       J2=J1+MIN0(24,JMXB1-J1)
+C       WRITE(6,340)(J,J=J1,J2)
+C       DO 280 I=2,IMXB1
+C       WRITE(6,320)I,(ZBM(I,J),J=J1,J2)
+C 280   CONTINUE
 C
-C 290  FORMAT(1H1)
-C 300  FORMAT(/5X,'DEPTH FIELD.')
-C 310  FORMAT(/5X,'HIGHEST ELEVATION (INCLUDING RIDGES, ROADS, ETC) AT
-C     1MOMENTUM GRID POINTS.')
-C 320  FORMAT(1H ,I2,26F5.0)
-C 330  FORMAT(1H ,I2,26F5.1)
-C 340  FORMAT(/I6,26I5)
-C 350  CONTINUE
+C 290 FORMAT(1H1)
+C 300 FORMAT(/5X,'DEPTH FIELD.')
+C 310 FORMAT(/5X,'HIGHEST ELEVATION (INCLUDING RIDGES, ROADS, ETC) AT
+C    1MOMENTUM GRID POINTS.')
+C 320 FORMAT(1H ,I2,26F5.0)
+C 330 FORMAT(1H ,I2,26F5.1)
+C 340 FORMAT(/I6,26I5)
+C     ENDIF
       RETURN
-       END
+      END

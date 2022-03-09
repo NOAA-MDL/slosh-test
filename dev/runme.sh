@@ -1,6 +1,6 @@
 #!/bin/bash
 #------------------------------------------------------------------------------
-# runme.sh                                              Last Change: 2022-01-07
+# runme.sh                                              Last Change: 2022-03-08
 #                                                        Arthur.Taylor@noaa.gov
 #                                                              NWS/OSTI/MDL/DSD
 #------------------------------------------------------------------------------
@@ -59,6 +59,7 @@ for tst in ${T[@]} ; do
    # Run the model
    #---------------
    echo "[*] Running the SLOSH model for ${tstRay[0]} in $bsn"
+   echo "    For more SLOSH command line options: $(man ../docs/slosh.man.gz)"
    set -x
    $SLOSH -basin $bsn -rootDir ../parm -trk work/$name.trk \
          -rex work/$name.rex -env work/$name.env -verbose 1

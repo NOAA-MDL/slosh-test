@@ -26,8 +26,9 @@ C
       IF (DOLLAR.EQ.'2$') THEN
       DO  20 J=1,JMXB
       DO  20 I=1,IMXB
-      IF (IHMX(I,J).EQ.999) GOTO 20
-      IHMX(I,J)=(HMX(I,J)-ZSUB(J))*10.+.5
+      IF (IHMX(I,J).NE.999) THEN
+        IHMX(I,J)=(HMX(I,J)-ZSUB(J))*10.+.5
+      ENDIF
  20   CONTINUE
       ENDIF
 C

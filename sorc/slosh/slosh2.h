@@ -70,6 +70,15 @@ void RunLoopStep (int teamSize,
 #ifdef _MPI_
                   MPI_Win win_HB7, MPI_Datatype dstType[9], MPI_Datatype srcType[9],
                   topoType *topo,
+                  /* window for windsea and swell energy D.Y 2020/01 */
+                  MPI_Win win_EWW1, MPI_Win win_EWW2,
+                  MPI_Win win_EWW3, MPI_Win win_EWW4,
+                  MPI_Win win_EWW5, MPI_Win win_EWW6,
+                  MPI_Win win_EWW7, MPI_Win win_EWW8,
+                  MPI_Win win_ESW1, MPI_Win win_ESW2,
+                  MPI_Win win_ESW3, MPI_Win win_ESW4,
+                  MPI_Win win_ESW5, MPI_Win win_ESW6,
+                  MPI_Win win_ESW7, MPI_Win win_ESW8,
 #endif
                   char * bsnAbrev, slosh_type * st, int imxb, int jmxb,
                   int *itime, int *mhalt,
@@ -96,7 +105,7 @@ int RunInit (int teamRank, int teamSize,
 int ReadTrkFile (char trkName[MY_MAX_PATH], char rexComment[201],
                  char envComment[161], float *ht1, float *ht2);
 
-int PerformRun (int teamRank, int teamSize,
+int PerformRun (int teamID, int teamRank, int teamSize,
 #ifdef _MPI_
                 MPI_Comm teamComm,
 #endif

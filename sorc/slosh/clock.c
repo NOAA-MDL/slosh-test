@@ -1496,7 +1496,6 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
    char f_ampm = -1;
    char f_timeZone = 0;
    char f_time = 0;
-   char f_date = 0;
    char f_slashWord = 0;
    char f_dateWord = 0;
    char f_monthWord = 0;
@@ -1513,7 +1512,6 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
       return 0;
 
    f_time = 0;
-   f_date = 0;
    lastWordType = WT_NONE;
    curTime = 0;
    while (Clock_GetWord (&ptr, &ptr2, word, &wordType) == 0) {

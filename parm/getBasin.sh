@@ -1,12 +1,12 @@
 #!/bin/bash
 #------------------------------------------------------------------------------
-# getBasin.sh                                           Last Change: 2022-02-28
+# getBasin.sh                                           Last Change: 2022-03-08
 #                                                        Arthur.Taylor@noaa.gov
 #                                                              NWS/OSTI/MDL/DSD
 #------------------------------------------------------------------------------
 DOWN=${HOME:?}/Downloads
 URL="api.github.com/repos/NOAA-MDL/slosh/releases"
-LATEST=v4.21
+LATEST=v4.22
 PAT_FILE=$HOME/.ssh/gitHub_pat
 if [[ ! -e $PAT_FILE ]] ; then
    PAT_FILE=$HOME/.ssh2/gitHub_pat
@@ -14,6 +14,7 @@ fi
 MODEL=SLOSH  # ETSS, PSURGE, SLOSH
 
 #--------------------------------------------------------------- PACKAGES -----
+V=v4.22; D="2021-05-11"; vers+=($V); ds+=($D)
 V=v4.21; D="2020-01-08"; vers+=($V); ds+=($D); T421="${V}_$D"
 V=v4.20; D="2019-11-13"; vers+=($V); ds+=($D); T420="${V}_$D"
 V=v4.12; D="2014-09-03"; vers+=($V); ds+=($D); T412="${V}_$D"
@@ -22,6 +23,25 @@ V=v3.97; D="2012-01-20"; vers+=($V); ds+=($D)
 V=v3.96; D="2011-02-17"; vers+=($V); ds+=($D)
 V=v3.95; D="2010-10-19"; vers+=($V); ds+=($D); T395="${V}_$D"
 V=v3.94; D="2009-10-08"; vers+=($V); ds+=($D); T394="${V}_$D"
+
+F_v422+=($T421:a0102.pn2  $T421:a0401.pv2  $T421:a0503.ny3  $T421:a0603.de3)
+F_v422+=($T421:a0904.cp5  $T421:a1003.hor3 $T421:a1104.ht3  $T421:a1203.il3)
+F_v422+=($T421:a1303.hch2 $T421:a1405.esv4 $T421:f0103.ejx3 $T421:f1003.etp3)
+F_v422+=($T421:f1102.cd2  $T421:f1203.ap3  $T421:f1303.hpa2 $T421:f1404.epn3)
+F_v422+=($T421:g0103.emo2 $T420:g0309.ms7  $T421:g0402.lf2  $T421:g0505.ebp3)
+F_v422+=($T421:g0604.egl3 $T421:g0702.ps2  $T421:g0803.cr3  $T421:g0903.ebr3)
+if [[ $MODEL != "ETSS" ]] ; then
+   F_v422+=($T421:f0403.eok3 $T421:f0602.hsff $T421:f0603.hsfe $T421:f0604.hsfd)
+fi
+if [[ $MODEL != "PSURGE" ]] ; then
+   F_v422+=($T420:f0202.co2  $T420:f0303.pb3  $T420:f0503.hmi3 $T420:f0704.eke2)
+   F_v422+=($T420:f0903.efm2 $T421:x0103.exm  $T421:x0205.eglc $T420:x0303.nep)
+   F_v422+=($T421:x0401.egoa $T420:x0602.ebbc)
+fi
+if [[ $MODEL != "ETSS" && $MODEL != "PSURGE" ]] ; then
+   F_v422+=($T421:g0310.hms8 $T421:i0101.bha  $T421:i0202.hsju $T421:i0302.evi2)
+   F_v422+=($T421:i0601.hnl)
+fi
 
 F_v421+=($T421:a0102.pn2  $T421:a0401.pv2  $T421:a0503.ny3  $T421:a0603.de3)
 F_v421+=($T421:a0904.cp5  $T421:a1003.hor3 $T421:a1104.ht3  $T421:a1203.il3)

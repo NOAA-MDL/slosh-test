@@ -79,7 +79,6 @@ static sInt4 Data_WriteTrk (FILE * fp2, const char *trkName, int f_tide)
    rewind (fp);
 
    if (strncmp(buff2, "FileVersion=", 12) == 0) {
-      /* printf ("New format of trk file %s\n", buff2); */
  /* skip the header file */
       for (i = 0; i < 16; i++) {
           fgets (buff2, 200, fp);
@@ -109,14 +108,9 @@ static sInt4 Data_WriteTrk (FILE * fp2, const char *trkName, int f_tide)
 /* read the landfall,begin and end hour */
       fgets (buff2, 200, fp);
       k = (int) atoi (buff2 + 13);
-      /* printf("landfall=%s\n",buff2+13); */
-
       fgets (buff2, 200, fp);
-      /* printf("begin=%s\n",buff2+10); */
       i = (int) atoi (buff2 + 10);
-
       fgets (buff2, 200, fp);
-      /* printf("ending=%s\n",buff2+8); */
       j = (int) atoi (buff2 + 8);
 
       c_temp = (char) i;
@@ -130,9 +124,7 @@ static sInt4 Data_WriteTrk (FILE * fp2, const char *trkName, int f_tide)
 /* read the datum ht1 and ht2 */
       fgets (buff2, 200, fp);
       ht1 = (float) atof (buff2 + 11);
-      /* printf("ht1=%s\n",buff2+11); */
       fgets (buff2, 200, fp);
-      /* printf("ht2=%s\n",buff2+10); */
       ht2 = (float) atof (buff2 + 10);
 
    /* Tide mode of program run should over-ride the initWater. */
@@ -280,6 +272,7 @@ void RexSaveHeader (rexType *rex, int imxb, int jmxb, const char comment[201],
    char *temp = NULL;
    sInt4 l_temp;
    unsigned int i;
+   char buffer2[13] = " ArthurTaylor";
 
 /* Replace " with ' in the comment block. */
    for (i = 0; i < strlen (comment); i++) {
@@ -316,7 +309,10 @@ void RexSaveHeader (rexType *rex, int imxb, int jmxb, const char comment[201],
       strcat (temp, rex->comment);
       str_len = strlen (temp);
       if (strlen (rex->comment) < 12) {
-         strncat (temp, " ArthurTaylor", 12 - strlen (rex->comment));
+/*         strncat (temp, " ArthurTaylor", 12 - strlen (rex->comment));*/
+         buffer2[12 - strlen(rex->comment)] = '\0';
+         strcat (temp, buffer2);
+
          str_len = strlen (temp);
          temp[strlen (temp) - (12 - strlen (rex->comment))] = '\0';
       }
@@ -406,7 +402,7 @@ int RexSaveStep (rexType *rex, float stormLat, float stormLon, float wspeed,
       fprintf (stderr, "Please call RexSaveHeader (after calling RexOpen).\n");
       return -1;
    } else if (rex->trkOffset == 0) {
-      /* First frame, doesn't need to go to previous frame to update Offset. */
+      /* First frame, doesn't need to move to previous frame to update Offset. */
    } else {
       /* Update old track jump to current Offset. */
       fseek (rex->fp, rex->trkOffset, SEEK_SET);
@@ -532,7 +528,7 @@ int RexSaveEnv (rexType *rex, const char *trkName,
       fprintf (stderr, "Please call RexSaveHeader (after calling RexOpen).\n");
       return -1;
    } else if (rex->trkOffset == 0) {
-      /* First frame, doesn't need to go to previous frame to update Offset. */
+      /* First frame, doesn't need to move to previous frame to update Offset. */
    } else {
       /* Update old track jump to current Offset. */
       fseek (rex->fp, rex->trkOffset, SEEK_SET);

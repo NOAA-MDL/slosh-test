@@ -100,24 +100,21 @@ C     1/2018 D.Y
       IF (HTSTRT)THEN
         PRINT *, 'FOUND ',HTMAIN
         INQUIRE(FILE=HTHB,EXIST=HTSTRT)
-      ELSE
-        GOTO 199
+        IF (HTSTRT)THEN
+          INQUIRE(FILE=HTUV,EXIST=HTSTRT)
+          PRINT *, 'FOUND ',HTHB
+        ELSE
+          PRINT *, 'MISSING ',HTHB
+          STOP
+        ENDIF
+        IF (HTSTRT)THEN
+          PRINT *, 'FOUND ',HTUV
+          PRINT *, 'ENTER HOT START MODE...'
+        ELSE
+          PRINT *, 'MISSING ',HTUV
+          STOP
+        ENDIF
       ENDIF
-      IF (HTSTRT)THEN
-        INQUIRE(FILE=HTUV,EXIST=HTSTRT)
-        PRINT *, 'FOUND ',HTHB
-      ELSE
-        PRINT *, 'MISSING ',HTHB
-        STOP
-      ENDIF
-      IF (HTSTRT)THEN
-        PRINT *, 'FOUND ',HTUV
-        PRINT *, 'ENTER HOT START MODE...'
-      ELSE
-        PRINT *, 'MISSING ',HTUV
-        STOP
-      ENDIF
- 199  CONTINUE
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
 C CODE FOR PROGRAM MAIN STARTS.
@@ -161,7 +158,6 @@ c
 c   include 'cmpgr1.for'
 C
 c Arthur: This part goes into intrface.f (but we don't need conditional.
-C     IF (MHALT.EQ.0) GOTO 1111
 c
       JUMPR=1
 C      INCSM=20                  Arthur: Moved into loop...
@@ -206,9 +202,11 @@ C start of time parse in FORTRAN
         READ(LFTIME,2020) MHR,MMIN,MDAY,CMNT,MYR
  2020 FORMAT(2X,2I2.2,1X,I2.2,1X,A3,1X,I4)
         DO MBNT=1,12
-          IF(CMNT.EQ.TMNT(MBNT)) GOTO 2021
+          IF(CMNT.EQ.TMNT(MBNT)) THEN
+C Exit the loop.
+            EXIT
+          ENDIF
         END DO
- 2021   CONTINUE
       ELSE IF (Flag_TrkFile == 2013) THEN
 C Tatiana. added 2/9/16 for new file format
         MHR=iMHR
@@ -260,11 +258,13 @@ C Pass back the delt to C.
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C     ADDED FOR WAVE MODEL INITIALIZATION
 C     4/2017 D.Y.
+#ifdef INCLUDE_WAVE
       IF (WAVE.EQ.1) THEN
         CALL INITWV(BSNABREV,AS5) ! SET CONSTANTS, PARAMETERS, READ INPUTS
         CALL WVCMPT
         IF(.NOT. HTSTRT)CALL WINDX2            ! GET FIRST WIND INPUTS
       ENDIF
+#endif
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       DDELT = DELT
       MCLOCK = DMCLOCK

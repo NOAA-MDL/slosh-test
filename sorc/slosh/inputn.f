@@ -17,22 +17,22 @@ C      CHARACTER*80   dummy
       CHARACTER*80   LFTIME
       COMMON /TRKHRS/ ITRACKLEN
 C
-      OPEN(5,FILE=FLE5)
+      OPEN(25,FILE=FLE5)
 C         READ IN 2 TITLE CARDS
-      READ (5,'(20a4)') AIDENT
+      READ (25,'(20a4)') AIDENT
 C
 C
 C        READ 100 STRM PSTNS IN LAT AND LONG, MM PRESSURE DROPS,
 C        RADII OF MAX WINDS IN ST MILES, ALL 1 HOURS APART
       iTrackLen=100
       DO 110 I=1,iTrackLen
-      READ (5,300) ITM,XLAT(I),YLONG(I),SPeed,DIRr,PT(I),R(I)
+      READ (25,300) ITM,XLAT(I),YLONG(I),SPeed,DIRr,PT(I),R(I)
  300  FORMAT(15X,I5,8F8.2)
  110  CONTINUE
-      READ (5,'(3I3)') IBGNT,ITEND,JHR
-      READ (5,'(A80)') LFTIME
-      READ (5,'(2f5.1,A1,F5.1)') SEADTM,DTMLAK,XOKE,DTMCHN
-      CLOSE (5)
+      READ (25,'(3I3)') IBGNT,ITEND,JHR
+      READ (25,'(A80)') LFTIME
+      READ (25,'(2f5.1,A1,F5.1)') SEADTM,DTMLAK,XOKE,DTMCHN
+      CLOSE (25)
 C
 C ht1 < 99.9 implies initial water was for tide + anomaly (so tide)
 C ht1 = 99.9 implies initial water was missing (so surge)

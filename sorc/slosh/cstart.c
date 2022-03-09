@@ -32,7 +32,7 @@
 
 /*****************************************************************************
 *****************************************************************************/
-static int DoOneStorm (int wRank, int wSize, userType *usr)
+static int DoOneStorm (int teamID, int wRank, int wSize, userType *usr)
 {
    int imxb = 0, jmxb = 0;
    char dtaName[MY_MAX_PATH] = "basin";
@@ -63,7 +63,7 @@ static int DoOneStorm (int wRank, int wSize, userType *usr)
       printf ("\trex: %s\n", rexName);
       fflush (stdout);
    }
-   PerformRun (wRank, wSize, 
+   PerformRun (teamID, wRank, wSize, 
 #ifdef _MPI_
                MPI_COMM_WORLD,
 #endif
@@ -208,7 +208,7 @@ int DoStormListV0 (userType *usr)
          printf ("rex: %s\n", rexName);
          fflush (stdout);
       }
-      PerformRun (0, 1, 
+      PerformRun (1, 0, 1, 
 #ifdef _MPI_
                   MPI_COMM_WORLD,
 #endif
@@ -367,7 +367,7 @@ int DoStormListV1 (userType *usr)
              return -1;
          }
 
-         PerformRun (0, 1, 
+         PerformRun (1, 0, 1, 
 #ifdef _MPI_
                      MPI_COMM_WORLD,
 #endif
@@ -397,7 +397,7 @@ int main (int argc, char **argv)
    int wRank;
    MPI_Comm teamComm;         /* A communication channel for a team */
    int teamID;                /* Which team is this */
-   int teamSize = 2;          /* How big are the teams. */
+   int teamSize = 1;          /* How big are the teams. */
    int teamRank;              /* Which member of the team is this? */
    int *teamLeadRay;          /* Which processes are team leaders and for which
                                * teamIDs? */
@@ -407,10 +407,12 @@ int main (int argc, char **argv)
 
    if (strcmp (PRG_VER, "4.20") == 0) {
       strcpy (PRG_DATE, "2019-11-13");
-   } else if (strcmp (PRG_VER, "4.21")) {
+   } else if (strcmp (PRG_VER, "4.21") == 0) {
       strcpy (PRG_DATE, "2020-01-08");
+   } else if (strcmp (PRG_VER, "4.22") == 0) {
+      strcpy (PRG_DATE, "2021-05-11");
    } else {
-      strcpy (PRG_DATE, "2020-01-08");
+      strcpy (PRG_DATE, "2021-05-11");
    }
 
    UserInit (&usr);
@@ -471,10 +473,11 @@ int main (int argc, char **argv)
       MPI_Init (&argc, &argv);
       MPI_Comm_size (MPI_COMM_WORLD, &wSize);
       MPI_Comm_rank (MPI_COMM_WORLD, &wRank);
-      ans = DoOneStorm (wRank, wSize, &usr);
+      teamID = 1;
+      ans = DoOneStorm (teamID, wRank, wSize, &usr);
       MPI_Finalize ();
 #else
-      ans = DoOneStorm (0, 1, &usr);
+      ans = DoOneStorm (1, 0, 1, &usr);
 #endif
    } else if (usr.lstType == 0) {
       ans = DoStormListV0 (&usr);
@@ -486,22 +489,14 @@ int main (int argc, char **argv)
       if (wSize <= 1) {
          ans = DoStormListV1 (&usr);
       } else if (wSize < 1 + 2 * teamSize) {
-         printf ("Need at least two teams of size %d and one group leader\n",
+         printf ("FATAL ERROR: Need at least two teams of size %d and one group leader\n",
                  teamSize);
-         ans = 0;
+         ans = -1;
       } else {
          /* Set up teamID (e.g. color) for sub-teams */
          if (wRank == 0) {
             teamID = 0;
             teamRank = 0;
-            teamLeadRay = (int *) malloc (wSize * sizeof (int));
-            for (P = 0; P < wSize; P++) {
-               if ((P > 0) && (((P - 1) % teamSize) == 0)) {
-                  teamLeadRay[P] = 1 + ((P - 1) / teamSize);
-               } else {
-                  teamLeadRay[P] = 0;
-               }
-            }
          } else {
             teamID = 1 + ((wRank - 1) / teamSize);
             teamRank = (wRank - 1) % teamSize;
@@ -512,6 +507,14 @@ int main (int argc, char **argv)
 
          /* Shift into roles */
          if (wRank == 0) {
+            teamLeadRay = (int *) malloc (wSize * sizeof (int));
+            for (P = 0; P < wSize; P++) {
+               if ((P > 0) && (((P - 1) % teamSize) == 0)) {
+                  teamLeadRay[P] = 1 + ((P - 1) / teamSize);
+               } else {
+                  teamLeadRay[P] = 0;
+               }
+            }
             if (leader (wSize, teamLeadRay, usr.lstFile, usr.doneFile,
                         usr.verbose) != 0) {
                MPI_Abort (MPI_COMM_WORLD, -1);

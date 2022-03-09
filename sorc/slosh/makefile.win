@@ -1,6 +1,6 @@
 #!/bin/make
 #------------------------------------------------------------------------------
-# makefile.win                                          Last Change: 2022-02-28
+# makefile.win                                          Last Change: 2022-03-08
 #                                                        Arthur.Taylor@noaa.gov
 #                                                              NWS/OSTI/MDL/DSB
 #
@@ -18,7 +18,8 @@ MINGW=true#                   # Allow MinGW specific functions
 B?=4.5.0#                     # See usage.
 DOUBLE=true#                  # Use double precision flags
 COMPLEX_16=original#          # Use COMPLEX*16 (original) or COMPLEX(16) (new)
-VER=4.21#                     # Be compatible with 4.21 version (1/8/2020)
+VER=4.22#                     # Be compatible with 4.22 version (2021-05-11)
+WAVE=no#                      # Include wave code
 
 #-----------------
 # Set up the PATH
@@ -37,7 +38,12 @@ endif
 # Set up the called executables and version
 #-------------------------------------------
 CC=gcc
-CC_VER:=$(shell $(CC) --version | head -n1 | cut -d' ' -f2,3 --output-delimiter='-')
+CC_VVV:=$(shell $(CC) --version | head -n1 | cut -d' ' -f2,3 --output-delimiter='-')
+ifeq ($(MINGW),true)
+   CC_VER=MinGW-$(CC_VVV)
+else
+   CC_VER=$(CC_VVV)
+endif
 FC=gfortran
 MV=/bin/mv
 RM=/bin/rm
@@ -82,8 +88,15 @@ endif
 # Set up the FORTRAN compiler flags
 #-----------------------------------
 FFLAGS=-O3#                   # Optimization level
+FFLAGS+=-cpp#                 # Turn on Pre-processing in FORTRAN code
+ifeq ($(WAVE),yes)
+   FFLAGS+=-DINCLUDE_WAVE#    # Include Wave code
+endif
 ifeq ($(DOUBLE),true)
    FFLAGS+=-fdefault-real-8#  # Use double precision flags
+endif
+ifeq ($(COMPLEX_16),new)
+   FFLAGS+=-DCOMPLEX_p16
 endif
 # FFLAGS+=-fmax-stack-var-size=4000# # Use stack for arrays smaller than 4000 bytes
 # FFLAGS+=-frecursive#        # Treat all procs as recursive with regards to stack array
@@ -155,14 +168,13 @@ FSRC+=mapshift.f
 #----------------------------------
 # Intrface.f :: Was in this order.
 #----------------------------------
-# FSRC+=parm2.f#                 # Compile FORTRAN modules first.
-# FSRC+=inital.f
+FSRC+=inital.f
 FSRC+=wind.f
 FSRC+=wav.f
-# FSRC+=tmstep.f
+FSRC+=tmstpc.f#               # First part of tmstep.f
+FSRC+=tmstpm.f#               # Second part of tmstep.f
 FSRC+=clnup.f
 FSRC+=cln_hs.f
-# FSRC+=dealloc.f
 FSRC+=xy2llx.f
 FSRC+=staticht.f
 FSRC+=issubgrid.f
@@ -187,11 +199,7 @@ FSRC+=extrpt.f
 FSRC+=intdlt.f
 FSRC+=intval.f
 FSRC+=cnstnt.f
-ifeq ($(COMPLEX_16),new)
-FSRC+=btmstr_gnu.f
-else
 FSRC+=btmstr.f
-endif
 FSRC+=setcmp.f
 FSRC+=stmval.f
 FSRC+=cnsdlt.f
@@ -199,7 +207,6 @@ FSRC+=force1.f
 FSRC+=intwnd.f
 FSRC+=prtstm.f
 FSRC+=crdrd1.f
-# FSRC+=alloc.f
 FSRC+=ttimer.f
 FSRC+=initlz.f
 FSRC+=inputn.f
@@ -208,10 +215,9 @@ FSRC+=setdst.f
 FSRC+=depmsy.f
 FSRC+=intlht.f
 FSRC+=crdrd2.f
-FSRC+=crdrd2_n.f
 FSRC+=contty.f
 FSRC+=bdryht.f
-FSRC+=flw1dm_block.f#         # subblock and flw1dm combined.
+FSRC+=flw1dm_block.f#            # subblock and flw1dm combined.
 FSRC+=depsfc.f
 FSRC+=channl.f
 FSRC+=frcpnt.f
@@ -239,19 +245,9 @@ else
 endif
 FSRC+=setcmp_hs.f
 FSRC+=hbuv_hs.f
-
-#-------------------------------------
-# FORTRAN code for command line only.
-#-------------------------------------
-FSRC1=wave.f
-FSRC1+=inital.f
-FSRC1+=tmstpc.f#               # First part of tmstep.f
-FSRC1+=tmstpm.f#               # Second part of tmstep.f
-
-# FORTRAN code for GUI only.
-FSRC2=inital_GUI.f
-FSRC2+=tmstpc_GUI.f
-FSRC2+=tmstpm_GUI.f
+ifeq ($(WAVE),yes)
+   FSRC+=wave.f
+endif
 
 #----------------
 # C header files
@@ -283,7 +279,9 @@ HEADERS+=winBuffer.h
 #------------------------------------
 FORT_HEADERS+=parm.for
 FORT_HEADERS+=parmmsy.for
-FORT_HEADERS+=wav1.for
+ifeq ($(WAVE),yes)
+   FORT_HEADERS+=wav1.for
+endif
 
 #---------------------------------
 # Setup OBJ1 list and CMD1 target
@@ -298,7 +296,7 @@ ifeq ($(MPI),true)
    OBJS1+=winBuffer.o
 endif
 OBJS1+=$(FSRC:.f=.o)
-OBJS1+=$(FSRC1:.f=.o)
+
 MAIN1=cstart.c
 CMD1=sloshDos
 EXT=.exe
@@ -306,24 +304,23 @@ EXT=.exe
 #---------------------------------------
 # Setup GUI (OBJ2) list and CMD2 target
 #---------------------------------------
+GUISRC=haloclock2.c
+GUISRC+=tclslosh.c
+
+GUI_HEADERS+=$(HEADERS)
+GUI_HEADERS+=haloclock2.h
+GUI_HEADERS+=halo_out.h
+GUI_HEADERS+=tclslosh.h
+
+OBJS2=$(CSRC:.c=.o)
+ifeq ($(MPI),true)
+  OBJS2+=$(MPISRC:.c=.o)
+endif
+OBJS2+=$(FSRC:.f=.o)
+OBJS2+=$(GUISRC:.c=.o)
+
+MAIN2=tclstart.c
 ifeq ($(GUI_COMPILE),yes)
-  GUISRC=haloclock2.c
-  GUISRC+=tclslosh.c
-
-  GUI_HEADERS+=$(HEADERS)
-  GUI_HEADERS+=haloclock2.h
-  GUI_HEADERS+=halo_out.h
-  GUI_HEADERS+=tclslosh.h
-
-  OBJS2=$(CSRC:.c=.o)
-  ifeq ($(MPI),true)
-    OBJS2+=$(MPISRC:.c=.o)
-  endif
-  OBJS2+=$(FSRC:.f=.o)
-  OBJS2+=$(FSRC2:.f=.o)
-  OBJS2+=$(GUISRC:.c=.o)
-
-  MAIN2=tclstart.c
   CMD2=sloshGui
 else
   CMD2=

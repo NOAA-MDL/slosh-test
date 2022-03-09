@@ -1,4 +1,4 @@
-> *README.md*           SLOSH Model Help Pages          Last Change: 2022-03-01
+> *README.md*           SLOSH Model Help Pages          Last Change: 2022-03-08
 
 The intent of this file is to help the user start to use the SLOSH model.
 
@@ -75,7 +75,7 @@ SLOSH's official compiler has evolved over time as follows:
 3. If you want the **SLOSH-GUI** (vs just the command line) then:
 ```bash
    cd ~/save/slosh/gui
-   ./getGuiLib.sh PAT v4.21
+   ./getGuiLib.sh PAT v4.22
 ```
 
 4. Build, install, and clean up - SLOSH model
@@ -116,7 +116,7 @@ model such as (P-Surge, P-ETSS, or ETSS).
    # Don't Panic.  In the following call, there will be a few 'Notes' and
    # 'Cautions' because some basins do not have all of the tide files (i.e.,
    # Binary Harmonic Constants, Datum Adjustments, or Tide-Flavor).
-   ./getBasin.sh PAT v4.21
+   ./getBasin.sh PAT v4.22
 ```
 
 * Note - If you have problems automatically downloading basin assets from
@@ -136,7 +136,7 @@ and place them in "~/save/slosh/tar/".  Then run expandBasin.sh via:
 1. Get the required storms for the tests:
 ```bash
    cd ~/save/slosh/dev
-   ./getStorms.sh PAT v4.21
+   ./getStorms.sh PAT v4.22
 ```
 
 * Note - If you have problems automatically downloading test cases from github,
@@ -152,6 +152,8 @@ of ~/save/slosh/dev/getStorms.sh for how to un-tar them.
    cd ~/save/slosh/dev
    ./runme.sh go
 ```
+
+* For more SLOSH command line options: `man ~/save/slosh/docs/slosh.man.gz`
 
 While runme.sh compares the outputs with the expected results, you can do so
 yourself via:
@@ -214,7 +216,7 @@ To remove all non-repo related files (e.g., do the 'tidy' option and remove:
 executables, basin data, test answers, and GUI libraries):
 ```bash
    cd ~/save/slosh
-   ./util/cleanUp.sh wipe
+   util/cleanUp.sh wipe
 ```
 
 -------------------------------------------------------------------------------

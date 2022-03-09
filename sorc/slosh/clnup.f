@@ -26,28 +26,6 @@ c      CALL FILTRP
       CALL FHMXSV
       if (ienv.eq.1) CALL ARCHIV
 
-C
-C      GOTO 1112
-C 1111 call rdhmx
-C 1112 CONTINUE
-c
-c   include 'cmpgr4.for'
-C
-C    FINISHING UP WHAT WAS LEFT IN MAIN PROGRAM
-      IF (KEY1.EQ.0) GOTO 1000
-C
-CC       WRITE(*,*)'   FINISHED SAVING SURGE ENVELOP (FT*10) TO DISK.'
-CC       WRITE(*,'(A)') '  FILE NAME = '
-CC       WRITE(*,'(A)')  FLE91
-CC       WRITE(*,*)'   TIME-HISTORIES data ARE SAVED ON'
-CC       WRITE(*,'(A)') FLE10
-CC       WRITE(*,'(A)') FLE20
-CC       WRITE(*,'(A)')  FLE30
-CC       WRITE(*,*) ' RESPECTIVELY FOR SURGE, WIND SPEED, AND WIND DIR.'
-CC       WRITE(*,*) '  IN FEET, MPH, METEOR. DIRECTION (DEG.)'
-C
- 1000 CONTINUE
-c
 c       CALL PLOTS1
 C
 C      CALL GETDAT(MYR,MMON,MDAY)

@@ -64,6 +64,7 @@ void UserInit (userType *usr)
    usr->envDir2 = NULL;
    usr->f_appendBsn = 1;
    usr->tideDir = NULL;
+   usr->tideOnlyDir = NULL;
    usr->trkFile = NULL;
    usr->rexFile = NULL;
    usr->envFile = NULL;
@@ -110,6 +111,9 @@ void UserFree (userType *usr)
    if (usr->tideDir != NULL) {
       free (usr->tideDir);
    }
+   if (usr->tideOnlyDir != NULL) {
+      free (usr->tideOnlyDir);
+   }
    if (usr->trkFile != NULL) {
       free (usr->trkFile);
    }
@@ -134,7 +138,7 @@ static char *UsrOpt[] = { "-help", "-V", "-verbose", "-basin",
    "-rootDir", "-trk", "-rexDir", "-rex", "-envDir", "-env", "-f_appendBsn",
    "-lst", "-lstType", "-doneFile", "-rexSave", "-f_tide", "-TideDatabase",
    "-f_stat", "-spinUp", "-f_saveSpinUp", "-asOf", "-envDir2", "-envSave2",
-   "-restart", "-wave", NULL
+   "-restart", "-wave", "-tideOnlyDir", NULL
 };
 
 void Usage (const char *argv0)
@@ -183,6 +187,7 @@ void Usage (const char *argv0)
         "\t\tin RunLoopStep.n",
       "Do we want restart files [0]=no, 1=yes",
       "What type of waves [0]=none, 1=version-1, ...",
+      "Directory containing precomputed tideOnly results (for P-Surge)",
       NULL
    };
    unsigned int i, j;
@@ -218,7 +223,7 @@ static int ParseUserChoice (userType *usr, char *cur, char *next)
    enum { HELP, VERSION, VERBOSE, BASIN, ROOTDIR, TRKFILE, REXDIR, REXFILE,
       ENVDIR, ENVFILE, F_APPENDBSN, LSTFILE, LSTTYPE, DONEFILE, REXSAVEMIN,
       F_TIDE, TIDEDATABASE, F_STAT, SPINUP, F_SAVESPINUP, ASOF, ENVDIR2,
-      ENVSAVE2, RESTART, WAVE
+      ENVSAVE2, RESTART, WAVE, TIDEONLYDIR
    };
    int index;           /* "cur"'s index into Opt, which matches enum val. */
 
@@ -256,6 +261,13 @@ static int ParseUserChoice (userType *usr, char *cur, char *next)
          }
          usr->rootDir = (char *) malloc ((strlen (next) + 1) * sizeof (char));
          strcpy (usr->rootDir, next);
+         return 2;
+      case TIDEONLYDIR:
+         if (usr->tideOnlyDir != NULL) {
+            free (usr->tideOnlyDir);
+         }
+         usr->tideOnlyDir = (char *) malloc ((strlen (next) + 1) * sizeof (char));
+         strcpy (usr->tideOnlyDir, next);
          return 2;
       case TRKFILE:
          if (usr->trkFile != NULL) {

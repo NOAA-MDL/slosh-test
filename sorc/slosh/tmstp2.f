@@ -61,10 +61,7 @@ c  continuity
 !c
 !C       NO CORNER SMOOTHING for PNB BASIN
 !
-!C      IF (EBSN1.EQ.'&'.or.EBSN1.EQ.'+') GOTO 113
-      IF (ISMPT2G.EQ.0) GOTO 113
-      IF (ITM2.GT.5.AND.INCSM.NE.1)  CALL SMPT2G
- 113  CONTINUE
+      IF (ISMPT2G.NE.0.AND.ITM2.GT.5.AND.INCSM.NE.1)  CALL SMPT2G
 !c
 !c
 !c
@@ -74,8 +71,6 @@ c  continuity
       IF (NSQRWC.NE.0.and.nof1d.ne.'+') CALL FLW1DM2
 
   180 CONTINUE
-!C
-!C       IF (KEY1.EQ.0) GOTO 1112
 !C
 !c      IF(ITIME+1.EQ.NHRAD.or.EBSN1.EQ.'+') THEN
 !      IF(mod(ITIME+1,INCSM).EQ.0.or.EBSN1.EQ.'+') THEN

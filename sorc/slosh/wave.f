@@ -1,32 +1,20 @@
       SUBROUTINE WVSTEP(ETIME)
 C     WAVE MODEL COMPUTATION AT WAVE TIME STEPS
 C     4/2017 D.Y.
-      PARAMETER (IDIM=1000,JDIM=1000)
       COMMON/TPARM/DT,DTWIND,DTT,NHRS,NDTT
-      COMMON /HOTSTART/ HTSTRT
-      COMMON/WNDW/WUW(IDIM,JDIM),WVW(IDIM,JDIM)
-      LOGICAL HTSTRT
       REAL TWD,TIO,TWV,ETIME,ETWD,ETIO,ETWV
       SAVE ETWD,ETIO,ETWV
       DATA ETWD,ETIO,ETWV/0.,0.,0./
       SAVE TWD,TIO,TWV
       DATA TWD,TIO,TWV/0.,0.,0./
 
-      IF(HTSTRT)THEN
-        CALL TMWVIN(ETWD,ETIO,ETWV,TWD,TIO,TWV)
-c        print *, 'WAVE HOTSTART'
-      ENDIF
-c      print *, 'ETIME = ',etime, 'TWD = ',twd
       ! READ WIND INPUT IF AT TIME STEP
-      IF (HTSTRT)THEN
-        ETWD = ETWD + .1
-      ELSE IF (TWD .GE. DTWIND)THEN 
+      IF (TWD .GE. DTWIND)THEN 
         CALL WINDX2
-c        CALL WINDX1(ETIME)     
         ETWD = ETWD + DTWIND
         PRINT *, 'READ WIND INPUT: STEP ', INT(ETIME/DTWIND)
       END IF
-c      goto 980
+c      go to 980
       ! UPDATE WAVE FIELD IF AT TIME STEP
       IF (TWV .GE. DTT)THEN
         CALL WVCMPT
@@ -35,7 +23,7 @@ c      goto 980
 
       ! OUTPUT WAVE RESULTS IF AT TIME STEP
       IF (TIO .GE. DT)THEN
-        CALL WOUTP    
+c        CALL WOUTP    
         CALL WOUTP2
         ETIO = ETIO + DT
         print *, 'Wave time step: ', DTT, ' seconds...'
@@ -47,12 +35,6 @@ c      goto 980
       TIO=ETIME-ETIO
       TWV=ETIME-ETWV
 
-      ! RESTART FILE OUTPUT
-      IF (MOD(INT(ETIME),3600).EQ. 0 .AND. ETIME .GT. 0.)THEN
-        CALL RSWVOUT
-        CALL TMWVOUT(ETWD,ETIO,ETWV,TWD,TIO,TWV)
-      END IF      
-
       RETURN
       END
 
@@ -60,7 +42,7 @@ c      goto 980
 
 C     CREATED 2/2017 BY D.Y
 C     INITIALIZATION
-C     SET CONSTANTS, COEFFICIENTS
+C     SET CONSTANTS, COEEFICIENTS
 C     READ INPUT FILES
 
       include 'wav1.for'
@@ -79,113 +61,66 @@ C     READ INPUT FILES
       CHARACTER*80 MAPNAME,DUM
       integer as5
       CHARACTER(LEN=AS5),INTENT(IN):: BSNABREV
+      COMMON /COORD/XR(IDIM,JDIM), YR(IDIM,JDIM) ! GRID POINT LOCATION
       INTEGER LBSN
-c****************************************************************************
-C      open(9999,file='temp_slshll.dat',action='write')
-c      write(string2, '("(",I4,"(F8.1,X))")') jmxb
-c      open(600,file='lat_wf1_new.dat',form="FORMATTED",status="unknown")
-c      open(700,file='lon_wf1_new.dat',form="FORMATTED",status="unknown")
+      COMMON /GPRT1/  DOLLAR,EBSN
+      CHARACTER*1 EBSN
+      CHARACTER*2 DOLLAR
+      COMMON /BDNBR/ JST,JND,J1(JDIM),J2(JDIM)
+      INTEGER JST,JND,J1,J2
 
-c      write(string1, '("(",I4,"(E10.3,X))")') jmxb
-c      write(61,'(A)')'X Radiation Stress'
-c      do i=1,imxb
-c        write(61,string1)(rsxin(i,j),j=1,jmxb)
-c      end do
-c      do ii=1,imxb
-c        write(600,'(F8.3)')(xidx(ii,jj),jj=1,jmxb)
-c         
-c      enddo
-c      do ii=1,imxb
-c        write(700,'(F8.3)')(yidx(ii,jj),jj=1,jmxb)
-c      enddo
-c      close(600)
-c      close(700)
-c      stop
-c****************************************************************************
 C     CONSTANTS AND COEFFICIENTS
 
       ! SET
       DATA G,VK,R2D/9.81,0.4,57.2958/
       DATA RHOAIR,RHOH2O,GAMMA,CBF/1.2233,1000.,0.056,0.00005/
       DATA EPS1,S2H,DMIN/1E-14,.707107,50/
-      DATA COSD/1.,.7071,0.,-.7071,-1.,-.7071,0.,.7071/
-      DATA SIND/0.,.7071,1.,.7071,0.,-.7071,-1.,-.7071/
       DATA PA,CDS,SPM,MPA,DELT/0.15,2.36E-5,5.495E-2,4,0./
       DATA ASN,GM1/3.,1.1/ ! ALPHA AND GAMA
-      
-      ! TEMP: SET LT0,LT1,LG0,LG1 FOR HSJ5/HHI7 4/2017 D.Y.
-      IF (BSNABREV(2:4)=='DE3')THEN
-        LT0=36.50
-        LT1=41.50
-        LG0=-76.25
-        LG1=-70.85
-      ELSE IF (BSNABREV(1:4)=='HSJ5')THEN
-        LT0=16.3
-        LT1=20.1
-        LG0=-68.47
-        LG1=-64.47
-      ELSE IF (BSNABREV(1:4)=='HHI7')THEN
-        LT0=11.+45./60.
-        LT1=26.+21./60.
-        LG0=-1.*(78.+58./60.)
-        LG1=-1.*(63.+25./60.)
-      ELSE IF (BSNABREV(1:4)=='HHI8')THEN
-        LT0=13.2
-        LT1=24.85
-        LG0=-77.45
-        LG1=-64.95
-      ELSE IF (BSNABREV(1:4)=='HHN4')THEN
-        LT0=20.155
-        LT1=22.705
-        LG0=-159.305
-        LG1=-156.565
-      ELSE IF (BSNABREV(1:4)=='HHW4')THEN
-        LG1 = -153.947
-        LG0 = -157.103
-        LT1 = 21.127
-        LT0 = 18.163
-      ELSE IF (BSNABREV(1:4)=='HKW4')THEN
-        LG1 = -158.46
-        LG0 = -160.512
-        LT1 = 23.025
-        LT0 = 21.115
-      ELSE IF (BSNABREV(1:4)=='HMA3')THEN
-        LG1 = -155.25
-        LG0 = -157.65
-        LT1 = 21.96
-        LT0 = 19.69
-      ELSE IF (BSNABREV(2:4)=='SCL')THEN
-        LG1 = -115.751
-        LG0 = -123.949
-        LT1 = 35.
-        LT0 = 30.
-      ELSE IF (BSNABREV(2:4)=='WF1')THEN
-        LG1 = -80.3971
-        LG0 = -88.8410
-        LT1 = 31.6139
-        LT0 = 25.0904
-      ELSE
-        PRINT *, 'No wave model grid dimension available for ', BSNABREV
-        STOP
-      ENDIF
+
+      IM = IMXB
+      JM = JMXB
+      IMM1=IM-1
+      JMM1=JM-1
+
+        ! FOR CLOSED CIRCULAR BASIN 2019.10 D.Y
+      JST = 2
+      JND = JMM1
+      DO J=1,JM
+        J1(J) = J-1
+        J2(J) = J+1
+      END DO
+      IF (DOLLAR .EQ. '$')THEN
+        JST = 1
+        JND = JM
+        J1(1) = JMM1
+        J2(JM) = 2
+      END IF
 
       ! COMPUTED: BASICS
-      DO I=1,8
-        COSM2(I) = COSD(I)*COSD(I)
-        SINM2(I) = SIND(I)*SIND(I)
-        SINCO(I) = SIND(I)*COSD(I)
-      END DO
+      NDIR=8
       FAC2=0.5*GAMMA*RHOAIR/(RHOH2O*G)
       PI=4.*ATAN(1.)
       GTPI=G/(2.*PI)
       WTPI=1./(2.*PI)
       RHOG = RHOH2O*G
-      COEFF1 = 2.*PI/8. ! Directional integration
+      COEFF1 = 2.*PI/FLOAT(NDIR) ! directional integration
       COEFF2 = .6 !E2EP
       COEFF0 = COEFF1*COEFF2*RHOG
       COEFF = COEFF1*COEFF2
-      CALP=1.5E-3/(2*PI*G**2)     ! WIND GROWTH ALPHA COEFFICIENT
-      CBET=2*PI*PA*RHOAIR/RHOH2O  ! WIND GROWTH BETA COEFFICIENT
+
+      DDIR=2*PI/FLOAT(NDIR)
+      DO K = 1,NDIR
+        ADIR(K) = (K-1)*DDIR
+        ECOS(K) = COS(ADIR(K))
+        ESIN(K) = SIN(ADIR(K))
+        COSM2(K) = ECOS(K)*ECOS(K)
+        SINM2(K) = ESIN(K)*ESIN(K)
+        SINCO(K) = ESIN(K)*ECOS(K)
+        VFW(K) = 0.
+      END DO
+      CALP=1.5E-3/(2*PI*G**2)     ! WIND GROWTH ALPHA COEFF
+      CBET=2*PI*PA*RHOAIR/RHOH2O  ! WIND GROWTH BETA COEFF
 C--------------------------------------------------------------------------
 C READ PROBLEM PARAMETERS FROM INPUT FILE 'wmgl.in' UNIT = 8: 
 C--------------------------------------------------------------------------
@@ -221,7 +156,6 @@ C--------------------------------------------------------------------------
       NSTEPS=NHRS/DT+0.5
       DT=DT*3600.
       DTWIND=DTWIND*3600.
-      DDS=1./DS
       WRITE(6,7030) FGRID,FBTH,FINPUT,FOUT,FINI
  7030 FORMAT(//,'   LAND/ICE MASK  FILE FGRID = ',/,A80,/,
      1       '   BATHYMETRY =     ',/,A80,/,
@@ -239,149 +173,75 @@ C--------------------------------------------------------------------------
       WRITE(6,7042) DTWIND
  7042 FORMAT(10X,'DTWIND = ',F10.2)
 
-      ! COMPUTED: SPATIAL AVERAGING PARAMETERS 04/2016 D.Y
-      ADS=ASN/DS ! ALPHA/DS
-      RG1=.5*(GM1-1./GM1)
-      PHI=(.25*PI-RG1)/(.25*PI+RG1)
-      AC1=ADS*.25*PI*2*RG1/(3*PI)
-      AC2=ADS*.25*PI*(1-4*RG1/PI)/3.
-      AC3=ADS*2.*.25*PI/3.
-      AC4=ADS*.5*SQRT(2.)*(.25*PI+RG1)*(1-PHI)/3.
-      AC5=ADS*.5*SQRT(2.)*(.25*PI+RG1)*PHI/6.
-      AC6=ADS*SQRT(2.)*(.25*PI+RG1)/3.
+C  GET GRID MESH AND BATHYMETRY FROM SLOSH
+      DO I=1,IM
+        DO J=1,JM
+          XR(I,J)=YLG(I,J)
+          YR(I,J)=YLT(I,J)
+          DPTH(I,J)=ZB(I,J)*.3048 !FROM FT TO METER
+          D(I,J)=0
+          IF (DOLLAR .EQ. '$')THEN
+            IF(DPTH(I,J)<0.)THEN
+              D(I,J)=100
+            END IF
+          ELSE
+            IF(DPTH(I,J)<0. .OR.I<=1.OR.I>=IM-1.OR.J<=1.OR.J>=JM-1)THEN
+              D(I,J)=100
+            END IF
+          END IF
+        END DO
+      END DO
 
-C  READ BATHYMETRIC GRID INFORMATION
-      open(UNIT=7,FORM='FORMATTED',STATUS='OLD',FILE=FGRID,ERR=167)
-      do i=1,8
-        read(7,*)
-      enddo
-      read(7,51)IM,JM
-51    format(i3,1x,i3)
-      do i=1,5
-        read(7,*)
-      enddo
-      do j=1,jm
-        do i=1,im
-          read(7,*) d(i,j)
-        enddo
-      enddo
-      close(7)
+c      IMM1=IM-1
+c      JMM1=JM-1
 
-      open(UNIT=17,FORM='FORMATTED',STATUS='OLD',FILE=FBTH,ERR=167)
-      do i=1,8
-        read(17,*)
-      enddo
-      read(17,151)IM,JM
-151   format(i3,1x,i3)
-      do i=1,5
-        read(17,*)
-      enddo
-      do j=1,jm
-        do i=1,im
-          DPTH(I,J)=0.
-          read(17,*) DPTH(I,J)
-          IF(DPTH(I,J).LT. 0.1) DPTH(I,J)=.1
-        enddo
-      enddo
-      close(17)
+C  SET CURVILNEAR GRID COEFFICIENTS
+      DO I=2,IMM1
+        DO J=JST,JND
+          DXDP=.5*(XR(I+1,J)-XR(I-1,J))*111321*COS(YR(I,J)*PI/180.)
+          DXDQ=.5*(XR(I,J2(J))-XR(I,J1(J)))*111321*COS(YR(I,J)*PI/180.)
+          DYDP=.5*(YR(I+1,J)-YR(I-1,J))*111000
+          DYDQ=.5*(YR(I,J2(J))-YR(I,J1(J)))*111000
+          IF(D(I,J)<DMIN)THEN
+            DS1(I,J) = MAX(ABS(DXDP),ABS(DXDQ),ABS(DYDP),ABS(DYDQ))
+          ELSE
+            DS1(I,J) = 9999
+          ENDIF
+          GSQRT(I,J) = (DXDP*DYDQ - DXDQ*DYDP)
+          DPDX(I,J) = DYDQ / GSQRT(I,J)
+          DQDX(I,J) = -DYDP / GSQRT(I,J)
+          DPDY(I,J) = -DXDQ / GSQRT(I,J)
+          DQDY(I,J) = DXDP / GSQRT(I,J)
+        END DO
+      END DO
 
-      goto 168
-167   continue
-      print *,"No land mask found - recreate if needed"
-      print *,"Press enter to quit"
-      read(5,*)
-      stop
-168   continue
-      IMM1=IM-1
-      JMM1=JM-1
-
-C  SET INITIAL EW,ER,FW,FR,CW,WIND-SEA INDEX
+C  SET INITIAL EW,ER,FW,FR,CW,WINDSEA IDX
       DO 10 I=1,IM
       DO 10 J=1,JM
-        XXMOM1(I,J)=0.
-        XYMOM1(I,J)=0.
-        YYMOM1(I,J)=0.
-        YXMOM1(I,J)=0.
-        XXMOM2(I,J)=0.
-        XYMOM2(I,J)=0.
-        YYMOM2(I,J)=0.
-        YXMOM2(I,J)=0.
-        FXX1(I,J)=0.35
-        FXY1(I,J)=0.35
-        FYY1(I,J)=0.35
-        FYX1(I,J)=0.35
-        FXX2(I,J)=0.35
-        FXY2(I,J)=0.35
-        FYY2(I,J)=0.35
-        FYX2(I,J)=0.35
-        CXX1(I,J)=0.5
-        CXY1(I,J)=0.5
-        CYY1(I,J)=0.5
-        CYX1(I,J)=0.5
-        CXX2(I,J)=0.5
-        CXY2(I,J)=0.5
-        CYY2(I,J)=0.5
-        CYX2(I,J)=0.5
-        ERXX1(I,J)=0.
-        ERXY1(I,J)=0.
-        ERYY1(I,J)=0.
-        ERYX1(I,J)=0.
-        ERXX2(I,J)=0.
-        ERXY2(I,J)=0.
-        ERYY2(I,J)=0.
-        ERYX2(I,J)=0.
-        FRXX1(I,J)=0.25
-        FRXY1(I,J)=0.25
-        FRYY1(I,J)=0.25
-        FRYX1(I,J)=0.25
-        FRXX2(I,J)=0.25
-        FRXY2(I,J)=0.25
-        FRYY2(I,J)=0.25
-        FRYX2(I,J)=0.25
+        DO K=1,NDIR
+          EWW(I,J,K)=0.
+          ESW(I,J,K)=0.
+          FRW(I,J,K)=0.35
+          FRS(I,J,K)=0.35
+          CPW(I,J,K)=0.5
+        END DO
+      S(I,J)=0.0
    10 CONTINUE
 
-      ! WAVE RESTART FILE READ IN
-      IF(HTSTRT)THEN
-        CALL RSWVIN
-c        GO TO 170
-      END IF
-
-C INITIALIZE PHASE VELOCITY OF WIND-SEA FOR DTT AND INITIAL WAVE GROWTH
+C INITIALIZE PHASE VELOCITY OF WINDSEA FOR DTT AND INITIAL WAVE GROWTH
       DO J=1,JM
         DO I=1,IM
          IF(D(I,J).LT.DMIN) THEN
-          DPTH1=MAX(DPTH(I,J),0.1)
-          CALL CGCP(FXX1(I,J),DPTH1,DUM1,CXX1(I,J),WNXX1(I,J),NN)
-          CALL CGCP(FXY1(I,J),DPTH1,DUM1,CXY1(I,J),WNXY1(I,J),NN)
-          CALL CGCP(FYY1(I,J),DPTH1,DUM1,CYY1(I,J),WNYY1(I,J),NN)
-          CALL CGCP(FYX1(I,J),DPTH1,DUM1,CYX1(I,J),WNYX1(I,J),NN)
-          CALL CGCP(FXX2(I,J),DPTH1,DUM1,CXX2(I,J),WNXX2(I,J),NN)
-          CALL CGCP(FXY2(I,J),DPTH1,DUM1,CXY2(I,J),WNXY2(I,J),NN)
-          CALL CGCP(FYY2(I,J),DPTH1,DUM1,CYY2(I,J),WNYY2(I,J),NN)
-          CALL CGCP(FYX2(I,J),DPTH1,DUM1,CYX2(I,J),WNYX2(I,J),NN)
+           DPTH1=MAX(DPTH(I,J),0.1)
+           DO K=1,NDIR
+            CALL
+     1      CGCP(FRW(I,J,K),DPTH1,CGW(I,J,K),CPW(I,J,K),WNM(I,J,K),CNN)
+           END DO
          ENDIF
         ENDDO
       ENDDO
 
 c170   CONTINUE
-C     READ MAPPING FROM SLOSH GRID TO WAVE GRID 4/2017 D.Y.
-      IF(BSNABREV(1:1)=='H' .OR. BSNABREV(1:1)=='E')THEN
-        MAPNAME='./'//'sls2wv_'//BSNABREV(1:4)//'.dat'
-      ELSE
-        MAPNAME='./'//'sls2wv_'//BSNABREV(2:4)//'.dat'
-      END IF
-      OPEN(71, FILE=TRIM(MAPNAME),ACTION='READ')
-      READ(71,'(A)')DUM
-      DO I=1,IM
-        DO J=1,JM
-c          READ(71,'(I5,I5)')XIDX(I,J),YIDX(I,J)
-          READ(71,'(I5,1X,I5)')XIDX(I,J),YIDX(I,J)
-        END DO
-      END DO
-      print *, 'Map from SLOSH grid to wave grid: ',mapname
-
-C     GENERATE MAPPING FROM WAVE GRID TO SLOSH GRID 4/2017 D.Y
-      CALL INTWGT
 
       PRINT *, 'INITIALIZE WAVE MODEL SUCCESSFULLY'
       END
@@ -391,751 +251,843 @@ C  ITERATING COMPUTATIONAL STEPS OF WAVE MODEL
 C  CREATED 2/2017 D.Y
 
       include 'wav1.for'
+      COMMON /WVEN/ EWW1(IDIM,JDIM),EWW2(IDIM,JDIM),
+     1              EWW3(IDIM,JDIM),EWW4(IDIM,JDIM),
+     2              EWW5(IDIM,JDIM),EWW6(IDIM,JDIM),
+     3              EWW7(IDIM,JDIM),EWW8(IDIM,JDIM),
+     4              ESW1(IDIM,JDIM),ESW2(IDIM,JDIM),
+     5              ESW3(IDIM,JDIM),ESW4(IDIM,JDIM),
+     6              ESW5(IDIM,JDIM),ESW6(IDIM,JDIM),
+     7              ESW7(IDIM,JDIM),ESW8(IDIM,JDIM)
       COMMON/WNDW/WUW(IDIM,JDIM),WVW(IDIM,JDIM)
       COMMON/WVIO/RSX(IDIM,JDIM),RSY(IDIM,JDIM)
       COMMON/DSIO/DSP(IDIM,JDIM)
+      COMMON/RSTS/SXX(IDIM,JDIM),SXY(IDIM,JDIM),SYY(IDIM,JDIM)
       REAL RSX,RSY
-      REAL SXX(IDIM,JDIM),SXY(IDIM,JDIM),SYY(IDIM,JDIM)
-      REAL US(IDIM,JDIM)
-      REAL ETXX1(IDIM,JDIM),ETXY1(IDIM,JDIM),ETYY1(IDIM,JDIM),
-     1 ETYX1(IDIM,JDIM),ETXX2(IDIM,JDIM),ETXY2(IDIM,JDIM),
-     2 ETYY2(IDIM,JDIM),ETYX2(IDIM,JDIM),ET(IDIM,JDIM)
-      LOGICAL WSXX1(IDIM,JDIM),WSXY1(IDIM,JDIM),WSYY1(IDIM,JDIM),
-     1 WSYX1(IDIM,JDIM),WSXX2(IDIM,JDIM),WSXY2(IDIM,JDIM),
-     2 WSYY2(IDIM,JDIM),WSYX2(IDIM,JDIM)
-      REAL CGXX1(IDIM,JDIM),CGXY1(IDIM,JDIM),CGYY1(IDIM,JDIM),
-     1  CGYX1(IDIM,JDIM),CGXX2(IDIM,JDIM),CGXY2(IDIM,JDIM),
-     2  CGYX2(IDIM,JDIM),CGYY2(IDIM,JDIM) ! WIND-SEA GROUP VELOCITY
-      REAL GRXX1(IDIM,JDIM),GRXY1(IDIM,JDIM),GRYY1(IDIM,JDIM),
-     1  GRYX1(IDIM,JDIM),GRXX2(IDIM,JDIM),GRXY2(IDIM,JDIM),
-     2  GRYY2(IDIM,JDIM),GRYX2(IDIM,JDIM)
-      REAL NRXX1(IDIM,JDIM),NRXY1(IDIM,JDIM),NRYY1(IDIM,JDIM),
-     1  NRYX1(IDIM,JDIM),NRXX2(IDIM,JDIM),NRXY2(IDIM,JDIM),
-     2  NRYY2(IDIM,JDIM),NRYX2(IDIM,JDIM)
-      REAL NNXX1(IDIM,JDIM),NNXY1(IDIM,JDIM),NNYY1(IDIM,JDIM),
-     1  NNYX1(IDIM,JDIM),NNXX2(IDIM,JDIM),NNXY2(IDIM,JDIM),
-     2  NNYY2(IDIM,JDIM),NNYX2(IDIM,JDIM)
+      REAL SXX,SXY,SYY
+c      REAL SXX(IDIM,JDIM),SXY(IDIM,JDIM),SYY(IDIM,JDIM)
+      COMMON /BDNBR/ JST,JND,J1(JDIM),J2(JDIM)
+      INTEGER JST,JND,J1,J2
+      REAL US(IDIM,JDIM),CMM(IDIM,JDIM)
+      REAL WND(KDIM)
+      REAL RXW(IDIM),RXS(IDIM),RYW(IDIM),RYS(IDIM),RWW(IDIM),RSS(IDIM)
+      LOGICAL WSI(IDIM,JDIM,KDIM)
+      REAL CGS(IDIM,JDIM,KDIM),
+     1     NNW(IDIM,JDIM,KDIM),NNS(IDIM,JDIM,KDIM),
+     2     CPT(IDIM,JDIM,KDIM),CQT(IDIM,JDIM,KDIM),
+     3     VFX(IDIM,JDIM,KDIM),VFY(IDIM,JDIM,KDIM),
+     4     FLD(IDIM,JDIM,KDIM)
       SAVE FIRST1,IC
       DATA FIRST1,IC/0,0/
 
 C     CALCULATE WAVE MODEL COMPUTATIONAL TIME STEP - DTT
-      WMAX=0.
-      DO 40 I=2,IMM1
-        DO 40 J=2,JMM1
-          IF(D(I,J).GT.DMIN) GO TO 40
-          Ctmp=AMAX1(CXX1(I,J),CXY1(I,J),CYY1(I,J),CYX1(I,J),
-     1 CXX2(I,J),CXY2(I,J),CYY2(I,J),CYX2(I,J)) ! 03/2016 D.Y
-c          Ctmp=.2*amax1(wuw(I,J),wvw(I,J))
-          WMAX=AMAX1(WMAX,ABS(Ctmp)) ! Reduced WMAX 03/2016 D.Y
-   40 CONTINUE
-      NDTT=2*IFIX((1.414*WMAX*DT)/DS)+2
-c      NDTT=IFIX((1.414*WMAX*DT)/DS)+2
+      WMAX=MAXVAL(CGW)
+      DS = MINVAL(DS1(2:IMM1,JST:JND))
+      NDTT=.75*IFIX((1.414*WMAX*DT)/DS)+2
       DTT=DT/NDTT
-      DTTDS=DTT*0.25/DS
+c      print *, DS, DT, NDTT, DTT, WMAX
+
       IF (IC.eq.0)THEN
         IC=1
-        GO TO 30 ! Skip computations for test purpose
+        GO TO 30 ! skip computations for test purpose
       ENDIF
 
-C     INITIALIZE WIND-SEA INDEX 6/2016 D.Y 
+C     UPDATE WINDSEA AND SWELL ENERGY AFTER MPI GATHERING
+      EWW(:,:,1) = EWW1
+      EWW(:,:,2) = EWW2
+      EWW(:,:,3) = EWW3
+      EWW(:,:,4) = EWW4
+      EWW(:,:,5) = EWW5
+      EWW(:,:,6) = EWW6
+      EWW(:,:,7) = EWW7
+      EWW(:,:,8) = EWW8
+      ESW(:,:,1) = ESW1
+      ESW(:,:,2) = ESW2
+      ESW(:,:,3) = ESW3
+      ESW(:,:,4) = ESW4
+      ESW(:,:,5) = ESW5
+      ESW(:,:,6) = ESW6
+      ESW(:,:,7) = ESW7
+      ESW(:,:,8) = ESW8
+
+C     INITIALIZE WINDSEA IDX 6/2016 D.Y 
       DO I=1,IM
         DO J=1,JM
-          WSXX1(I,J)=.FALSE.
-          WSXY1(I,J)=.FALSE.
-          WSYY1(I,J)=.FALSE.
-          WSYX1(I,J)=.FALSE.
-          WSXX2(I,J)=.FALSE.
-          WSXY2(I,J)=.FALSE.
-          WSYY2(I,J)=.FALSE.
-          WSYX2(I,J)=.FALSE.
+          WSI(I,J,1:NDIR)=.FALSE.
         END DO
       END DO
 
 C     FIRST LOOP: WAVE GROWTH
       DO 90 I=2,IMM1
-        DO 90 J=2,JMM1
+        DO 90 J=JST,JND
           IF(D(I,J).GT.DMIN) GO TO 90
           UWIND=WUW(I,J)
           VWIND=WVW(I,J)
+          IF (J == 1)THEN
+            UWIND=WUW(I,JM)
+            VWIND=WVW(I,JM)
+          END IF
           WSPDSQ=UWIND*UWIND+VWIND*VWIND
           WDIR=ATAN2(VWIND,UWIND)
           WNDSPD=SQRT(WSPDSQ)
-          WNDXX1=MAX(WNDSPD*COS(WDIR-.0*PI),0.)
-          WNDXY1=MAX(WNDSPD*COS(WDIR-.25*PI),0.)
-          WNDYY1=MAX(WNDSPD*COS(WDIR-.5*PI),0.)
-          WNDYX1=MAX(WNDSPD*COS(WDIR-.75*PI),0.)
-          WNDXX2=MAX(WNDSPD*COS(WDIR-1.*PI),0.)
-          WNDXY2=MAX(WNDSPD*COS(WDIR-1.25*PI),0.)
-          WNDYY2=MAX(WNDSPD*COS(WDIR-1.5*PI),0.)
-          WNDYX2=MAX(WNDSPD*COS(WDIR-1.75*PI),0.)
-
-          CSN=UWIND/WNDSPD ! COS(WIND DIRECTION)
-          SNN=VWIND/WNDSPD ! SIN(WIND DIRECTION)
+          DO K=1,NDIR
+            WND(K)=MAX(WNDSPD*COS(WDIR-ADIR(K)),0.)
+          END DO
 
           ! FRICTIONAL VELOCITY - US
           WNDREF=31.5
           WNDMOD=AMIN1(WNDSPD,66.)/WNDREF
           CD1=(.55+2.97*WNDMOD-1.49*WNDMOD**2)*1E-3
           US(I,J)=SQRT(CD1*WSPDSQ) ! U*
+          SIGS=.13*G/(28*US(I,J))
 
-          ! UPDATE WIND SEA INDEX
-          IF (WNDXX1 .GT. CXX1(I,J))WSXX1(I,J)=.TRUE.
-          IF (WNDXY1 .GT. CXY1(I,J))WSXY1(I,J)=.TRUE.
-          IF (WNDYY1 .GT. CYY1(I,J))WSYY1(I,J)=.TRUE.
-          IF (WNDYX1 .GT. CYX1(I,J))WSYX1(I,J)=.TRUE.
-          IF (WNDXX2 .GT. CXX2(I,J))WSXX2(I,J)=.TRUE.
-          IF (WNDXY2 .GT. CXY2(I,J))WSXY2(I,J)=.TRUE.
-          IF (WNDYY2 .GT. CYY2(I,J))WSYY2(I,J)=.TRUE.
-          IF (WNDYX2 .GT. CYX2(I,J))WSYX2(I,J)=.TRUE.
+          ! UPDATE WIND SEA IDX
+          DO K=1,NDIR
+            IF (WND(K) .GT. CPW(I,J,K))WSI(I,J,K)=.TRUE.
+          END DO
 
-          ! WAVE GROWTH FOR WIND-SEA
-          ! XX1
-          IF (WSXX1(I,J)) THEN
-            CTHXX1=AMAX1(.0,CSN)
-            ! ALPHA
-            GG=EXP(-1*(SIGS/FXX1(I,J))**4)
-            ALPXX1 = CALP*GG*(US(I,J)*CTHXX1)**4
-            ! BETA
-            BETXX1 = 28*US(I,J)*CTHXX1/CXX1(I,J)-1
-            BETXX1 = MAX(0., CBET*FXX1(I,J)*BETXX1)
-            ! ENERGY
-            VFLXX1 = ALPXX1+BETXX1*XXMOM1(I,J)
-          ELSE
-            VFLXX1 = 0.
-          ENDIF
+          ! WAVE GROWTH FOR WINDSEA
+          PWR=1.
 
-          ! XY1
-          IF (WSXY1(I,J)) THEN
-            CTHXY1=AMAX1(.0,S2H*(CSN+SNN))
-            ! ALPHA
-            GG=EXP(-1*(SIGS/FXY1(I,J))**4)
-            ALPXY1 = CALP*GG*(US(I,J)*CTHXY1)**4
-            ! BETA
-            BETXY1 = 28*US(I,J)*CTHXY1/CXY1(I,J)-1
-            BETXY1 = MAX(0., CBET*FXY1(I,J)*BETXY1)
-            ! ENERGY
-            VFLXY1 = ALPXY1+BETXY1*XYMOM1(I,J)
-          ELSE
-            VFLXY1 = 0.
-          ENDIF
-
-          ! YY1
-          IF (WSYY1(I,J)) THEN
-            CTHYY1=AMAX1(.0,SNN)
-            ! ALPHA
-            GG=EXP(-1*(SIGS/FYY1(I,J))**4)
-            ALPYY1 = CALP*GG*(US(I,J)*CTHYY1)**4
-            ! BETA
-            BETYY1 = 28*US(I,J)*CTHYY1/CYY1(I,J)-1
-            BETYY1 = MAX(0., CBET*FYY1(I,J)*BETYY1)
-            ! ENERGY
-            VFLYY1 = ALPYY1+BETYY1*YYMOM1(I,J)
-          ELSE
-            VFLYY1 = 0.
-          ENDIF 
-
-          ! YX1
-          IF (WSYX1(I,J)) THEN
-            CTHYX1=AMAX1(.0,S2H*(-1.*CSN+SNN))
-            ! ALPHA
-            GG=EXP(-1*(SIGS/FYX1(I,J))**4)
-            ALPYX1 = CALP*GG*(US(I,J)*CTHYX1)**4
-            ! BETA
-            BETYX1 = 28*US(I,J)*CTHYX1/CYX1(I,J)-1
-            BETYX1 = MAX(0., CBET*FYX1(I,J)*BETYX1)
-            ! ENERGY
-            VFLYX1 = ALPYX1+BETYX1*YXMOM1(I,J)
-          ELSE
-            VFLYX1 = 0.
-          ENDIF
-
-          ! XX2
-          IF (WSXX2(I,J)) THEN
-            CTHXX2=(-1.*AMIN1(0.,CSN))
-            ! ALPHA
-            GG=EXP(-1*(SIGS/FXX2(I,J))**4)
-            ALPXX2 = CALP*GG*(US(I,J)*CTHXX2)**4
-            ! BETA
-            BETXX2 = 28*US(I,J)*CTHXX2/CXX2(I,J)-1
-            BETXX2 = MAX(0., CBET*FXX2(I,J)*BETXX2)
-            ! ENERGY
-            VFLXX2 = ALPXX2+BETXX2*XXMOM2(I,J)
-          ELSE
-            VFLXX2 = 0.
-          ENDIF
-
-          ! XY2
-          IF (WSXY2(I,J)) THEN
-            CTHXY2=AMAX1(.0,S2H*(-1.*CSN-SNN))
-            ! ALPHA
-            GG=EXP(-1*(SIGS/FXY2(I,J))**4)
-            ALPXY2 = CALP*GG*(US(I,J)*CTHXY2)**4
-            ! BETA
-            BETXY2 = 28*US(I,J)*CTHXY2/CXY2(I,J)-1
-            BETXY2 = MAX(0., CBET*FXY2(I,J)*BETXY2)
-            ! ENERGY
-            VFLXY2 = ALPXY2+BETXY2*XYMOM2(I,J)
-          ELSE
-            VFLXY2 = 0.
-          ENDIF
-
-          ! YY2
-          IF (WSYY2(I,J)) THEN
-            CTHYY2=(-1.*AMIN1(0.,SNN))
-            ! ALPHA
-            GG=EXP(-1*(SIGS/FYY2(I,J))**4)
-            ALPYY2 = CALP*GG*(US(I,J)*CTHYY2)**4
-            ! BETA
-            BETYY2 = 28*US(I,J)*CTHYY2/CYY2(I,J)-1
-            BETYY2 = MAX(0., CBET*FYY2(I,J)*BETYY2)
-            ! ENERGY
-            VFLYY2 = ALPYY2+BETYY2*YYMOM2(I,J)
-          ELSE
-            VFLYY2 = 0.
-          ENDIF
-
-          ! YX2
-          IF (WSYX2(I,J)) THEN
-            CTHYX2=AMAX1(.0,S2H*(CSN-SNN))
-            ! ALPHA
-            GG=EXP(-1*(SIGS/FYX2(I,J))**4)
-            ALPYX2 = CALP*GG*(US(I,J)*CTHYX2)**4
-            ! BETA
-            BETYX2 = 28*US(I,J)*CTHYX2/CYX2(I,J)-1
-            BETYX2 = MAX(0., CBET*FYX2(I,J)*BETYX2)
-            ! ENERGY
-            VFLYX2 = ALPYX2+BETYX2*YXMOM2(I,J)
-          ELSE
-            VFLYX2 = 0.
-          ENDIF
+          DO K=1,NDIR
+            IF(WSI(I,J,K))THEN
+              CTH=AMAX1(.0,COS(WDIR-ADIR(K)))**PWR
+              ! ALPHA
+              GG=EXP(-1*(SIGS/FRW(I,J,K))**4)
+              ALP = CALP*GG*(US(I,J)*CTH)**4
+              ! BETA
+              BET = 28*US(I,J)*CTH/CPW(I,J,K)-1
+              BET = MAX(0., CBET*FRW(I,J,K)*BET)
+              ! ENERGY
+              VFW(K) = ALP+BET*EWW(I,J,K)
+            ELSE
+              VFW(K) = 0.
+            ENDIF
+          END DO
 
           ! FP UPDATE DURING WAVE GROWTH
           TMPC=(6.5E-4)**3*G**4*US(I,J)**2
-          IF (WSXX1(I,J)) THEN
-             TMP=3.08*(TMPC/XXMOM1(I,J)**3)**.1
-             FXX1(I,J)=MIN(FXX1(I,J), TMP*WTPI, 1.) ! CAP FP 08/2016 D.Y
-          END IF
-          IF (WSXY1(I,J)) THEN
-            TMP=3.08*(TMPC/XYMOM1(I,J)**3)**.1
-            FXY1(I,J)=MIN(FXY1(I,J), TMP*WTPI, 1.) ! CAP FP 08/2016 D.Y
-          END IF
-          IF (WSYY1(I,J)) THEN
-            TMP=3.08*(TMPC/YYMOM1(I,J)**3)**.1
-            FYY1(I,J)=MIN(FYY1(I,J), TMP*WTPI, 1.) ! CAP FP 08/2016 D.Y
-          END IF
-          IF (WSYX1(I,J)) THEN
-            TMP=3.08*(TMPC/YXMOM1(I,J)**3)**.1
-            FYX1(I,J)=MIN(FYX1(I,J), TMP*WTPI, 1.) ! CAP FP 08/2016 D.Y
-          END IF
-          IF (WSXX2(I,J)) THEN
-            TMP=3.08*(TMPC/XXMOM2(I,J)**3)**.1
-            FXX2(I,J)=MIN(FXX2(I,J), TMP*WTPI, 1.) ! CAP FP 08/2016 D.Y
-          END IF
-          IF (WSXY2(I,J)) THEN
-            TMP=3.08*(TMPC/XYMOM2(I,J)**3)**.1
-            FXY2(I,J)=MIN(FXY2(I,J), TMP*WTPI, 1.) ! CAP FP 05/2016 D.Y
-          END IF
-          IF (WSYY2(I,J)) THEN
-            TMP=3.08*(TMPC/YYMOM2(I,J)**3)**.1
-            FYY2(I,J)=MIN(FYY2(I,J), TMP*WTPI, 1.) ! CAP FP 08/2016 D.Y
-          END IF
-          IF (WSYX2(I,J)) THEN
-            TMP=3.08*(TMPC/YXMOM2(I,J)**3)**.1
-            FYX2(I,J)=MIN(FYX2(I,J), TMP*WTPI, 1.) ! CAP FP 08/2016 D.Y
-          END IF
+          DO K=1,NDIR
+            IF(WSI(I,J,K))THEN
+              TMP=3.08*(TMPC/EWW(I,J,K)**3)**.1
+              FRW(I,J,K)=MIN(FRW(I,J,K), TMP*WTPI, 1.)
+            END IF
+          END DO
             
           ! BOTTOM FRICTION
           UB=0
 
-          ! WIND-SEA ENERGY UPDATE
+          ! WINDSEA ENERGY UPDATE
           DTFAC=DTT
-          XXMOM1(I,J)=XXMOM1(I,J)+DTFAC*VFLXX1-DTT*CBF*UB*UB+EPS1
-          XYMOM1(I,J)=XYMOM1(I,J)+DTFAC*VFLXY1-DTT*CBF*UB*UB+EPS1
-          YYMOM1(I,J)=YYMOM1(I,J)+DTFAC*VFLYY1-DTT*CBF*UB*UB+EPS1
-          YXMOM1(I,J)=YXMOM1(I,J)+DTFAC*VFLYX1-DTT*CBF*UB*UB+EPS1
-          XXMOM2(I,J)=XXMOM2(I,J)+DTFAC*VFLXX2-DTT*CBF*UB*UB+EPS1
-          XYMOM2(I,J)=XYMOM2(I,J)+DTFAC*VFLXY2-DTT*CBF*UB*UB+EPS1
-          YYMOM2(I,J)=YYMOM2(I,J)+DTFAC*VFLYY2-DTT*CBF*UB*UB+EPS1
-          YXMOM2(I,J)=YXMOM2(I,J)+DTFAC*VFLYX2-DTT*CBF*UB*UB+EPS1
+          DO K=1,NDIR
+            EWW(I,J,K) = EWW(I,J,K)+DTFAC*VFW(K)-DTT*CBF*UB*UB+EPS1
+          END DO
 
           ! DISSIPATION
-          ETOT=XXMOM1(I,J)+XYMOM1(I,J)+YYMOM1(I,J)+YXMOM1(I,J)+
-     1    XXMOM2(I,J)+XYMOM2(I,J)+YYMOM2(I,J)+YXMOM2(I,J)
-          IF (ETOT > 0.)THEN
+          ETOT = SUM(EWW(I,J,1:NDIR))
+          IF (ETOT > 1E-9)THEN
             DETOT = 1./ETOT
-            SIGBAR = (XXMOM1(I,J)*FXX1(I,J)+XYMOM1(I,J)*FXY1(I,J)+
-     1      YYMOM1(I,J)*FYY1(I,J)+YXMOM1(I,J)*FYX1(I,J)+
-     2      XXMOM2(I,J)*FXX2(I,J)+XYMOM2(I,J)*FXY2(I,J)+
-     3      YYMOM2(I,J)*FYY2(I,J)+YXMOM2(I,J)*FYX2(I,J))*DETOT
-            SIGBAR = 2*PI*SIGBAR 
+            SIGBAR = 0.
+            WNBAR = 0.
+            DO K=1,NDIR
+              SIGBAR = SIGBAR + EWW(I,J,K)*FRW(I,J,K)
+              WNBAR = WNBAR + EWW(I,J,K)*WNM(I,J,K)
+            END DO
 
-            WNBAR = (XXMOM1(I,J)*WNXX1(I,J)+XYMOM1(I,J)*WNXY1(I,J)+
-     1      YYMOM1(I,J)*WNYY1(I,J)+YXMOM1(I,J)*WNYX1(I,J)+
-     2      XXMOM2(I,J)*WNXX2(I,J)+XYMOM2(I,J)*WNXY2(I,J)+
-     3      YYMOM2(I,J)*WNYY2(I,J)+YXMOM2(I,J)*WNYX2(I,J))*DETOT
+            SIGBAR = 2*PI*SIGBAR*DETOT
+            WNBAR = WNBAR*DETOT
             DDWNBAR = DELT/WNBAR
 
-            SDSC=AMIN1(.99,1.2*CDS*(WNBAR*ETOT**.5/SPM)**5.8*SIGBAR)
-            SDSXX1=SDSC*(1-DELT+WNXX1(I,J)*DDWNBAR)*XXMOM1(I,J)
-            SDSXY1=SDSC*(1-DELT+WNXY1(I,J)*DDWNBAR)*XYMOM1(I,J)
-            SDSYY1=SDSC*(1-DELT+WNYY1(I,J)*DDWNBAR)*YYMOM1(I,J)
-            SDSYX1=SDSC*(1-DELT+WNYX1(I,J)*DDWNBAR)*YXMOM1(I,J)
-            SDSXX2=SDSC*(1-DELT+WNXX2(I,J)*DDWNBAR)*XXMOM2(I,J)
-            SDSXY2=SDSC*(1-DELT+WNXY2(I,J)*DDWNBAR)*XYMOM2(I,J)
-            SDSYY2=SDSC*(1-DELT+WNYY2(I,J)*DDWNBAR)*YYMOM2(I,J)
-            SDSYX2=SDSC*(1-DELT+WNYX2(I,J)*DDWNBAR)*YXMOM2(I,J)
+            SDSC = AMIN1(.99,1.2*CDS*(WNBAR*ETOT**.5/SPM)**5.8*SIGBAR)
 
-            XXMOM1(I,J)=XXMOM1(I,J)-SDSXX1
-            XYMOM1(I,J)=XYMOM1(I,J)-SDSXY1
-            YYMOM1(I,J)=YYMOM1(I,J)-SDSYY1
-            YXMOM1(I,J)=YXMOM1(I,J)-SDSYX1
-            XXMOM2(I,J)=XXMOM2(I,J)-SDSXX2
-            XYMOM2(I,J)=XYMOM2(I,J)-SDSXY2
-            YYMOM2(I,J)=YYMOM2(I,J)-SDSYY2
-            YXMOM2(I,J)=YXMOM2(I,J)-SDSYX2
+            DO K=1,NDIR
+              SDS = SDSC*(1-DELT+WNM(I,J,K)*DDWNBAR)*EWW(I,J,K)
+              EWW(I,J,K) = EWW(I,J,K) - SDS
+            END DO
+          END IF
 
-          ENDIF
+          ! UPDATE WINDSEA CG AND CP
+          DPTH1 = MAX(.1, DPTH(I,J))
+          DO K=1,NDIR
+            CALL
+     1     CGCP(FRW(I,J,K),DPTH1,CGW(I,J,K),CPW(I,J,K),
+     2     WNM(I,J,K),NNW(I,J,K))
+          END DO
+
+          ! UPDATE WINDSEA CG ON OB
+          IF (I==2) THEN
+            CGW(1,J,:)=CGW(I,J,:)
+          END IF
+          IF (I==IMM1) THEN
+            CGW(IM,J,:)=CGW(I,J,:)
+          END IF
+c          IF (J==2) THEN
+c            CGW(I,1,:)=CGW(I,J,:)
+c          END IF
+c          IF (J==JMM1) THEN
+c            CGW(I,JM,:)=CGW(I,J,:)
+c          END IF
+
    90 CONTINUE
-C         SECOND LOOP: WIND-SEA ADVECTION
+C         SECOND LOOP: WINDSEA ADVECTION
+C         CONVERT WAVE ENERGY AND SPEED TO CURVILINEAR GRID  
+C         2019.6 D.Y
+          DO I=2,IMM1
+            DO J=JST,JND
+              FLD(I,J,:) = GSQRT(I,J)*EWW(I,J,:)
+              DO K=1,NDIR
+                CXTOT = CGW(I,J,K)*ECOS(K)
+                CYTOT = CGW(I,J,K)*ESIN(K)
+                CPT(I,J,K) = DTT*(CXTOT*DPDX(I,J)+CYTOT*DPDY(I,J))
+                CQT(I,J,K) = DTT*(CXTOT*DQDX(I,J)+CYTOT*DQDY(I,J))
+              END DO
+            END DO
+          END DO
+
+c         DO I=2,IMM1
+c            DO J=2,JMM1
+c              DO K=1,NDIR
+c                I1 = I - SIGN(1,INT(DPDX(I,J)))
+c                I2 = I + SIGN(1,INT(DPDX(I,J)))
+c                J1 = J - SIGN(1,INT(DQDY(I,J)))
+c                J2 = J + SIGN(1,INT(DQDY(I,J)))
+c                IF(CPT(I,J,K)>0)THEN
+c                  IF(D(I1,J)<DMIN)CPT(I,J,K)=MAX(CPT(I1,J,K),CPT(I,J,K))
+c                ELSE
+c                  IF(D(I2,J)<DMIN)CPT(I,J,K)=MIN(CPT(I2,J,K),CPT(I,J,K))
+c                END IF
+c                IF(CQT(I,J,K)>0)THEN
+c                  IF(D(I,J1)<DMIN)CQT(I,J,K)=MAX(CQT(I,J1,K),CQT(I,J,K))
+c                ELSE
+c                  IF(D(I,J2)<DMIN)CQT(I,J,K)=MIN(CQT(I,J2,K),CQT(I,J,K))
+c                END IF
+c              END DO
+c            END DO
+c          END DO
+
+C         COMPUTE FLUX ITEMS
+C         2019.6 D.Y
+          DO I=2,IMM1
+            DO J=JST,JND
+              VFX(I,J,:) = MAX(CPT(I,J,:), 0.) * FLD(I,J,:)+
+     1                     MIN(CPT(I+1,J,:), 0.) * FLD(I+1,J,:)
+              VFY(I,J,:) = MAX(CQT(I,J,:), 0.) * FLD(I,J,:) +
+     1                     MIN(CQT(I,J2(J),:), 0.) * FLD(I,J2(J),:)
+
+c              VFX(I,J,:) = MAX(CPT(I,J,:), 0.) * FLD(I,J,:)+
+c     1                     MIN(CPT(I,J,:), 0.) * FLD(I+1,J,:)
+c              VFY(I,J,:) = MAX(CQT(I,J,:), 0.) * FLD(I,J,:) +
+c     1                     MIN(CQT(I,J,:), 0.) * FLD(I,J+1,:)
+            END DO
+          END DO
+
+C         WINDSEA ENERGY PROPAGATION
+          DO I=2,IMM1
+            DO J=JST,JND
+              IF (D(I,J).GT.DMIN) CYCLE
+              FLD(I,J,:) = FLD(I,J,:) + VFX(I-1,J,:) - VFX(I,J,:)
+     1                                + VFY(I,J1(J),:) - VFY(I,J,:)
+            END DO
+          END DO
+
+C         CONVERT WAVE ENERGY BACK TO RECTILINEAR GRID
+C         2019.6 D.Y
+          DO I=2,IMM1
+            DO J=JST,JND
+              EWW(I,J,:)=FLD(I,J,:)/GSQRT(I,J)
+            END DO
+          END DO
+
+C         WINDSEA ENERGY TO SWELL ON NO-WINDSEA POINTS
           DO 91 I=2,IMM1
-            DO 91 J=2,JMM1
+            DO 91 J=JST,JND
               IF(D(I,J).GT.DMIN) GO TO 91
-              
-              ! UPDATE CG AND CP
-              DPTH1 = MAX(.1, DPTH(I,J))
-              CALL
-     1 CGCP(FXX1(I,J),DPTH1,CGXX1(I,J),CXX1(I,J),WNXX1(I,J),NNXX1(I,J))
-              CALL
-     1 CGCP(FXY1(I,J),DPTH1,CGXY1(I,J),CXY1(I,J),WNXY1(I,J),NNXY1(I,J))
-              CALL
-     1 CGCP(FYY1(I,J),DPTH1,CGYY1(I,J),CYY1(I,J),WNYY1(I,J),NNYY1(I,J))
-              CALL
-     1 CGCP(FYX1(I,J),DPTH1,CGYX1(I,J),CYX1(I,J),WNYX1(I,J),NNYX1(I,J))
-              CALL
-     1 CGCP(FXX2(I,J),DPTH1,CGXX2(I,J),CXX2(I,J),WNXX2(I,J),NNXX2(I,J))
-              CALL
-     1 CGCP(FXY2(I,J),DPTH1,CGXY2(I,J),CXY2(I,J),WNXY2(I,J),NNXY2(I,J))
-              CALL
-     1 CGCP(FYY2(I,J),DPTH1,CGYY2(I,J),CYY2(I,J),WNYY2(I,J),NNYY2(I,J))
-              CALL
-     1 CGCP(FYX2(I,J),DPTH1,CGYX2(I,J),CYX2(I,J),WNYX2(I,J),NNYX2(I,J))
-
-              ! ADVECTION X-COMPONENTS
-              XXFLX1=
-     1        4*(CGXX1(I,J)*XXMOM1(I,J)-CGXX1(I-1,J)*XXMOM1(I-1,J)) ! DX
-              XYFLX1=
-     1        4*(CGXY1(I,J)*XYMOM1(I,J)-CGXY1(I-1,J-1)*XYMOM1(I-1,J-1)) !DX*SQRT(2)
-              XXFLX2=
-     1        4*(CGXX2(I+1,J)*XXMOM2(I+1,J)-CGXX2(I,J)*XXMOM2(I,J)) !DX
-              XYFLX2=
-     1        4*(CGXY2(I+1,J+1)*XYMOM2(I+1,J+1)-CGXY2(I,J)*XYMOM2(I,J)) !DX*SQRT(2)
-              XXMOM1(I,J)=XXMOM1(I,J)-DTTDS*XXFLX1
-              XYMOM1(I,J)=XYMOM1(I,J)-S2H*DTTDS*XYFLX1
-              XXMOM2(I,J)=XXMOM2(I,J)+DTTDS*XXFLX2
-              XYMOM2(I,J)=XYMOM2(I,J)+S2H*DTTDS*XYFLX2
-              
-              ! ADVECTION Y-COMPONENTS
-              YYFLX1=
-     1        4*(CGYY1(I,J)*YYMOM1(I,J)-CGYY1(I,J-1)*YYMOM1(I,J-1)) ! DX
-              YXFLX1=
-     1        4*(CGYX1(I,J)*YXMOM1(I,J)-CGYX1(I+1,J-1)*YXMOM1(I+1,J-1)) !DX*SQRT(2)
-              YYFLX2=
-     1        4*(CGYY2(I,J+1)*YYMOM2(I,J+1)-CGYY2(I,J)*YYMOM2(I,J)) ! DX
-              YXFLX2=
-     1        4*(CGYX2(I-1,J+1)*YXMOM2(I-1,J+1)-CGYX2(I,J)*YXMOM2(I,J)) !DX*SQRT(2)
-              YYMOM1(I,J)=YYMOM1(I,J)-DTTDS*YYFLX1
-              YXMOM1(I,J)=YXMOM1(I,J)-S2H*DTTDS*YXFLX1
-              YYMOM2(I,J)=YYMOM2(I,J)+DTTDS*YYFLX2
-              YXMOM2(I,J)=YXMOM2(I,J)+S2H*DTTDS*YXFLX2
-
-
-              ! ENERGY TO SWELL ON NO-WIND-SEA LOCATION
-              IF(.NOT. WSXX1(I,J))THEN
-                 ERXX1(I,J)=ERXX1(I,J)+XXMOM1(I,J)
-                 XXMOM1(I,J)=0.
-                 IF (FRXX1(I,J) .GT. FXX1(I,J))THEN
-                   FRXX1(I,J)=FXX1(I,J)
-                 END IF
-              END IF
-              IF(.NOT. WSXY1(I,J))THEN
-                ERXY1(I,J)=ERXY1(I,J)+XYMOM1(I,J)
-                XYMOM1(I,J)=0.
-                IF (FRXY1(I,J) .GT. FXY1(I,J))THEN
-                  FRXY1(I,J)=FXY1(I,J)
+              DO K=1,NDIR
+                IF(.NOT. WSI(I,J,K))THEN
+                  ESW(I,J,K)=ESW(I,J,K)+EWW(I,J,K)
+                  EWW(I,J,K)=0.
+                  IF (FRS(I,J,K) .GT. FRW(I,J,K))THEN
+                    FRS(I,J,K)=FRW(I,J,K)
+                  END IF
                 END IF
-              END IF
-              IF(.NOT. WSYY1(I,J))THEN
-                ERYY1(I,J)=ERYY1(I,J)+YYMOM1(I,J)
-                YYMOM1(I,J)=0.
-                IF (FRYY1(I,J) .GT. FYY1(I,J))THEN
-                  FRYY1(I,J)=FYY1(I,J)
-                END IF
-              END IF
-              IF(.NOT. WSYX1(I,J))THEN
-                ERYX1(I,J)=ERYX1(I,J)+YXMOM1(I,J)
-                YXMOM1(I,J)=0.
-                IF (FRYX1(I,J) .GT. FYX1(I,J))THEN
-                  FRYX1(I,J)=FYX1(I,J)
-                END IF
-              END IF
-              IF(.NOT. WSXX2(I,J))THEN
-                ERXX2(I,J)=ERXX2(I,J)+XXMOM2(I,J)
-                XXMOM2(I,J)=0.
-                IF (FRXX2(I,J) .GT. FXX2(I,J))THEN
-                  FRXX2(I,J)=FXX2(I,J)
-                END IF
-              END IF
-              IF(.NOT. WSXY2(I,J))THEN
-                ERXY2(I,J)=ERXY2(I,J)+XYMOM2(I,J)
-                XYMOM2(I,J)=0.
-                IF (FRXY2(I,J) .GT. FXY2(I,J))THEN
-                  FRXY2(I,J)=FXY2(I,J)
-                END IF
-              END IF
-              IF(.NOT. WSYY2(I,J))THEN
-                ERYY2(I,J)=ERYY2(I,J)+YYMOM2(I,J)
-                YYMOM2(I,J)=0.
-                IF (FRYY2(I,J) .GT. FYY2(I,J))THEN
-                  FRYY2(I,J)=FYY2(I,J)
-                END IF
-              END IF
-              IF(.NOT. WSYX2(I,J))THEN
-                ERYX2(I,J)=ERYX2(I,J)+YXMOM2(I,J)
-                YXMOM2(I,J)=0.
-                IF (FRYX2(I,J) .GT. FYX2(I,J))THEN
-                  FRYX2(I,J)=FYX2(I,J)
-                END IF
-              END IF
+              END DO
    91     CONTINUE
 
-C         LOOP3: SWELL ADVECTION
-c          GO TO 88
-          ! UPDATE SWELL FP
-          ! XX1, XY1
-          DO 93 I=IMM1,2,-1
-            DO 93 J=JMM1,2,-1
-              IF(D(I,J).GT.DMIN) GO TO 93
-              IF(I .GT. 2 .AND. J .GT. 2)THEN
-                IF(D(I-1,J)<DMIN)THEN
-                  FRXX1(I,J)=AMIN1(FRXX1(I,J),FRXX1(I-1,J))
-                END IF
-                IF(D(I-1,J-1)<DMIN)THEN
-                  FRXY1(I,J)=AMIN1(FRXY1(I,J),FRXY1(I-1,J-1))
-                END IF
-              END IF
-   93     CONTINUE
-          ! YY1, YX1
-          DO 94 I=2,IMM1
-            DO 94 J=JMM1,2,-1
-              IF(D(I,J).GT.DMIN) GO TO 94
-              IF(I .LT. IMM1 .AND. J .GT. 2)THEN
-                IF(D(I,J-1)<DMIN)THEN
-                  FRYY1(I,J)=AMIN1(FRYY1(I,J),FRYY1(I,J-1))
-                END IF
-                IF(D(I+1,J-1)<DMIN)THEN
-                  FRYX1(I,J)=AMIN1(FRYX1(I,J),FRYX1(I+1,J-1))
-                END IF
-              END IF
-   94     CONTINUE
-          ! XX2, XY2
-          DO 95 I=2,IMM1
-            DO 95 J=2,JMM1
-              IF(D(I,J).GT.DMIN) GO TO 95
-              IF(I .LT. IMM1 .AND. J .LT. JMM1)THEN
-                IF(D(I+1,J)<DMIN)THEN
-                  FRXX2(I,J)=AMIN1(FRXX2(I,J),FRXX2(I+1,J))
-                END IF
-                IF(D(I+1,J+1)<DMIN)THEN
-                  FRXY2(I,J)=AMIN1(FRXY2(I,J),FRXY2(I+1,J+1))
-                END IF
-              END IF
-   95     CONTINUE
-          ! YY2, YX2
-          DO 96 I=IMM1,2,-1
-            DO 96 J=2,JMM1
-              IF(D(I,J).GT.DMIN) GO TO 96
-              IF(I .GT. 2 .AND. J .LT. JMM1)THEN
-                IF(D(I,J+1)<DMIN)THEN
-                  FRYY2(I,J)=AMIN1(FRYY2(I,J),FRYY2(I,J+1))
-                END IF
-                IF(D(I-1,J+1)<DMIN)THEN
-                  FRYX2(I,J)=AMIN1(FRYX2(I,J),FRYX2(I-1,J+1))
-                END IF
-              END IF
-   96     CONTINUE
+C         UPDATE SWELL FREQUENCY ACCORDING TO UPWIND GRIDS
+C         2019/9 D.Y
+C          GO TO 87
+          DO K=1,NDIR
+            IF (ADIR(K)>=0. .AND. ADIR(K)<.25*PI)THEN
+              DO 71 I=IMM1,2,-1
+                DO 71 J=JND,JST,-1
+                  IF(D(I,J).GT.DMIN) GO TO 71
+                  IF(I .GE. 2)THEN
+                    IF(D(I-1,J)<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J,K))
+                    END IF
+                  END IF
+                  IF(I .GE. 2 .AND. J .GE.JST)THEN
+                    IF(D(I-1,J1(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J1(J),K))
+                    END IF
+                  END IF
+                  IF(J .GE.JST)THEN
+                    IF(D(I,J1(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I,J1(J),K))
+                    END IF
+                  END IF
+c                  IF(I .LT. IMM1 .AND. J .GT.2)THEN
+c                    IF(D(I+1,J-1)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J-1,K))
+c                    END IF
+c                  END IF
+c                  IF(I .LT. IMM1)THEN
+c                    IF(D(I+1,J)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J,K))
+c                    END IF
+c                  END IF
+c                  IF(I .LT. IMM1 .AND. J .LT. JMM1)THEN
+c                    IF(D(I+1,J+1)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J+1,K))
+c                    END IF
+c                  END IF
+                  IF(J .LE. JND)THEN
+                    IF(D(I,J2(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I,J2(J),K))
+                    END IF
+                  END IF
+                  IF(I .GE. 2 .AND. J .LE. JND)THEN
+                    IF(D(I-1,J2(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J2(J),K))
+                    END IF
+                  END IF
+   71         CONTINUE
+            ELSE IF (ADIR(K)>=.25*PI .AND. ADIR(K)<.5*PI)THEN
+              DO 72 I=IMM1,2,-1
+                DO 72 J=JND,JST,-1
+                  IF(D(I,J).GT.DMIN) GO TO 72
+                  IF(I .GE. 2)THEN
+                    IF(D(I-1,J)<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J,K))
+                    END IF
+                  END IF
+                  IF(I .GE. 2 .AND. J .GE.JST)THEN
+                    IF(D(I-1,J1(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J1(J),K))
+                    END IF
+                  END IF
+                  IF(J .GE.JST)THEN
+                    IF(D(I,J1(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I,J1(J),K))
+                    END IF
+                  END IF
+                  IF(I .LE. IMM1 .AND. J .GE.JST)THEN
+                    IF(D(I+1,J1(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J1(J),K))
+                    END IF
+                  END IF
+c                  IF(I .LT. IMM1)THEN
+c                    IF(D(I+1,J)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J,K))
+c                    END IF
+c                  END IF
+c                  IF(I .LT. IMM1 .AND. J .LT. JMM1)THEN
+c                    IF(D(I+1,J+1)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J+1,K))
+c                    END IF
+c                  END IF
+c                  IF(J .LT. JMM1)THEN
+c                    IF(D(I,J+1)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I,J+1,K))
+c                    END IF
+c                  END IF
+                  IF(I .GE. 2 .AND. J .LE. JND)THEN
+                    IF(D(I-1,J2(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J2(J),K))
+                    END IF
+                  END IF
+   72         CONTINUE
+            ELSE IF (ADIR(K)>=.5*PI .AND. ADIR(K)<.75*PI)THEN
+              DO 73 I=2,IMM1
+                DO 73 J=JND,JST,-1
+                  IF(D(I,J).GT.DMIN) GO TO 73
+                  IF(I .GE. 2)THEN
+                    IF(D(I-1,J)<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J,K))
+                    END IF
+                  END IF
+                  IF(I .GE. 2 .AND. J .GE.JST)THEN
+                    IF(D(I-1,J1(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J1(J),K))
+                    END IF
+                  END IF
+                  IF(J .GE.JST)THEN
+                    IF(D(I,J1(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I,J1(J),K))
+                    END IF
+                  END IF
+                  IF(I .LE. IMM1 .AND. J .GE.JST)THEN
+                    IF(D(I+1,J1(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J1(J),K))
+                    END IF
+                  END IF
+                  IF(I .LE. IMM1)THEN
+                    IF(D(I+1,J)<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J,K))
+                    END IF
+                  END IF
+c                  IF(I .LT. IMM1 .AND. J .LT. JMM1)THEN
+c                    IF(D(I+1,J+1)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J+1,K))
+c                    END IF
+c                  END IF
+c                  IF(J .LT. JMM1)THEN
+c                    IF(D(I,J+1)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I,J+1,K))
+c                    END IF
+c                  END IF
+c                  IF(I .GT. 2 .AND. J .LT. JMM1)THEN
+c                    IF(D(I-1,J+1)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J+1,K))
+c                    END IF
+c                  END IF
+   73         CONTINUE
+            ELSE IF (ADIR(K)>=.75*PI .AND. ADIR(K)<PI)THEN
+              DO 74 I=2,IMM1
+                DO 74 J=JND,JST,-1
+                  IF(D(I,J).GT.DMIN) GO TO 74
+c                  IF(I .GT. 2)THEN
+c                    IF(D(I-1,J)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J,K))
+c                    END IF
+c                  END IF
+                  IF(I .GE. 2 .AND. J .GE.JST)THEN
+                    IF(D(I-1,J1(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J1(J),K))
+                    END IF
+                  END IF
+                  IF(J .GE.JST)THEN
+                    IF(D(I,J1(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I,J1(J),K))
+                    END IF
+                  END IF
+                  IF(I .LE. IMM1 .AND. J .GE.JST)THEN
+                    IF(D(I+1,J1(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J1(J),K))
+                    END IF
+                  END IF
+                  IF(I .LE. IMM1)THEN
+                    IF(D(I+1,J)<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J,K))
+                    END IF
+                  END IF
+                  IF(I .LE. IMM1 .AND. J .LE. JND)THEN
+                    IF(D(I+1,J2(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J2(J),K))
+                    END IF
+                  END IF
+c                  IF(J .LT. JMM1)THEN
+c                    IF(D(I,J+1)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I,J+1,K))
+c                    END IF
+c                  END IF
+c                  IF(I .GT. 2 .AND. J .LT. JMM1)THEN
+c                    IF(D(I-1,J+1)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J+1,K))
+c                    END IF
+c                  END IF
+   74         CONTINUE
+            ELSE IF (ADIR(K)>=PI .AND. ADIR(K)<1.25*PI)THEN
+              DO 75 I=2,IMM1
+                DO 75 J=JST,JND
+                  IF(D(I,J).GT.DMIN) GO TO 75
+c                  IF(I .GT. 2)THEN
+c                    IF(D(I-1,J)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J,K))
+c                    END IF
+c                  END IF
+c                  IF(I .GT. 2 .AND. J .GT.2)THEN
+c                    IF(D(I-1,J-1)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J-1,K))
+c                    END IF
+c                  END IF
+                  IF(J .GE.JST)THEN
+                    IF(D(I,J1(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I,J1(J),K))
+                    END IF
+                  END IF
+                  IF(I .LE. IMM1 .AND. J .GE.JST)THEN
+                    IF(D(I+1,J1(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J1(J),K))
+                    END IF
+                  END IF
+                  IF(I .LE. IMM1)THEN
+                    IF(D(I+1,J)<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J,K))
+                    END IF
+                  END IF
+                  IF(I .LE. IMM1 .AND. J .LE. JND)THEN
+                    IF(D(I+1,J2(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J2(J),K))
+                    END IF
+                  END IF
+                  IF(J .LE. JND)THEN
+                    IF(D(I,J2(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I,J2(J),K))
+                    END IF
+                  END IF
+c                  IF(I .GT. 2 .AND. J .LT. JMM1)THEN
+c                    IF(D(I-1,J+1)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J+1,K))
+c                    END IF
+c                  END IF
+   75         CONTINUE
+            ELSE IF (ADIR(K)>=1.25*PI .AND. ADIR(K)<1.5*PI)THEN
+              DO 76 I=2,IMM1
+                DO 76 J=JST,JND
+                  IF(D(I,J).GT.DMIN) GO TO 76
+c                  IF(I .GT. 2)THEN
+c                    IF(D(I-1,J)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J,K))
+c                    END IF
+c                  END IF
+c                  IF(I .GT. 2 .AND. J .GT.2)THEN
+c                    IF(D(I-1,J-1)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J-1,K))
+c                    END IF
+c                  END IF
+c                  IF(J .GT.2)THEN
+c                    IF(D(I,J-1)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I,J-1,K))
+c                    END IF
+c                  END IF
+                  IF(I .LE. IMM1 .AND. J .GE.JST)THEN
+                    IF(D(I+1,J1(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J1(J),K))
+                    END IF
+                  END IF
+                  IF(I .LE. IMM1)THEN
+                    IF(D(I+1,J)<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J,K))
+                    END IF
+                  END IF
+                  IF(I .LE. IMM1 .AND. J .LE. JND)THEN
+                    IF(D(I+1,J2(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J2(J),K))
+                    END IF
+                  END IF
+                  IF(J .LE. JND)THEN
+                    IF(D(I,J2(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I,J2(J),K))
+                    END IF
+                  END IF
+                  IF(I .GE. 2 .AND. J .LE. JND)THEN
+                    IF(D(I-1,J2(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J2(J),K))
+                    END IF
+                  END IF
+   76         CONTINUE
+            ELSE IF (ADIR(K)>=1.5*PI .AND. ADIR(K)<1.75*PI)THEN
+              DO 77 I=IMM1,2,-1
+                DO 77 J=JST,JND
+                  IF(D(I,J).GT.DMIN) GO TO 77
+                  IF(I .GE. 2)THEN
+                    IF(D(I-1,J)<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J,K))
+                    END IF
+                  END IF
+c                  IF(I .GT. 2 .AND. J .GT.2)THEN
+c                    IF(D(I-1,J-1)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J-1,K))
+c                    END IF
+c                  END IF
+c                  IF(J .GT.2)THEN
+c                    IF(D(I,J-1)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I,J-1,K))
+c                    END IF
+c                  END IF
+c                  IF(I .LT. IMM1 .AND. J .GT.2)THEN
+c                    IF(D(I+1,J-1)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J-1,K))
+c                    END IF
+c                  END IF
+                  IF(I .LE. IMM1)THEN
+                    IF(D(I+1,J)<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J,K))
+                    END IF
+                  END IF
+                  IF(I .LE. IMM1 .AND. J .LE. JND)THEN
+                    IF(D(I+1,J2(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J2(J),K))
+                    END IF
+                  END IF
+                  IF(J .LE. JND)THEN
+                    IF(D(I,J2(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I,J2(J),K))
+                    END IF
+                  END IF
+                  IF(I .GE. 2 .AND. J .LE. JND)THEN
+                    IF(D(I-1,J2(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J2(J),K))
+                    END IF
+                  END IF
+   77         CONTINUE
+            ELSE
+             DO 78 I=IMM1,2,-1
+                DO 78 J=JST,JND
+                  IF(D(I,J).GT.DMIN) GO TO 78
+                  IF(I .GE. 2)THEN
+                    IF(D(I-1,J)<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J,K))
+                    END IF
+                  END IF
+                  IF(I .GE. 2 .AND. J .GE.JST)THEN
+                    IF(D(I-1,J1(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J1(J),K))
+                    END IF
+                  END IF
+c                  IF(J .GT.2)THEN
+c                    IF(D(I,J-1)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I,J-1,K))
+c                    END IF
+c                  END IF
+c                  IF(I .LT. IMM1 .AND. J .GT.2)THEN
+c                    IF(D(I+1,J-1)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J-1,K))
+c                    END IF
+c                  END IF
+c                  IF(I .LT. IMM1)THEN
+c                    IF(D(I+1,J)<DMIN)THEN
+c                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J,K))
+c                    END IF
+c                  END IF
+                  IF(I .LE. IMM1 .AND. J .LE. JND)THEN
+                    IF(D(I+1,J2(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I+1,J2(J),K))
+                    END IF
+                  END IF
+                  IF(J .LE. JND)THEN
+                    IF(D(I,J2(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I,J2(J),K))
+                    END IF
+                  END IF
+                  IF(I .GE. 2 .AND. J .LE. JND)THEN
+                    IF(D(I-1,J2(J))<DMIN)THEN
+                      FRS(I,J,K)=AMIN1(FRS(I,J,K),FRS(I-1,J2(J),K))
+                    END IF
+                  END IF
+   78         CONTINUE
+            ENDIF
+          END DO
+   87     CONTINUE
 
           DO 92 I=2,IMM1
-           DO 92 J=2,JMM1
-             IF(D(I,J).GT.DMIN) GO TO 92 
-             ! UPDATE SWELL CG AND CP
-             DPTH1 = MAX(.1, DPTH(I,J))
-             CALL CGCP(FRXX1(I,J),DPTH1,GRXX1(I,J),DUM1,DUM1,NRXX1(I,J))
-             CALL CGCP(FRXY1(I,J),DPTH1,GRXY1(I,J),DUM1,DUM1,NRXY1(I,J))
-             CALL CGCP(FRYY1(I,J),DPTH1,GRYY1(I,J),DUM1,DUM1,NRYY1(I,J))
-             CALL CGCP(FRYX1(I,J),DPTH1,GRYX1(I,J),DUM1,DUM1,NRYX1(I,J))
-             CALL CGCP(FRXX2(I,J),DPTH1,GRXX2(I,J),DUM1,DUM1,NRXX2(I,J))
-             CALL CGCP(FRXY2(I,J),DPTH1,GRXY2(I,J),DUM1,DUM1,NRXY2(I,J))
-             CALL CGCP(FRYY2(I,J),DPTH1,GRYY2(I,J),DUM1,DUM1,NRYY2(I,J))
-             CALL CGCP(FRYX2(I,J),DPTH1,GRYX2(I,J),DUM1,DUM1,NRYX2(I,J))
-             ! ADVECTION: X-COMPONENTS
-             XXFLX1=
-     1       4*(GRXX1(I,J)*ERXX1(I,J)-GRXX1(I-1,J)*ERXX1(I-1,J)) ! DX
-             XYFLX1=
-     1       4*(GRXY1(I,J)*ERXY1(I,J)-GRXY1(I-1,J-1)*ERXY1(I-1,J-1)) !DX*SQRT(2)
-             XXFLX2=
-     1       4*(GRXX2(I+1,J)*ERXX2(I+1,J)-GRXX2(I,J)*ERXX2(I,J)) !DX
-             XYFLX2=
-     1       4*(GRXY2(I+1,J+1)*ERXY2(I+1,J+1)-GRXY2(I,J)*ERXY2(I,J)) !DX*SQRT(2)
-             ERXX1(I,J)=ERXX1(I,J)-DTTDS*XXFLX1
-             ERXY1(I,J)=ERXY1(I,J)-S2H*DTTDS*XYFLX1
-             ERXX2(I,J)=ERXX2(I,J)+DTTDS*XXFLX2
-             ERXY2(I,J)=ERXY2(I,J)+S2H*DTTDS*XYFLX2
-             ! ADVECTION: Y-COMPONENTS
-             YYFLX1=
-     1       4*(GRYY1(I,J)*ERYY1(I,J)-GRYY1(I,J-1)*ERYY1(I,J-1)) ! DX
-             YXFLX1=
-     1       4*(GRYX1(I,J)*ERYX1(I,J)-GRYX1(I+1,J-1)*ERYX1(I+1,J-1)) !DX*SQRT(2)
-             YYFLX2=
-     1       4*(GRYY2(I,J+1)*ERYY2(I,J+1)-GRYY2(I,J)*ERYY2(I,J)) ! DX
-             YXFLX2=
-     1       4*(GRYX2(I-1,J+1)*ERYX2(I-1,J+1)-GRYX2(I,J)*ERYX2(I,J)) !DX*SQRT(2)
-             ERYY1(I,J)=ERYY1(I,J)-DTTDS*YYFLX1
-             ERYX1(I,J)=ERYX1(I,J)-S2H*DTTDS*YXFLX1
-             ERYY2(I,J)=ERYY2(I,J)+DTTDS*YYFLX2
-             ERYX2(I,J)=ERYX2(I,J)+S2H*DTTDS*YXFLX2
-   92     CONTINUE    
+            DO 92 J=JST,JND
+              IF(D(I,J).GT.DMIN) GO TO 92
+          ! UPDATE SWELL CG AND CP
+              DPTH1 = MAX(.1, DPTH(I,J))
+              DO K=1,NDIR
+            CALL CGCP(FRS(I,J,K),DPTH1,CGS(I,J,K),DUM1,DUM1,NNS(I,J,K))
+              END DO
 
-          ! SPATIAL AVERAGING
+          ! UPDATE SWELL CG ON OB
+              IF (I==3) THEN
+                DO K=1,NDIR
+                  CGS(1:2,J,K)=CGS(I,J,K)
+                END DO
+              END IF
+              IF (I==IMM1-1) THEN
+                DO K=1,NDIR
+                  CGS(IMM1:IM,J,K)=CGS(I,J,K)
+                END DO
+              END IF
+c              IF (J==3) THEN
+c                DO K=1,NDIR
+c                  CGS(I,1:2,K)=CGS(I,J,K)
+c                END DO
+c              END IF
+c              IF (J==JMM1-1) THEN
+c                DO K=1,NDIR
+c                  CGS(I,JMM1:JM,K)=CGS(I,J,K)
+c                END DO
+c              END IF
+
+   92     CONTINUE
+
+C         LOOP3: SWELL ADVECTION
+C         CONVERT WAVE ENERGY AND SPEED TO CURVILINEAR GRID  
+C         2019.6 D.Y
+          DO I=2,IMM1
+            DO J=JST,JND
+              FLD(I,J,:) = GSQRT(I,J)*ESW(I,J,:)
+              DO K=1,NDIR
+                CXTOT = CGS(I,J,K)*ECOS(K)
+                CYTOT = CGS(I,J,K)*ESIN(K)
+                CPT(I,J,K) = DTT*(CXTOT*DPDX(I,J)+CYTOT*DPDY(I,J))
+                CQT(I,J,K) = DTT*(CXTOT*DQDX(I,J)+CYTOT*DQDY(I,J))
+              END DO
+            END DO
+          END DO
+c          DO I=2,IMM1
+c            DO J=JST,JND
+c              DO K=1,NDIR
+c                I1 = I - SIGN(1,INT(DPDX(I,J)))
+c                I2 = I + SIGN(1,INT(DPDX(I,J)))
+c                J1 = J - SIGN(1,INT(DQDY(I,J)))
+c                J2 = J + SIGN(1,INT(DQDY(I,J)))
+c                IF(CPT(I,J,K)>0)THEN
+c                  IF(D(I1,J)<DMIN)CPT(I,J,K)=MAX(CPT(I1,J,K),CPT(I,J,K))
+c                ELSE
+c                  IF(D(I2,J)<DMIN)CPT(I,J,K)=MIN(CPT(I2,J,K),CPT(I,J,K))
+c                END IF
+c                IF(CQT(I,J,K)>0)THEN
+c                  IF(D(I,J1)<DMIN)CQT(I,J,K)=MAX(CQT(I,J1,K),CQT(I,J,K))
+c                ELSE
+c                  IF(D(I,J2)<DMIN)CQT(I,J,K)=MIN(CQT(I,J2,K),CQT(I,J,K))
+c                END IF
+c              END DO
+c            END DO
+c         END DO
+
+C         COMPUTE FLUX ITEMS
+C         2019.6 D.Y
+          DO I=2,IMM1
+            DO J=JST,JND
+c              VFX(I,J,:)=MAX(MIN(CPT(I,J,:),CPT(I-1,J,:)),0.)*FLD(I,J,:)
+c     1                +MIN(MAX(CPT(I,J,:),CPT(I+1,J,:)),0.)*FLD(I+1,J,:)
+c              VFY(I,J,:)=MAX(MIN(CQT(I,J,:),CQT(I,J-1,:)),0.)*FLD(I,J,:)
+c     1                +MIN(MAX(CQT(I,J,:),CQT(I,J+1,:)),0.)*FLD(I,J+1,:)
+
+              VFX(I,J,:) = MAX(CPT(I,J,:), 0.) * FLD(I,J,:)+
+     1                     MIN(CPT(I+1,J,:), 0.) * FLD(I+1,J,:)
+              VFY(I,J,:) = MAX(CQT(I,J,:), 0.) * FLD(I,J,:) +
+     1                     MIN(CQT(I,J2(J),:), 0.) * FLD(I,J2(J),:)
+
+c              VFX(I,J,:) = MAX(CPT(I,J,:), 0.) * FLD(I,J,:)+
+c     1                     MIN(CPT(I,J,:), 0.) * FLD(I+1,J,:)
+c              VFY(I,J,:) = MAX(CQT(I,J,:), 0.) * FLD(I,J,:) +
+c     1                     MIN(CQT(I,J,:), 0.) * FLD(I,J+1,:)
+            END DO
+          END DO
+C         SWELL ENERGY PROPAGATION
+          DO I=2,IMM1
+            DO J=JST,JND
+              IF (D(I,J).GT.DMIN) CYCLE
+                FLD(I,J,:) = FLD(I,J,:) + VFX(I-1,J,:) - VFX(I,J,:)
+     1                                  + VFY(I,J1(J),:) - VFY(I,J,:)
+            END DO
+          END DO
+
+C         CONVERT WAVE ENERGY BACK TO RECTILINEAR GRID  
+C         2019.6 D.Y
+          DO I=2,IMM1
+            DO J=JST,JND
+              ESW(I,J,:)=FLD(I,J,:)/GSQRT(I,J)
+            END DO
+          END DO
+
+C         SPATIAL AVERATING
 c          GO TO 88
-          DO 80 I=2,IMM1
-            DO 80 J=2,JMM1
-              IF(D(I,J).GT.DMIN) GO TO 80
-              ! WIND-SEA
-              ! XX1
-              XXMOM1(I,J)=CGXX1(I,J)*DTT*(AC1*
-     1 (XXMOM1(I-1,J-1)+XXMOM1(I-1,J+1)+XXMOM1(I+1,J-1)+XXMOM1(I+1,J+1))
-     2 +AC2*(XXMOM1(I,J-1)+XXMOM1(I,J+1)))+
-     3 (1-AC3*DTT*CGXX1(I,J))*XXMOM1(I,J)
-              ! YY1
-              YYMOM1(I,J)=CGYY1(I,J)*DTT*(AC1*
-     1 (YYMOM1(I-1,J-1)+YYMOM1(I-1,J+1)+YYMOM1(I+1,J-1)+YYMOM1(I+1,J+1))
-     2 +AC2*(YYMOM1(I-1,J)+YYMOM1(I+1,J)))+
-     3 (1-AC3*DTT*CGYY1(I,J))*YYMOM1(I,J)
-              ! XY1
-              XYMOM1(I,J)=CGXY1(I,J)*DTT*(AC5*
-     1 (XYMOM1(I,J-1)+XYMOM1(I,J+1)+XYMOM1(I-1,J)+XYMOM1(I+1,J))
-     2 +AC4*(XYMOM1(I-1,J+1)+XYMOM1(I+1,J-1)))+
-     3 (1-AC6*DTT*CGXY1(I,J))*XYMOM1(I,J)
-              ! YX1
-              YXMOM1(I,J)=CGYX1(I,J)*DTT*(AC5*
-     1 (YXMOM1(I-1,J-1)+YXMOM1(I-1,J+1)+YXMOM1(I+1,J-1)+YXMOM1(I+1,J+1))
-     2 +AC4*(YXMOM1(I-1,J-1)+YXMOM1(I+1,J+1)))+
-     3 (1-AC6*DTT*CGYX1(I,J))*YXMOM1(I,J)
-              ! XX2
-              XXMOM2(I,J)=CGXX2(I,J)*DTT*(AC1*
-     1 (XXMOM2(I-1,J-1)+XXMOM2(I-1,J+1)+XXMOM2(I+1,J-1)+XXMOM2(I+1,J+1))
-     2 +AC2*(XXMOM2(I,J-1)+XXMOM2(I,J+1)))+
-     3 (1-AC3*DTT*CGXX2(I,J))*XXMOM2(I,J)
-              ! YY2
-              YYMOM2(I,J)=CGYY2(I,J)*DTT*(AC1*
-     1 (YYMOM2(I-1,J-1)+YYMOM2(I-1,J+1)+YYMOM2(I+1,J-1)+YYMOM2(I+1,J+1))
-     2 +AC2*(YYMOM2(I-1,J)+YYMOM2(I+1,J)))+
-     3 (1-AC3*DTT*CGYY2(I,J))*YYMOM2(I,J)
-              ! XY2
-              XYMOM2(I,J)=CGXY2(I,J)*DTT*(AC5*
-     1 (XYMOM2(I,J-1)+XYMOM2(I,J+1)+XYMOM2(I-1,J)+XYMOM2(I+1,J))
-     2 +AC4*(XYMOM2(I-1,J+1)+XYMOM2(I+1,J-1)))+
-     3 (1-AC6*DTT*CGXY2(I,J))*XYMOM2(I,J)
-              ! YX2
-              YXMOM2(I,J)=CGYX2(I,J)*DTT*(AC5*
-     1 (YXMOM2(I-1,J-1)+YXMOM2(I-1,J+1)+YXMOM2(I+1,J-1)+YXMOM2(I+1,J+1))
-     2 +AC4*(YXMOM2(I-1,J-1)+YXMOM2(I+1,J+1)))+
-     3 (1-AC6*DTT*CGYX2(I,J))*YXMOM2(I,J)
-
-              ! SWELL
-              ! XX1
-              ERXX1(I,J)=GRXX1(I,J)*DTT*(AC1*
-     1 (ERXX1(I-1,J-1)+ERXX1(I-1,J+1)+ERXX1(I+1,J-1)+ERXX1(I+1,J+1))
-     2 +AC2*(ERXX1(I,J-1)+ERXX1(I,J+1)))+
-     3 (1-AC3*DTT*GRXX1(I,J))*ERXX1(I,J)
-              ! YY1
-              ERYY1(I,J)=GRYY1(I,J)*DTT*(AC1*
-     1 (ERYY1(I-1,J-1)+ERYY1(I-1,J+1)+ERYY1(I+1,J-1)+ERYY1(I+1,J+1))
-     2 +AC2*(ERYY1(I-1,J)+ERYY1(I+1,J)))+
-     3 (1-AC3*DTT*GRYY1(I,J))*ERYY1(I,J)
-              ! XY1
-              ERXY1(I,J)=GRXY1(I,J)*DTT*(AC5*
-     1 (ERXY1(I,J-1)+ERXY1(I,J+1)+ERXY1(I-1,J)+ERXY1(I+1,J))
-     2 +AC4*(ERXY1(I-1,J+1)+ERXY1(I+1,J-1)))+
-     3 (1-AC6*DTT*GRXY1(I,J))*ERXY1(I,J)
-              ! YX1
-              ERYX1(I,J)=GRYX1(I,J)*DTT*(AC5*
-     1 (ERYX1(I-1,J-1)+ERYX1(I-1,J+1)+ERYX1(I+1,J-1)+ERYX1(I+1,J+1))
-     2 +AC4*(ERYX1(I-1,J-1)+ERYX1(I+1,J+1)))+
-     3 (1-AC6*DTT*GRYX1(I,J))*ERYX1(I,J)
-              ! XX2
-              ERXX2(I,J)=GRXX2(I,J)*DTT*(AC1*
-     1 (ERXX2(I-1,J-1)+ERXX2(I-1,J+1)+ERXX2(I+1,J-1)+ERXX2(I+1,J+1))
-     2 +AC2*(ERXX2(I,J-1)+ERXX2(I,J+1)))+
-     3 (1-AC3*DTT*GRXX2(I,J))*ERXX2(I,J)
-              ! YY2
-      ERYY2(I,J)=GRYY2(I,J)*DTT*(AC1*
-     1 (ERYY2(I-1,J-1)+ERYY2(I-1,J+1)+ERYY2(I+1,J-1)+ERYY2(I+1,J+1))
-     2 +AC2*(ERYY2(I-1,J)+ERYY2(I+1,J)))+
-     3 (1-AC3*DTT*GRYY2(I,J))*ERYY2(I,J)
-              ! XY2
-              ERXY2(I,J)=GRXY2(I,J)*DTT*(AC5*
-     1 (ERXY2(I,J-1)+ERXY2(I,J+1)+ERXY2(I-1,J)+ERXY2(I+1,J))
-     2 +AC4*(ERXY2(I-1,J+1)+ERXY2(I+1,J-1)))+
-     3 (1-AC6*DTT*GRXY2(I,J))*ERXY2(I,J)
-              ! YX2
-              ERYX2(I,J)=GRYX2(I,J)*DTT*(AC5*
-     1 (ERYX2(I-1,J-1)+ERYX2(I-1,J+1)+ERYX2(I+1,J-1)+ERYX2(I+1,J+1))
-     2 +AC4*(ERYX2(I-1,J-1)+ERYX2(I+1,J+1)))+
-     3 (1-AC6*DTT*GRYX2(I,J))*ERYX2(I,J)
-
-   80     CONTINUE
+          COEF_C = .4
+          COEF_D = (1. - COEF_C) / 4.
+          DO I=1,IMM1
+            DO J=JST,JND
+              IF(D(I,J).GT.DMIN) CYCLE
+              ESW(I,J,:) = ESW(I,J,:)*COEF_C +
+     1 (ESW(I+1,J,:)+ESW(I-1,J,:)+ESW(I,J2(J),:)+ESW(I,J1(J),:))*COEF_D
+              EWW(I,J,:) = EWW(I,J,:)*COEF_C +
+     1 (EWW(I+1,J,:)+EWW(I-1,J,:)+EWW(I,J2(J),:)+EWW(I,J1(J),:))*COEF_D
+            END DO
+          END DO
    88     CONTINUE
 
           ! TOTAL ENERGY, PEAK FREQUENCY, DIRECTION, RADIATION STRESS,
-          ! HARD CAPPING    
+          CMM = SUM(ESW,3)+SUM(EWW,3)
           DO 97 I=2,IMM1
-            DO 97 J=2,JMM1
+            DO 97 J=JST,JND
               IF(D(I,J).GT.DMIN) GO TO 97
-              ! TOTAL DIRECTIONAL ENERGY
-              ETXX1(I,J)=(XXMOM1(I,J)+ERXX1(I,J))
-              ETXY1(I,J)=(XYMOM1(I,J)+ERXY1(I,J))
-              ETYY1(I,J)=(YYMOM1(I,J)+ERYY1(I,J))
-              ETYX1(I,J)=(YXMOM1(I,J)+ERYX1(I,J))
-              ETXX2(I,J)=(XXMOM2(I,J)+ERXX2(I,J))
-              ETXY2(I,J)=(XYMOM2(I,J)+ERXY2(I,J))
-              ETYY2(I,J)=(YYMOM2(I,J)+ERYY2(I,J))
-              ETYX2(I,J)=(YXMOM2(I,J)+ERYX2(I,J))
 
               ! TOTAL ENERGY, ITA
-              CM0=ABS(ETXX1(I,J))+ABS(ETXY1(I,J))+ABS(ETYY1(I,J))+
-     1        ABS(ETYX1(I,J))+ABS(ETXX2(I,J))+ABS(ETXY2(I,J))+
-     2        ABS(ETYY2(I,J))+ABS(ETYX2(I,J))
+              CM0 = CMM(I,J)
               CM=ABS(CM0*COEFF)+1.E-5
               S(I,J) = SQRT(CM)
 
               ! HARD CAPPING
-              DSP(I,J)=1.
+c              GO TO 89
               IF ((4*S(I,J)+.2*.3048) .GT. (.575*DPTH(I,J)))THEN
                 S(I,J)=0.25*(.575*DPTH(I,J)-.2*.3048)
                 CM1=S(I,J)*S(I,J)
                 RCAP=CM1/CM
-                DSP(I,J)=RCAP
-                XXMOM1(I,J)=XXMOM1(I,J)*RCAP
-                XYMOM1(I,J)=XYMOM1(I,J)*RCAP
-                YYMOM1(I,J)=YYMOM1(I,J)*RCAP
-                YXMOM1(I,J)=YXMOM1(I,J)*RCAP
-                XXMOM2(I,J)=XXMOM2(I,J)*RCAP
-                XYMOM2(I,J)=XYMOM2(I,J)*RCAP
-                YYMOM2(I,J)=YYMOM2(I,J)*RCAP
-                YXMOM2(I,J)=YXMOM2(I,J)*RCAP
-                ERXX1(I,J)=ERXX1(I,J)*RCAP
-                ERXY1(I,J)=ERXY1(I,J)*RCAP
-                ERYY1(I,J)=ERYY1(I,J)*RCAP
-                ERYX1(I,J)=ERYX1(I,J)*RCAP
-                ERXX2(I,J)=ERXX2(I,J)*RCAP
-                ERXY2(I,J)=ERXY2(I,J)*RCAP
-                ERYY2(I,J)=ERYY2(I,J)*RCAP
-                ERYX2(I,J)=ERYX2(I,J)*RCAP
-
+                EWW(I,J,1:NDIR)=EWW(I,J,1:NDIR)*RCAP
+                ESW(I,J,1:NDIR)=ESW(I,J,1:NDIR)*RCAP
               END IF
-   89         CONTINUE 
+c             testing: separate windsea/swell wave height
+c              s1(i,j) = sqrt(sum(esw(i,j,1:ndir))) !swell hs
+c              s2(i,j) = sqrt(sum(eww(i,j,1:ndir))) !windsea hs
+c             end testing
+   89         CONTINUE
 
-              ! RADIATION STRESS
+              ! RADIATION STRESS TENSOR
               IF (DPTH(I,J) .LT. 600.)THEN
-              RXW1 = (NNXX1(I,J)*COSM2(1)+NNXX1(I,J)-.5)*XXMOM1(I,J)
-              RXW2 = (NNXY1(I,J)*COSM2(2)+NNXY1(I,J)-.5)*XYMOM1(I,J)
-              RXW3 = (NNYY1(I,J)*COSM2(3)+NNYY1(I,J)-.5)*YYMOM1(I,J)
-              RXW4 = (NNYX1(I,J)*COSM2(4)+NNYX1(I,J)-.5)*YXMOM1(I,J)
-              RXW5 = (NNXX2(I,J)*COSM2(5)+NNXX2(I,J)-.5)*XXMOM2(I,J)
-              RXW6 = (NNXY2(I,J)*COSM2(6)+NNXY2(I,J)-.5)*XYMOM2(I,J)
-              RXW7 = (NNYY2(I,J)*COSM2(7)+NNYY2(I,J)-.5)*YYMOM2(I,J)
-              RXW8 = (NNYX2(I,J)*COSM2(8)+NNYX2(I,J)-.5)*YXMOM2(I,J)
-
-              RXS1 = (NRXX1(I,J)*COSM2(1)+NRXX1(I,J)-.5)*ERXX1(I,J)
-              RXS2 = (NRXY1(I,J)*COSM2(2)+NRXY1(I,J)-.5)*ERXY1(I,J)
-              RXS3 = (NRYY1(I,J)*COSM2(3)+NRYY1(I,J)-.5)*ERYY1(I,J)
-              RXS4 = (NRYX1(I,J)*COSM2(4)+NRYX1(I,J)-.5)*ERYX1(I,J)
-              RXS5 = (NRXX2(I,J)*COSM2(5)+NRXX2(I,J)-.5)*ERXX2(I,J)
-              RXS6 = (NRXY2(I,J)*COSM2(6)+NRXY2(I,J)-.5)*ERXY2(I,J)
-              RXS7 = (NRYY2(I,J)*COSM2(7)+NRYY2(I,J)-.5)*ERYY2(I,J)
-              RXS8 = (NRYX2(I,J)*COSM2(8)+NRYX2(I,J)-.5)*ERYX2(I,J)
-
-              RYW1 = (NNXX1(I,J)*SINM2(1)+NNXX1(I,J)-.5)*XXMOM1(I,J)
-              RYW2 = (NNXY1(I,J)*SINM2(2)+NNXY1(I,J)-.5)*XYMOM1(I,J)
-              RYW3 = (NNYY1(I,J)*SINM2(3)+NNYY1(I,J)-.5)*YYMOM1(I,J)
-              RYW4 = (NNYX1(I,J)*SINM2(4)+NNYX1(I,J)-.5)*YXMOM1(I,J)
-              RYW5 = (NNXX2(I,J)*SINM2(5)+NNXX2(I,J)-.5)*XXMOM2(I,J)
-              RYW6 = (NNXY2(I,J)*SINM2(6)+NNXY2(I,J)-.5)*XYMOM2(I,J)
-              RYW7 = (NNYY2(I,J)*SINM2(7)+NNYY2(I,J)-.5)*YYMOM2(I,J)
-              RYW8 = (NNYX2(I,J)*SINM2(8)+NNYX2(I,J)-.5)*YXMOM2(I,J)
-
-              RYS1 = (NRXX1(I,J)*SINM2(1)+NRXX1(I,J)-.5)*ERXX1(I,J)
-              RYS2 = (NRXY1(I,J)*SINM2(2)+NRXY1(I,J)-.5)*ERXY1(I,J)
-              RYS3 = (NRYY1(I,J)*SINM2(3)+NRYY1(I,J)-.5)*ERYY1(I,J)
-              RYS4 = (NRYX1(I,J)*SINM2(4)+NRYX1(I,J)-.5)*ERYX1(I,J)
-              RYS5 = (NRXX2(I,J)*SINM2(5)+NRXX2(I,J)-.5)*ERXX2(I,J)
-              RYS6 = (NRXY2(I,J)*SINM2(6)+NRXY2(I,J)-.5)*ERXY2(I,J)
-              RYS7 = (NRYY2(I,J)*SINM2(7)+NRYY2(I,J)-.5)*ERYY2(I,J)
-              RYS8 = (NRYX2(I,J)*SINM2(8)+NRYX2(I,J)-.5)*ERYX2(I,J)
-
-              RWW1 = NNXX1(I,J)*SINCO(1)*XXMOM1(I,J)
-              RWW2 = NNXY1(I,J)*SINCO(2)*XYMOM1(I,J)
-              RWW3 = NNYY1(I,J)*SINCO(3)*YYMOM1(I,J)
-              RWW4 = NNYX1(I,J)*SINCO(4)*YXMOM1(I,J)
-              RWW5 = NNXX2(I,J)*SINCO(5)*XXMOM2(I,J)
-              RWW6 = NNXY2(I,J)*SINCO(6)*XYMOM2(I,J)
-              RWW7 = NNYY2(I,J)*SINCO(7)*YYMOM2(I,J)
-              RWW8 = NNYX2(I,J)*SINCO(8)*YXMOM2(I,J)
-
-              RSS1 = NRXX1(I,J)*SINCO(1)*ERXX1(I,J)
-              RSS2 = NRXY1(I,J)*SINCO(2)*ERXY1(I,J)
-              RSS3 = NRYY1(I,J)*SINCO(3)*ERYY1(I,J)
-              RSS4 = NRYX1(I,J)*SINCO(4)*ERYX1(I,J)
-              RSS5 = NRXX2(I,J)*SINCO(5)*ERXX2(I,J)
-              RSS6 = NRXY2(I,J)*SINCO(6)*ERXY2(I,J)
-              RSS7 = NRYY2(I,J)*SINCO(7)*ERYY2(I,J)
-              RSS8 = NRYX2(I,J)*SINCO(8)*ERYX2(I,J)
-        
-              SXX(I,J) = COEFF0*(RXW1+RXW2+RXW3+RXW4+RXW5+RXW6+RXW7+RXW8
-     1        +RXS1+RXS2+RXS3+RXS4+RXS5+RXS6+RXS7+RXS8)
-              SYY(I,J) = COEFF0*(RYW1+RYW2+RYW3+RYW4+RYW5+RYW6+RYW7+RYW8
-     1        +RYS1+RYS2+RYS3+RYS4+RYS5+RYS6+RYS7+RYS8)
-              SXY(I,J) = COEFF0*(RWW1+RWW2+RWW3+RWW4+RWW5+RWW6+RWW7+RWW8
-     1        +RSS1+RSS2+RSS3+RSS4+RSS5+RSS6+RSS7+RSS8)
+                DO K=1,NDIR
+                 RXW(K) = (NNW(I,J,K)*COSM2(K)+NNW(I,J,K)-.5)*EWW(I,J,K)
+                 RXS(K) = (NNS(I,J,K)*COSM2(K)+NNS(I,J,K)-.5)*ESW(I,J,K)
+                 RYW(K) = (NNW(I,J,K)*SINM2(K)+NNW(I,J,K)-.5)*EWW(I,J,K)
+                 RYS(K) = (NNS(I,J,K)*SINM2(K)+NNS(I,J,K)-.5)*ESW(I,J,K)
+                 RWW(K) = NNW(I,J,K)*SINCO(K)*EWW(I,J,K)
+                 RSS(K) = NNS(I,J,K)*SINCO(K)*ESW(I,J,K)
+                END DO
+                SXX(I,J) = COEFF0*(SUM(RXW(1:NDIR))+SUM(RXS(1:NDIR)))
+                SYY(I,J) = COEFF0*(SUM(RYW(1:NDIR))+SUM(RYS(1:NDIR)))
+                SXY(I,J) = COEFF0*(SUM(RWW(1:NDIR))+SUM(RSS(1:NDIR)))
               ELSE
-              SXX(I,J) = 0.
-              SYY(I,J) = 0.
-              SXY(I,J) = 0.
+                SXX(I,J) = 0.
+                SYY(I,J) = 0.
+                SXY(I,J) = 0.
               END IF
-
    97     CONTINUE
 
-          DO 98 I=2,IMM1-1
-            DO 98 J=2,JMM1-1
-              IF (DPTH(I,J) .LT. 600.)THEN
-                DSXXDX=SXX(I,J)-SXX(I-1,J)
-                DSXYDX=SXY(I,J)-SXY(I-1,J)
-                DSXYDY=SXY(I,J)-SXY(I,J-1)
-                DSYYDY=SYY(I,J)-SYY(I,J-1)
-                RSX(I,J)=-1.*(DSXXDX+DSXYDY)*DDS
-                RSY(I,J)=-1.*(DSXYDY+DSYYDY)*DDS
+      !   RADIATION STRESS FORCE - CURVILINEAR COMPATIBLE 2019.7 D.Y
+          DO I=2,IMM1
+            DO J=JST,JND
+              IF (DPTH(I,J) .LT. 600. .AND. D(I,J)<DMIN)THEN
+                DSXXDX = DPDX(I,J)*(SXX(I+1,J)-SXX(I-1,J)) +
+     1                   DQDX(I,J)*(SXX(I,J2(J))-SXX(I,J1(J)))
+                DSXYDX = DPDX(I,J)*(SXY(I+1,J)-SXY(I-1,J)) +
+     1                   DQDX(I,J)*(SXY(I,J2(J))-SXY(I,J1(J)))
+                DSXYDY = DPDY(I,J)*(SXY(I+1,J)-SXY(I-1,J)) +
+     1                   DQDY(I,J)*(SXY(I,J2(J))-SXY(I,J1(J)))
+                DSYYDY = DPDY(I,J)*(SYY(I+1,J)-SYY(I-1,J)) +
+     1                   DQDY(I,J)*(SYY(I,J2(J))-SYY(I,J1(J)))
+                RSX(I,J) = -.5*(DSXXDX+DSXYDY)
+                RSY(I,J) = -.5*(DSXYDX+DSYYDY)
               ELSE
                 RSX(I,J)=0.
                 RSY(I,J)=0.
               END IF
-   98     CONTINUE
+            END DO
+          END DO
+
+          EWW1 = EWW(:,:,1)
+          EWW2 = EWW(:,:,2)
+          EWW3 = EWW(:,:,3)
+          EWW4 = EWW(:,:,4)
+          EWW5 = EWW(:,:,5)
+          EWW6 = EWW(:,:,6)
+          EWW7 = EWW(:,:,7)
+          EWW8 = EWW(:,:,8)
+          ESW1 = ESW(:,:,1)
+          ESW2 = ESW(:,:,2)
+          ESW3 = ESW(:,:,3)
+          ESW4 = ESW(:,:,4)
+          ESW5 = ESW(:,:,5)
+          ESW6 = ESW(:,:,6)
+          ESW7 = ESW(:,:,7)
+          ESW8 = ESW(:,:,8)
 
    60   CONTINUE
 
    30 CONTINUE
-
-
       END
 
       FUNCTION WNUM(F,D)
@@ -1144,7 +1096,7 @@ C  APPROXIMATE SOLUTION OF WAVE DISPERSION EQUATION
 C
 C  F = FREQUENCY (HZ)
 C  D = DEPTH (M)
-C  WNUM = WAVE NUMBER (1/M)
+C  WNUM = WAVENUMBER (1/M)
 C
 C  REFERENCE: HUNT, J.N. 1979. DIRECT SOLUTION OF WAVE DISPERSION
 C  EQUATION.
@@ -1155,7 +1107,6 @@ C
       Y=D*(TPI*F)**2/G
       X=Y*(Y+1./(1.+Y*(0.6522+Y*(0.4622+Y*Y*(0.0864+Y*0.0675)))))
       WNUM=SQRT(X)/D
-C      print *, WNUM
       RETURN
       END
 
@@ -1198,194 +1149,18 @@ C
       SUBROUTINE WINDX2
 C     INTERPOLATE SLOSH WIND FIELD ONTO WAVE GRID
 C     4/2017 D.Y.
-      include 'parm.for'
       include 'wav1.for'
+      include 'parm.for'
       COMMON/WNDW/WUW(IDIM,JDIM),WVW(IDIM,JDIM)
       
       DO I=1,IM
         DO J=1,JM
-          WUW(I,J)=0.
-          WVW(I,J)=0.
-          IX=XIDX(I,J)
-          IY=YIDX(I,J)
-          IF (IX .LT. 9000)THEN
-            WUW(I,J)=WU(IX,IY)*.3048
-            WVW(I,J)=WV(IX,IY)*.3048
-          END IF
+          WUW(I,J)=WU(I,J)*.3048
+          WVW(I,J)=WV(I,J)*.3048
         END DO
       END DO
 
       RETURN
-      END
-
-      SUBROUTINE WINDX1(TIME)
-      include 'wav1.for'
-      character*80 windinp,tempinp,lstini,whgtini,wudirini
-      character*80 wvdirini,wperini,whgtout,wudirout,wvdirout,wperout
-      character*80 wavedirout
-      character*80 head1,head2,head3,head4,head5,head6,head7
-      character*80 head8,head9,head10,head11,head12,head13,head14
-      COMMON/FIPPARM/windinp,tempinp
-      COMMON/FINPARM/lstini,whgtini,wudirini,wvdirini,wperini
-      COMMON/FOPPARM/whgtout,wudirout,wvdirout,wperout,wavedirout
-      COMMON/HEADERS/head1,head2,head3,head4,head5,head6,head7
-      COMMON/HEADERS/head8,head9,head10,head11,head12,head13,head14
-      COMMON/WNDW/WUW(IDIM,JDIM),WVW(IDIM,JDIM)
-      integer first
-      REAL TA(IDIM,JDIM)
-      REAL WU1(IDIM,JDIM),WV1(IDIM,JDIM),degtorad,ktstoms
-      REAL WU2(IDIM,JDIM),WV2(IDIM,JDIM),wdir(idim,jdim)
-      REAL TW(IDIM,JDIM),wspd(idim,jdim)
-      INTEGER ios
-      CHARACTER*80 line
-      LOGICAL EX
-      SAVE IFIRST,NREC,N1,NRMAX,TW,WU1,WV1,WU2,WV2
-
-      DATA FIRST/0/
-
-C-----------------------------------------------------------------------
-C ON FIRST TIME STEP OPEN REQUIRED INPUT DATA FILES
-C AND SET PARAMETERS
-      IF(FIRST.EQ.0) THEN
-        open(UNIT=10,FORM='FORMATTED',STATUS='OLD',FILE=windinp,ERR=210)
-        open(UNIT=11,FORM='FORMATTED',STATUS='OLD',FILE=tempinp,ERR=210)
-
-        NRMAX=NHRS/(DTWIND/3600.)+1
-        FIRST=1
-
-        INQUIRE(FILE=lstini,EXIST=EX)
-        print *,ex
-        IF(EX) THEN
-          open(UNIT=13,FORM='FORMATTED',STATUS='OLD',FILE=lstini)
-          do i=1,14
-            read(13,*)
-          enddo
-          do j=1,jm
-            do i=1,im
-              read(13,*) tw(i,j)
-              if (tw(i,j).lt.0.0) tw(i,j) = 0.0
-            enddo
-          enddo
-          close(13)
-        ELSE
-          print *,"No lake surface temp found- Using 4C"
-          do j=1,jm
-            do i=1,im
-              tw(i,j) = 4.0
-            enddo
-          enddo
-        ENDIF
-        NREC=0
-        N1=0 ! TIMER
-      ENDIF
-C-----------------------------------------------------------------
-C DETERMINE RECORD NUMBER AT BEGINNING OF INTERVAL
-      N=IFIX(TIME/DTWIND)+1
-      T1=(N-1)*DTWIND
-C CHECK IF NEW FIELDS ARE REQUIRED
-      IF(N.NE.N1) THEN
-        N1=N
-C FIRST TIME THROUGH GET STRESSES AT BEGINNING OF INTERVAL
-        IF(N1.EQ.1) THEN
-          NREC=NREC+1
-          read(10,'(A)') head1
-          read(10,'(A)') head2
-          read(10,'(A)') head3
-          read(10,'(A)') head4
-          read(10,'(A)') head5
-          read(10,'(A)') head6
-          read(10,'(A)') head7
-          read(10,'(A)') head8
-          read(10,'(A)') head9
-          read(10,'(A)') head10
-          read(10,'(A)') head11
-          read(10,'(A)') head12
-          read(10,'(A)') head13
-          read(10,'(A)') head14
-
-          do j=1,jm
-            do i=1,im
-              read(10,*,iostat=ios) wu1(i,j),wv1(i,j)
-              if (ios>0)then
-                print *, 'error: i=',i,', j=',j
-                stop
-              endif
-            enddo
-          enddo
-
-          do i=1,14
-            read(11,*)
-          enddo
-
-          do j=1,jm
-            do i=1,im
-              read(11,*) ta(i,j)
-              ta(i,j) = (ta(i,j) - 32.) * 5 / 9
-            enddo
-          enddo
-
-        ELSE
-C  OTHERWISE GET OLD FIELD FROM END OF INTERVAL
-          DO 30 J=1,JM
-            DO 30 I=1,IM
-              WU1(I,J)=WU2(I,J)
-              WV1(I,J)=WV2(I,J)
-30        CONTINUE
-        ENDIF
-C  READ FIELDS AT END OF INTERVAL
-        NREC=NREC+1
-        IF(NREC.LE.NRMAX) THEN
-          do i=1,14
-            read(10,*)
-          enddo
-          do j=1,jm
-            do i=1,im
-              read(10,*,iostat=ios) wu2(i,j),wv2(i,j)
-            enddo
-          enddo
-
-          read(11,'(A)') head1
-          read(11,'(A)') head2
-          read(11,'(A)') head3
-          read(11,'(A)') head4
-          read(11,'(A)') head5
-          read(11,'(A)') head6
-          read(11,'(A)') head7
-          read(11,'(A)') head8
-          read(11,'(A)') head9
-          read(11,'(A)') head10
-          read(11,'(A)') head11
-          read(11,'(A)') head12
-          read(11,'(A)') head13
-          read(11,'(A)') head14
-
-          do j=1,jm
-            do i=1,im
-              read(11,*) ta(i,j)
-              ta(i,j) = (ta(i,j) - 32.) * 5 / 9
-            enddo
-          enddo
-
-          NT=MIN(N1+1,NRMAX-1)
-        ENDIF
-      ENDIF
-C LINEARLY INTERPOLATE WIND STRESS COMPONENTS IN TIME
-      WGT=(TIME-T1)/DTWIND
-      DO 60 J=1,JM
-      DO 60 I=1,IM
-        WUW(I,J)=(1.-WGT)*WU1(I,J)+WGT*WU2(I,J)
-        WVW(I,J)=(1.-WGT)*WV1(I,J)+WGT*WV2(I,J)
-60    CONTINUE
-      RETURN
-
-999   WRITE (6,70)
-70    FORMAT ('0PROBLEM WITH HOURLY WATER TEMPS IN SUBROUTINE WINDX ',
-     1       '- CHECK *.WT FILE or WMGL.IN - PROGRAM TERMINATED')
-      STOP
-210   print *,"Problem with met input files"
-      print *,"Press enter to quit"
-      read(5,*)
-      stop
       END
 
       SUBROUTINE WOUTP
@@ -1403,7 +1178,7 @@ C LINEARLY INTERPOLATE WIND STRESS COMPONENTS IN TIME
       COMMON/HEADERS/head8,head9,head10,head11,head12,head13,head14
       COMMON/WNDW/WUW(IDIM,JDIM),WVW(IDIM,JDIM)
       COMMON/WVIO/RSX(IDIM,JDIM),RSY(IDIM,JDIM)
-      COMMON/DSIO/DSP(IDIM,JDIM) ! Dissipation ratio 07/2017 D.Y
+      COMMON/DSIO/DSP(IDIM,JDIM) ! dissipation ratio 07/2017 D.Y
       REAL RSX,RSY
       SAVE NR
       DATA NR/0/
@@ -1510,28 +1285,26 @@ C ON FIRST TIME STEP OPEN XDR OUTPUT FILES
       write(84,67) head13
       write(84,67) head14
 
-      ! SAVE SIGNIFICANT WAVE HEIGHT
+      ! SAVE SIGNIFICANT WAVEHEIGHT
       DO 10 J=1,JM
         DO 10 I=1,IM
           DUM(I,J)=(4*3.28083*S(I,J)) + 0.2
-c          print *, DUM(I,J)
           write(81,196) MIN(dum(i,j) ,1000.)
 196   format(f6.1)
    10 CONTINUE
 
-      ! SAVE WAVE DISSIPATION RATIO
+      ! SAVE WIND VECTORS
       DO 20 J=1,JM
         DO 20 I=1,IM
-          write(82,197) DSP(I,J)
-197   format(f5.3)
+          write(83,197) WUW(I,J)
+          write(84,197) WVW(I,J)
+197   format(f6.1)
    20 CONTINUE
 
 
-      ! SAVE WAVE DIRECTION
+      ! SAVE WAVE RADIATION FORCES
       DO 30 J=1,JM
         DO 30 I=1,IM
-c          write(83,1981) WUW(I,J)
-c          write(84,1981) WVW(I,J)
           write(83,198) RSX(I,J)
           write(84,198) RSY(I,J)
 198   format(e10.3)
@@ -1541,475 +1314,114 @@ c          write(84,1981) WVW(I,J)
       RETURN
       END
 
-      SUBROUTINE INTWGT
-      include 'wav1.for'
-      include 'parm.for'
-      COMMON/INWT/WT1(M_,N_),WT2(M_,N_),WT3(M_,N_),WT4(M_,N_),
-     1 M(M_,N_),N(M_,N_)
-      REAL WT1,WT2,WT3,WT4
-      INTEGER M,N
-      COMMON /DUMB3/  IMXB,JMXB,IMXB1,JMXB1,IMXB2,JMXB2
-      REAL XLATIN,YLONIN,XPD,YPD,DX,DY
-      REAL W1,W2,PA,QA
-      INTEGER I,J
-
-      DX=(LG1-LG0)/(IM-1)
-      DY=(LT1-LT0)/(JM-1)
-      XPD=1./DX
-      YPD=1./DY
-
-      DO I=1,IMXB
-        DO J=1,JMXB
-          PA=(YLT(I,J)-LT0)*YPD+1.
-          QA=(YLG(I,J)-LG0)*XPD+1.
-          M(I,J)=PA
-          N(I,J)=QA
-          W1=PA-M(I,J)
-          W2=QA-N(I,J)
-          WT1(I,J)=(1.-W1)*(1.-W2)
-          WT2(I,J)=W1*(1.-W2)
-          WT3(I,J)=(1.-W1)*W2
-          WT4(I,J)=W1*W2
-        END DO
-      END DO
-
-      RETURN
-      END
-
       SUBROUTINE WOUTP2
       include 'wav1.for'
       include 'parm.for'
       COMMON/WVIO/RSX(IDIM,JDIM),RSY(IDIM,JDIM)
       REAL RSX,RSY
-      COMMON/RSIN/RSXIN(M_,N_),RSYIN(M_,N_),HSIN(M_,N_),SXX(M_,N_),
-     1 SYY(M_,N_)
-      REAL RSXIN,RSYIN,HSIN,SXX,SYY
+      COMMON/RSIN/RSXIN(M_,N_),RSYIN(M_,N_),HSIN(M_,N_)
+      REAL RSXIN,RSYIN,HSIN
       COMMON /DUMB3/  IMXB,JMXB,IMXB1,JMXB1,IMXB2,JMXB2
-      COMMON/INWT/WT1(M_,N_),WT2(M_,N_),WT3(M_,N_),WT4(M_,N_),
-     1 M(M_,N_),N(M_,N_)
-      REAL WT1,WT2,WT3,WT4
+      COMMON /COORD/XR(IDIM,JDIM), YR(IDIM,JDIM) ! GRID POINT LOCATION
+      COMMON /WNDW/WUW(IDIM,JDIM),WVW(IDIM,JDIM)
+      COMMON/RSTS/SXX(IDIM,JDIM),SXY(IDIM,JDIM),SYY(IDIM,JDIM)
+      REAL SXX,SXY,SYY
       INTEGER M,N
       INTEGER I,J,K,L
-      CHARACTER(LEN=20)STRING1
+      CHARACTER(LEN=20)STRING1,STRING2,STRING3
       SAVE NR
       DATA NR/0/
 
-      DO I=1,IMXB
-        DO J=1,JMXB
-          L=M(I,J)
-          K=N(I,J)
-c          K=M(I,J)
-c          L=N(I,J)
-          RSXIN(I,J)=WT1(I,J)*RSX(K,L)+WT2(I,J)*RSX(K+1,L)+
-     1 WT3(I,J)*RSX(K,L+1)+WT4(I,J)*RSX(K+1,L+1)
-          RSYIN(I,J)=WT1(I,J)*RSY(K,L)+WT2(I,J)*RSY(K+1,L)+
-     1 WT3(I,J)*RSY(K,L+1)+WT4(I,J)*RSY(K+1,L+1)
+      DO I=1,IM
+        DO J=1,JM
+          RSXIN(I,J)=RSX(I,J)
+          RSYIN(I,J)=RSY(I,J)
         END DO
       END DO
-c************************************************************************
-c      IF(NR.EQ.0) THEN
-c        open(61,file='rx.dat',form='FORMATTED',status='UNKNOWN')
-c        open(62,file='ry.dat',form='FORMATTED',status='UNKNOWN')
-c        K=INDEX(FOUT,' ')
-c        NR=1
-c      ENDIF
-cc      write(string1, '("(",I4,"(E10.3,X))")') jmxb
-cc      write(61,'(A)')'X Radiation Stress'
+
+      GO TO 93
+      WRITE(STRING1, '("(",I4,"(E10.3,X))")') JMXB
+      WRITE(STRING2, '("(",I4,"(F6.1,X))")') JMXB
+      WRITE(STRING3, '("(",I4,"(F12.5,X))")') JMXB
+
+      IF(NR.EQ.0) THEN
+        open(61,file='./test_curvilinear_outs/maria_nhs_f35_ts8/rx.dat'
+     1 ,form='FORMATTED',status='UNKNOWN')
+        open(62,file='./test_curvilinear_outs/maria_nhs_f35_ts8/ry.dat'
+     1 ,form='FORMATTED',status='UNKNOWN')
+        open(63,file='./test_curvilinear_outs/maria_nhs_f35_ts8/sxx.dat'
+     1 ,form='FORMATTED',status='UNKNOWN')
+        open(64,file='./test_curvilinear_outs/maria_nhs_f35_ts8/sxy.dat'
+     1 ,form='FORMATTED',status='UNKNOWN')
+        open(65,file='./test_curvilinear_outs/maria_nhs_f35_ts8/syy.dat'
+     1 ,form='FORMATTED',status='UNKNOWN')
+        open(66,file='./test_curvilinear_outs/maria_nhs_f35_ts8/hs.dat'
+     1 ,form='FORMATTED',status='UNKNOWN')
+        open(67,file='./test_curvilinear_outs/maria_nhs_f35_ts8/xr.dat'
+     1 ,form='FORMATTED',status='UNKNOWN')
+        open(68,file='./test_curvilinear_outs/maria_nhs_f35_ts8/yr.dat'
+     1 ,form='FORMATTED',status='UNKNOWN')
+        K=INDEX(FOUT,' ')
+
+        write(67,'(A)')'XR'
+        do i=1,imxb
+          write(67,string3)(xr(i,j),j=1,jmxb)
+        end do
+        write(68,'(A)')'YR'
+        do i=1,imxb
+          write(68,string3)(yr(i,j),j=1,jmxb)
+        end do
+
+        NR=1
+      ENDIF
+
+      write(61,'(A)')'X Radiation Stress'
+      do i=1,imxb
+        write(61,string1)(rsx(i,j),j=1,jmxb)
+      end do
+      write(62,'(A)')'Y Radiation Stress'
+      do i=1,imxb
+        write(62,string1)(rsy(i,j),j=1,jmxb)
+      end do
+
+c      write(63,'(A)')'hs-swell'
 c      do i=1,imxb
-c       write(61,'(E10.3)')(rsxin(i,j),j=1,jmxb)
+c        write(63,string2)((4*3.28083*S1(I,J))+0.2,j=1,jmxb)
 c      end do
-cc     write(62,'(A)')'Y Radiation Stress'
+c      write(64,'(A)')'hs-windsea'
 c      do i=1,imxb
-c       write(62,'(E10.3)')(rsyin(i,j),j=1,jmxb)
+c        write(64,string2)((4*3.28083*S2(I,J))+0.2,j=1,jmxb)
 c      end do
-c*************************************************************************
+c
+c      write(65,'(A)')'WU'
+c      do i=1,imxb
+c        write(65,string2)(wuw(i,j),j=1,jmxb)
+c      end do
+c      write(66,'(A)')'WV'
+c      do i=1,imxb
+c        write(66,string2)(wvw(i,j),j=1,jmxb)
+c      end do
+
+      write(63,'(A)')'SXX'
+      do i=1,imxb
+        write(63,string1)(sxx(i,j),j=1,jmxb)
+      end do
+
+      write(64,'(A)')'SXY'
+      do i=1,imxb
+        write(64,string1)(sxy(i,j),j=1,jmxb)
+      end do
+
+      write(65,'(A)')'SYY'
+      do i=1,imxb
+        write(65,string1)(syy(i,j),j=1,jmxb)
+      end do
+
+      write(66,'(A)')'Hs'
+      do i=1,imxb
+        write(66,string2)((4*3.28083*S(I,J))+0.2,j=1,jmxb)
+      end do
+
+   93 CONTINUE
       RETURN 
-      END
-
-      SUBROUTINE RSWVOUT
-      include 'wav1.for'
-      COMMON/WNDW/WUW(IDIM,JDIM),WVW(IDIM,JDIM)
-      COMMON /HTNM/ HTMAIN,HTHB,HTUV,HTWV,HTWVT,HTHMX
-      character*80 HTMAIN,HTHB,HTUV,HTWV,HTWVT,HTHMX
-
-      CHARACTER(LEN=20)STRING
-      WRITE(STRING,'("(",I4,"(F20.3,X))")') JM
-
-      OPEN(1005,FILE=HTWV)
-      ! WIND WAVE ENERGY
-      DO I=1,IM
-        WRITE(1005,STRING)(XXMOM1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(XYMOM1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(YYMOM1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(YXMOM1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(XXMOM2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(XYMOM2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(YYMOM2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(YXMOM2(I,J),J=1,JM)
-      END DO
-      ! WIND WAVE FREQUENCY
-      DO I=1,IM
-        WRITE(1005,STRING)(FXX1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(FXY1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(FYY1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(FYX1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(FXX2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(FXY2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(FYY2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(FYX2(I,J),J=1,JM)
-      END DO
-      ! SWELL ENERGY
-      DO I=1,IM
-        WRITE(1005,STRING)(ERXX1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(ERXY1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(ERYY1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(ERYX1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(ERXX2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(ERXY2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(ERYY2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(ERYX2(I,J),J=1,JM)
-      END DO
-      ! SWELL FREQUENCY
-      DO I=1,IM
-        WRITE(1005,STRING)(FRXX1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(FRXY1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(FRYY1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(FRYX1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(FRXX2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(FRXY2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(FRYY2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(FRYX2(I,J),J=1,JM)
-      END DO
-
-      DO I=1,IM
-        WRITE(1005,STRING)(WUW(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(WVW(I,J),J=1,JM)
-      END DO
-      GO TO 280
-      ! WIND WAVE PHASE SPEED
-      DO I=1,IM
-        WRITE(1005,STRING)(CXX1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(CXY1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(CYY1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(CYX1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(CXX2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(CXY2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(CYY2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(CYX2(I,J),J=1,JM)
-      END DO
-      ! WIND WAVE WAVE NUMBER
-      DO I=1,IM
-        WRITE(1005,STRING)(WNXX1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(WNXY1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(WNYY1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(WNYX1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(WNXX2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(WNXY2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(WNYY2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        WRITE(1005,STRING)(WNYX2(I,J),J=1,JM)
-      END DO
-
- 280  CONTINUE
-      CLOSE(1005)
-    
-      RETURN
-      END
-
-      SUBROUTINE RSWVIN
-      include 'wav1.for'
-      COMMON/WNDW/WUW(IDIM,JDIM),WVW(IDIM,JDIM)
-      COMMON /HTNM/ HTMAIN,HTHB,HTUV,HTWV,HTWVT,HTHMX
-      character*80 HTMAIN,HTHB,HTUV,HTWV,HTWVT,HTHMX
-
-      CHARACTER(LEN=20)STRING
-      WRITE(STRING,'("(",I4,"(F20.3,X))")') JM
-
-      OPEN(1005,FILE=HTWV,STATUS='OLD')
-      ! WIND WAVE ENERGY
-      DO I=1,IM
-        READ(1005,STRING)(XXMOM1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(XYMOM1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(YYMOM1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(YXMOM1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(XXMOM2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(XYMOM2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(YYMOM2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(YXMOM2(I,J),J=1,JM)
-      END DO
-      ! WIND WAVE FREQUENCY
-      DO I=1,IM
-        READ(1005,STRING)(FXX1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(FXY1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(FYY1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(FYX1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(FXX2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(FXY2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(FYY2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(FYX2(I,J),J=1,JM)
-      END DO
-      ! SWELL ENERGY
-      DO I=1,IM
-        READ(1005,STRING)(ERXX1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(ERXY1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(ERYY1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(ERYX1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(ERXX2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(ERXY2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(ERYY2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(ERYX2(I,J),J=1,JM)
-      END DO
-      ! SWELL FREQUENCY
-      DO I=1,IM
-        READ(1005,STRING)(FRXX1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(FRXY1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(FRYY1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(FRYX1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(FRXX2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(FRXY2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(FRYY2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(FRYX2(I,J),J=1,JM)
-      END DO
-
-c      GO TO 290
-      DO I=1,IM
-        READ(1005,STRING)(WUW(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(WVW(I,J),J=1,JM)
-      END DO
-      GO TO 290
-      ! WIND WAVE PHASE SPEED
-      DO I=1,IM
-        READ(1005,STRING)(CXX1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(CXY1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(CYY1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(CYX1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(CXX2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(CXY2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(CYY2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(CYX2(I,J),J=1,JM)
-      END DO
-      ! WIND WAVE WAVE NUMBER
-      DO I=1,IM
-        READ(1005,STRING)(WNXX1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(WNXY1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(WNYY1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(WNYX1(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(WNXX2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(WNXY2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(WNYY2(I,J),J=1,JM)
-      END DO
-      DO I=1,IM
-        READ(1005,STRING)(WNYX2(I,J),J=1,JM)
-      END DO
- 290  CONTINUE
-      CLOSE(1005)
-
-      RETURN
-      END
- 
-      SUBROUTINE TMWVOUT(ETWD,ETIO,ETWV,TWD,TIO,TWV)
-      REAL ETWD,ETIO,ETWV,TWD,TIO,TWV
-      COMMON /HTNM/ HTMAIN,HTHB,HTUV,HTWV,HTWVT,HTHMX
-      character*80 HTMAIN,HTHB,HTUV,HTWV,HTWVT,HTHMX
-
-      OPEN(1004,FILE=HTWVT)
-
-      WRITE(1004,'(F12.4)')ETWD
-      WRITE(1004,'(F12.4)')ETIO
-      WRITE(1004,'(F12.4)')ETWV
-      WRITE(1004,'(F12.4)')TWD
-      WRITE(1004,'(F12.4)')TIO
-      WRITE(1004,'(F12.4)')TWV
-
-      CLOSE(1004)
-
-      RETURN
-      END
-
-      SUBROUTINE TMWVIN(ETWD,ETIO,ETWV,TWD,TIO,TWV)
-      REAL ETWD,ETIO,ETWV,TWD,TIO,TWV
-      COMMON /HTNM/ HTMAIN,HTHB,HTUV,HTWV,HTWVT,HTHMX
-      character*80 HTMAIN,HTHB,HTUV,HTWV,HTWVT,HTHMX
-
-      OPEN(1004,FILE=HTWVT,STATUS='OLD')
-
-      READ(1004,'(F12.4)')ETWD
-      READ(1004,'(F12.4)')ETIO
-      READ(1004,'(F12.4)')ETWV
-      READ(1004,'(F12.4)')TWD
-      READ(1004,'(F12.4)')TIO
-      READ(1004,'(F12.4)')TWV
-
-      CLOSE(1004)
-
-      RETURN
       END

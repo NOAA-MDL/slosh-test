@@ -2,10 +2,13 @@
 
 #include <mpi.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #include "mstUtil.h"
 /* #include "runStorm.h" */
+#include "setup.h"
 #include "slosh2.h"
 
 /* MSG_IDLE => follower has started and is idle. */
@@ -14,7 +17,7 @@ enum { MSG_UNDEF = -1, MSG_IDLE, MSG_BUSY, MSG_QUIT };
 
 
 
-static int _skipTideRun (char *bsnAbrev, char *rootDir, char *envDir,
+static int _skipTideRun (char *bsnAbrev, char *tideOnlyDir, char *envDir,
                          char *envDir2, double asOf, int fcstHrs)
 {
    int hhh;
@@ -35,11 +38,11 @@ static int _skipTideRun (char *bsnAbrev, char *rootDir, char *envDir,
    }
    dstFile = (char *) malloc (dstLen);
 
-   /* Size based on "cp " + ${rootDir} + "/tideOnly/" + days_Since1970 + "/ans1hr/" + ${bsnAbrev} +
+   /* Size based on "cp " + ${tideOnlyDir} + days_Since1970 + "/ans1hr/" + ${bsnAbrev} +
     *      "/tideOnly" + days_Since1970 + "-" +  hours + ".env " +
     *      $dstFile + Buffer */
-   cmd = (char *) malloc (3 + strlen(rootDir) + 10 + 7 + 8 + strlen(bsnAbrev) + 9 +
-                          7 + 1 + 3 + 4 + dstLen + 10 + 1);
+   cmd = (char *) malloc (3 + strlen(tideOnlyDir) + 7 + 8 + strlen(bsnAbrev) + 9 +
+                          7 + 1 + 3 + 5 + dstLen + 10 + 1);
 
    /* Avoid white space at beginning of bsn. */
    bsn = bsnAbrev;
@@ -56,10 +59,11 @@ static int _skipTideRun (char *bsnAbrev, char *rootDir, char *envDir,
       }
       /* Attempt to copy it.  If it fails then we do tideOnly run. */
       sprintf (dstFile, "%s/%s/tideOnly%03d.env", envDir, bsn, hhh);
-      sprintf (cmd, "cp %s/tideOnly/%d/ans1hr/%s/tideOnly-%d-%03d.env %s",
-               rootDir, days_Since1970, bsn, days_Since1970, hours, dstFile);
+      sprintf (cmd, "cp %s/%d/ans1hr/%s/tideOnly-%d-%03d.env %s",
+               tideOnlyDir, days_Since1970, bsn, days_Since1970, hours, dstFile);
       if (system (cmd) != 0) {
          printf ("Unable to copy to %s\n", dstFile);
+         printf ("Will dynamically create it instead (slightly slower)\n");
          free (cmd);
          free (dstFile);
          return 0;
@@ -77,10 +81,11 @@ static int _skipTideRun (char *bsnAbrev, char *rootDir, char *envDir,
       }
       /* Attempt to copy it.  If it fails then we do tideOnly run. */
       sprintf (dstFile, "%s/%s/tideOnly%03d.env", envDir2, bsn, hhh);
-      sprintf (cmd, "cp %s/tideOnly/%d/ans6hr/%s/tideOnly-%d-%03d.env %s",
-               rootDir, days_Since1970, bsn, days_Since1970, hours, dstFile);
+      sprintf (cmd, "cp %s/%d/ans6hr/%s/tideOnly-%d-%03d.env %s",
+               tideOnlyDir, days_Since1970, bsn, days_Since1970, hours, dstFile);
       if (system (cmd) != 0) {
          printf ("Unable to copy to %s\n", dstFile);
+         printf ("Will dynamically create it instead (slightly slower)\n");
          free (cmd);
          free (dstFile);
          return 0;
@@ -94,7 +99,7 @@ static int _skipTideRun (char *bsnAbrev, char *rootDir, char *envDir,
 
 
 
-static int _teamRun (int teamRank, int teamSize, MPI_Comm teamComm,
+static int _teamRun (int teamID, int teamRank, int teamSize, MPI_Comm teamComm,
                      userType *usr, char msg[MY_MAX_PATH])
 {
    char bsn[5];         /* The basin abbreviation. */
@@ -114,6 +119,7 @@ static int _teamRun (int teamRank, int teamSize, MPI_Comm teamComm,
 
    if (GetBasinAbrev (msg, bsn) != 0) {
       /* Aborting because of a detected error in the track name */
+      fprintf (stderr, "Aborting because of an error in the track name\n");
       return -1;
    }
 
@@ -141,23 +147,25 @@ static int _teamRun (int teamRank, int teamSize, MPI_Comm teamComm,
    f_tide = usr->f_tide;
    f_byPass = 0;
    if (strcmp (trkRoot, "/tideOnly.trk") == 0) {
+      /* Setting tideOnly.trk f_tide to -1 (tide only version 1) */
       f_tide = -1;
-      printf ("\tHERE MPI Util setting tideOnly.trk f_tide to -1 (tide only version 1)\n");
-      /* hard wired number of fcst Hrs to 102 */
-      printf ("\tCalling ByPassTideRun with %s %s\n", usr->envDir, usr->envDir2);
-/*
-      f_byPass = _skipTideRun (bsnAbrev, usr->rootDir, usr->envDir,
-                               usr->envDir2, usr->asOf, 102);
-*/
+      if (usr->tideOnlyDir == NULL) {
+         printf ("\tWarning: Can't byPass tide only run as -tideOnlyDir was not set.\n");
+         printf ("\tWill dynamically compute the tide only data (slightly slower)\n");
+      } else {
+         /* Hard wired number of fcst Hrs to 102 */
+         f_byPass = _skipTideRun (bsnAbrev, usr->tideOnlyDir, usr->envDir,
+                                  usr->envDir2, usr->asOf, 102);
+      }
    }
 
    if (! f_byPass) {
       /* runStorm (teamRank, teamSize, teamComm, msg, verbose); */
-      PerformRun (teamRank, teamSize, teamComm,
+      PerformRun (teamID, teamRank, teamSize, teamComm,
                   bsnAbrev, dtaName,
-                  trkName, 
+                  trkName,
                   envName, envName2, rexName,
-                  usr->tideDir, imxb, jmxb, bsnStatus, usr->rexSaveMin, 
+                  usr->tideDir, imxb, jmxb, bsnStatus, usr->rexSaveMin,
                   usr->envSave2Min, usr->verbose, f_tide, usr->tideThresh,
                   usr->f_stat, usr->spinUp, usr->f_saveSpinUp, usr->asOf,
                   usr->f_restart, usr->f_wave);
@@ -200,9 +208,11 @@ int teamLead (int teamSize, int teamID, MPI_Comm teamComm, userType *usr)
    char f_continue = 1;       /* Whether to continue looping. */
    MPI_Status stat;           /* Status of the received message. */
    int P;                     /* Loop over team-members */
+   int verbose = usr->verbose;
 
-   if (usr->verbose) {
-      printf ("[%d]\t%d-0 - Started\n", TIME, teamID);
+   verbose = 0;
+   if (verbose) {
+      printf ("[%d]\tTeam %d-0 - Started\n", TIME, teamID);
    }
 
    /* Let Leader know we are here and we're idle. */
@@ -215,11 +225,13 @@ int teamLead (int teamSize, int teamID, MPI_Comm teamComm, userType *usr)
                 &stat);
 
       /* Pass the message to the team */
-      for (P = 1; P < teamSize; P++) {
-         MPI_Send (&msg, MY_MAX_PATH, MPI_CHAR, P, MSG_BUSY, teamComm);
-         if (usr->verbose) {
-            printf ("[%d]\t%d-0 - Send member %d-%d '%s'\n", TIME,
-                    teamID, teamID, P, msg);
+      if (teamSize > 1) {
+         for (P = 1; P < teamSize; P++) {
+            MPI_Send (&msg, MY_MAX_PATH, MPI_CHAR, P, MSG_BUSY, teamComm);
+            if (verbose) {
+               printf ("[%d]\t%d-0 - Send member %d-%d '%s'\n", TIME,
+                       teamID, teamID, P, msg);
+            }
          }
       }
 
@@ -228,21 +240,21 @@ int teamLead (int teamSize, int teamID, MPI_Comm teamComm, userType *usr)
          f_continue = 0;
          break;
       }
-      if (usr->verbose) {
+      if (verbose) {
          printf ("[%d]\t%d-0 - given '%s'\n", TIME, teamID, msg);
       }
 
       /* Run the storm */
-      _teamRun (0, teamSize, teamComm, usr, msg);
+      _teamRun (teamID, 0, teamSize, teamComm, usr, msg);
 
-      if (usr->verbose) {
+      if (verbose) {
          printf ("[%d]\t%d-0 - finished '%s'\n", TIME, teamID, msg);
       }
       MPI_Send (&numMsg, 1, MPI_INT, 0, MSG_IDLE, MPI_COMM_WORLD);
       numMsg++;
    }
 
-   if (usr->verbose) {
+   if (verbose) {
       printf ("[%d]\t%d-0 - Quitting\n", TIME, teamID);
    }
    return 0;
@@ -280,8 +292,14 @@ int teamMember (int teamRank, int teamSize, int teamID, MPI_Comm teamComm,
    char msg[MY_MAX_PATH];     /* Current track to pass. */
    char f_continue = 1;       /* Whether to continue looping. */
    MPI_Status stat;           /* Status of the received message. */
+   int verbose = usr->verbose;
 
-   if (usr->verbose) {
+   verbose = 0;
+   if (teamSize < 2) {
+      fprintf (stderr, "[%d]\t\tERROR - no teamMembers for teams < 2\n", TIME);
+      return -1;
+   }
+   if (verbose) {
       printf ("[%d]\t\t%d-%d - Started\n", TIME, teamID, teamRank);
    }
 
@@ -294,20 +312,20 @@ int teamMember (int teamRank, int teamSize, int teamID, MPI_Comm teamComm,
          f_continue = 0;
          break;
       }
-      if (usr->verbose) {
+      if (verbose) {
          printf ("[%d]\t\t%d-%d - given '%s'\n", TIME, teamID, teamRank, msg);
       }
 
       /* Run the storm */
-      _teamRun (teamRank, teamSize, teamComm, usr, msg);
+      _teamRun (teamID, teamRank, teamSize, teamComm, usr, msg);
 
-      if (usr->verbose) {
+      if (verbose) {
          printf ("[%d]\t\t%d-%d - finished '%s'\n", TIME, teamID,
                  teamRank, msg);
       }
    }
 
-   if (usr->verbose) {
+   if (verbose) {
       printf ("[%d]\t\t%d-%d - Quitting\n", TIME, teamID, teamRank);
    }
    return 0;

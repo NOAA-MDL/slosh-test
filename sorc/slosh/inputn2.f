@@ -74,7 +74,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !     Author: Brian Zachry
       
       !Open the track file
-      OPEN(5,FILE=FLE5,STATUS='OLD',ACTION='READ',IOSTAT=iError)
+      OPEN(25,FILE=FLE5,STATUS='OLD',ACTION='READ',IOSTAT=iError)
       IF (iError /= 0) THEN
         WRITE(*,*) 'ERROR: Cannot Find the Track File'
         WRITE(*,'(A,A)') '   Track File Name: ',FLE5
@@ -87,7 +87,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       Flag_TrkFile = 1992
 
       !Check first line of track file for version number (year)
-      READ(5,'(A100)',IOSTAT=iError) chLine
+      READ(25,'(A100)',IOSTAT=iError) chLine
       IF (chLine(1:12) == 'FileVersion=') THEN
         READ(chLine(13:16),*) Flag_TrkFile
       ELSE IF (chLine(1:13) == ' FileVersion=') THEN
@@ -100,7 +100,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !      WRITE(*,'(A,I0)') 'ver: ', Flag_TrkFile
 
       !Rewind track file after reading first line
-      REWIND(UNIT=5)
+      REWIND(UNIT=25)
 
 !     ----------------------
 
@@ -156,7 +156,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       iLine = 0
       iNumDataHead = 0
       DO
-        READ(5,'(A100)',IOSTAT=iError) chLine
+        READ(25,'(A100)',IOSTAT=iError) chLine
         IF (iError /= 0) EXIT
         iLine = iLine + 1
         TrkFileStr(iLine) = chLine
@@ -182,13 +182,13 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       END IF
 
       !Rewind file to go back through header block and parse data
-      REWIND(UNIT=5)
+      REWIND(UNIT=25)
 
 !     ----------------------
 
       !Code block to read and parse the header block
       DO jj = 1,TrkHeadLen
-        READ(5,'(A100)',IOSTAT=iError) chLine
+        READ(25,'(A100)',IOSTAT=iError) chLine
         IF (iError /= 0) EXIT
 
 C       Ignore comments, denoted by '#', provide check for extra spaces      
@@ -348,14 +348,14 @@ C       Ignore comments, denoted by '#', provide check for extra spaces
       DO
         !Read for the typical DeltaP format (PressureType=0)
         IF (Flag_Press == 0) THEN
-          READ(5,*,IOSTAT=iError) iHour,fLat,fLon,fDeltaP,fRMW
+          READ(25,*,IOSTAT=iError) iHour,fLat,fLon,fDeltaP,fRMW
         !Read for central pressure format (PressureType=1)
         ELSE IF (Flag_Press == 1) THEN
-          READ(5,*,IOSTAT=iError) iHour,fLat,fLon,fPress,fRMW
+          READ(25,*,IOSTAT=iError) iHour,fLat,fLon,fPress,fRMW
           fDeltaP = fAmbPress - fPress
         !Read for central pressure format with ambient (PressureType=2)
         ELSE IF (Flag_Press == 2) THEN
-          READ(5,*,IOSTAT=iError) iHour,fLat,fLon,fPress,fRMW,fAmbPress
+          READ(25,*,IOSTAT=iError) iHour,fLat,fLon,fPress,fRMW,fAmbPress
           fDeltaP = fAmbPress - fPress
         !Error for user has provided a value not supported
         ELSE
@@ -377,6 +377,9 @@ C       Ignore comments, denoted by '#', provide check for extra spaces
           WRITE(*,*) 'ERROR: Track Hour Out Of Bounds (0-999)'
           WRITE(*,'(A,I0)') '   Hour: ',iHour
           STOP
+        !Don't perform checks for iHour that is out of bounds of run 
+        !ELSE IF (iHour < iBegHr .OR. iEndHr < iHour) THEN
+
         !Check to make sure latitude is in bounds (0-90 N)
         ELSE IF (fLat < 0. .OR. fLat > 90.) THEN
           WRITE(*,*) 'ERROR: Latitude Out Of Bounds (0-90 N)'
@@ -460,7 +463,7 @@ C       Ignore comments, denoted by '#', provide check for extra spaces
       END DO  !Read of the data block
       
       !Close the track file
-      CLOSE(5)
+      CLOSE(25)
 
 !     ----------------------
 
@@ -598,7 +601,7 @@ C       Ignore comments, denoted by '#', provide check for extra spaces
         YLONG(i) = hrlyLon(i)
         PT(i)    = hrlyDeltaP(i) * fWindAdj
         R(i)     = hrlyRMW(i) * fRMWAdj
-        !WRITE(*,*) i,hrlyHour(i),XLAT(i),YLONG(i),P(i),R(i)
+       ! WRITE(*,*) i,hrlyHour(i),XLAT(i),YLONG(i),PT(i),R(i)
       END DO
 
 !     ----------------------------------------------------------
@@ -610,18 +613,18 @@ C       Ignore comments, denoted by '#', provide check for extra spaces
       iTrackLen = 100
 
 C     READ IN 2 TITLE CARDS
-      READ (5,'(20a4)') AIDENT
+      READ (25,'(20a4)') AIDENT
 
 C     READ 100 STORM POSITIONS IN LAT AND LONG, MM PRESSURE DROPS,
 C     RADII OF MAX WINDS IN ST MILES, ALL 1 HOURS APART
       DO 110 I=1,100
-      READ (5,300) ITM,XLAT(I),YLONG(I),SPeed,DIRr,PT(I),R(I)
+      READ (25,300) ITM,XLAT(I),YLONG(I),SPeed,DIRr,PT(I),R(I)
  300  FORMAT(15X,I5,8F8.2)
  110  CONTINUE
-      READ (5,'(3I3)') IBGNT,ITEND,JHR
-      READ (5,'(A80)') LFTIME
-      READ (5,'(2f5.1,A1,F5.1)') SEADTM,DTMLAK,XOKE,DTMCHN
-      CLOSE (5)
+      READ (25,'(3I3)') IBGNT,ITEND,JHR
+      READ (25,'(A80)') LFTIME
+      READ (25,'(2f5.1,A1,F5.1)') SEADTM,DTMLAK,XOKE,DTMCHN
+      CLOSE (25)
 
       !Track file flag is not supported (user input error)
       ELSE
@@ -630,7 +633,7 @@ C     RADII OF MAX WINDS IN ST MILES, ALL 1 HOURS APART
         WRITE(*,*) '  Supported Versions: 1992 (Default) or 2013'
         WRITE(*,*) '  1992 - Original Track File Format'
         WRITE(*,*) '  2013 - New Track File Format'
-        CLOSE (5)
+        CLOSE (25)
         STOP
       END IF
 

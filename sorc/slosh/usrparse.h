@@ -18,6 +18,7 @@ typedef struct {
    char *rexDir;      /* Name of output rex directory (Assuming a number of runs)*/
    int f_appendBsn;   /* Flag to append the basin to the rexDir and envDir */
    char *tideDir;     /* Name of tide directory. */
+   char *tideOnlyDir;   /* Name of tideOnly directory (for P-Surge). */
    char *trkFile;     /* Name of 100 point track file. */
    char *rexFile;     /* Name of output rex file. */
    char *envFile;     /* Name of output env file. */

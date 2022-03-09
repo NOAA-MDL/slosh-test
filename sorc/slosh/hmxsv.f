@@ -38,8 +38,8 @@ C
       CHARACTER*1     EBSN1,EBSN2
 C      CHARACTER*1     EBSN,EBSN1,EBSN2
 C
-       DIMENSION       GAMF(4)
-       DIMENSION       IBB(6,3)
+      DIMENSION       GAMF(4)
+      DIMENSION       IBB(6,3)
 C         DATA IIH/0,1,0,-1/,JJH/-1,0,1,0/
       DATA IBB(1,1),IBB(1,2),IBB(1,3)/2,1,2/,
      1     IBB(3,1),         IBB(3,3)/1,  1/,
@@ -67,66 +67,70 @@ C
       DO 180 I=IL,IM,INCR
 C        NO UPDATING IF SURGE IS DECREASING.
       HX=HMX(I,J)
-      IF(HX.GE.HB(I,J)) GOTO 180
+      IF(HX.LT.HB(I,J)) THEN
 C        SMOOTHING IS UNNECESSARY FOR WATER DEPTH GREATER THAN 40 FT.
-      IF (ZB(I,J).GT.40..OR.EBSN1.EQ.'&') GOTO 175
-      HST=HB(I,J)+ZB(I,J)
+        IF (ZB(I,J).GT.40..OR.EBSN1.EQ.'&') THEN
+          HMX(I,J)=HB(I,J)
+        ELSE
+          HST=HB(I,J)+ZB(I,J)
 C        TEST FOR LAND WETTED LESS THAN 1 FT.
-      IF(HST.LT.1.) GO TO 175
-      HSM=0.
-      HDIF=0.
-      GAM0=ELPDL2(I)+(ELPCL2(I)-ELPDL2(I))*SINL2(J)
+          IF(HST.LT.1.) THEN
+            HMX(I,J)=HB(I,J)
+          ELSE
+            HSM=0.
+            HDIF=0.
+            GAM0=ELPDL2(I)+(ELPCL2(I)-ELPDL2(I))*SINL2(J)
 C
 C******** 'LOOP' FOR SMOOTHING******************************************
-      DO 150 K=1,4
-      II=I+IIH(K)
-      JJ=J+JJH(K)
-      IF (M.EQ.1) GOTO 158
-        IF (II.EQ.0.OR.JJ.EQ.0) THEN
-        GAMF(K)=0.
-        GO TO 140
-        ENDIF
- 158  CONTINUE
-      GAMFK=ELPDL2(II)+(ELPCL2(II)-ELPDL2(II))*SINL2(JJ)
+            DO 150 K=1,4
+            II=I+IIH(K)
+            JJ=J+JJH(K)
+            IF (M.NE.1.AND.(II.EQ.0.OR.JJ.EQ.0)) THEN
+              GAMF(K)=0.
+              HSM=HSM+HB(I,J)
+              HZZ=HB(I,J)
+            ELSE
+              GAMFK=ELPDL2(II)+(ELPCL2(II)-ELPDL2(II))*SINL2(JJ)
 c      GAMF(K)=.5*(1.+GAMFK/GAM0)-1.
-      Z=GAMFK/GAM0
-      GAMF(K)=2.*Z/(1.+Z)-1.
-      IF (JJ.EQ.JMXB.OR.II.EQ.IMXB) GO TO 140
+              Z=GAMFK/GAM0
+              GAMF(K)=2.*Z/(1.+Z)-1.
 C
 C        THE NEIGHBORING SQUARE IS DRY.
-      IF (HB(II,JJ)+ZB(II,JJ).LT.1.) GO TO 140
-      KK=MOD(K,4)+1
-      IA=I+IP(K)
-      IB=I+IP(KK)
-      JA=J+JP(K)
-      JB=J+JP(KK)
-      Z =ZBM(IA,JA)
-      ZZ=ZBM(IB,JB)
-      ZZZ=AMIN1(Z,ZZ)+1.
+              IF ((JJ.NE.JMXB.AND.II.NE.IMXB).AND.
+     1            HB(II,JJ)+ZB(II,JJ).GE.1.) THEN
+                KK=MOD(K,4)+1
+                IA=I+IP(K)
+                IB=I+IP(KK)
+                JA=J+JP(K)
+                JB=J+JP(KK)
+                Z =ZBM(IA,JA)
+                ZZ=ZBM(IB,JB)
+                ZZZ=AMIN1(Z,ZZ)+1.
 C
 C        WATER ON EITHER SIDE MUST EXCEED THE BARRIER(LOWER) BY AT
 C        LEAST 1 FT.
-      IF( HB(I,J).LT.ZZZ.OR.HB(II,JJ).LT.ZZZ) THEN
-          HSM=HSM+HB(I,J)
-          HZZ=HB(I,J)
-          ELSE
-          HSM=HSM+HB(II,JJ)
-          HZZ=HB(II,JJ)
-          ENDIF
-      GOTO 212
- 140  CONTINUE
-          HSM=HSM+HB(I,J)
-          HZZ=HB(I,J)
- 212  CONTINUE
+                IF( HB(I,J).LT.ZZZ.OR.HB(II,JJ).LT.ZZZ) THEN
+                  HSM=HSM+HB(I,J)
+                  HZZ=HB(I,J)
+                ELSE
+                  HSM=HSM+HB(II,JJ)
+                  HZZ=HB(II,JJ)
+                ENDIF
+              ELSE
+                HSM=HSM+HB(I,J)
+                HZZ=HB(I,J)
+              ENDIF 
+            ENDIF
 C       WEIGHTING ADJUSTMENTS IN I-DIRECTION DUE TO POLAR GRIDS.
-       HDIF=HDIF+HZZ*GAMF(K)
-  150 CONTINUE
+            HDIF=HDIF+HZZ*GAMF(K)
+  150       CONTINUE
 C******* END 'LOOP' FOR SMOOTHING **************************************
 C
-      HTEMP=(4.*HB(I,J)+HSM+HDIF)/8.
-      HMX(I,J)=AMAX1(HX,HTEMP)
-      GOTO 180
- 175  HMX(I,J)=HB(I,J)
+            HTEMP=(4.*HB(I,J)+HSM+HDIF)/8.
+            HMX(I,J)=AMAX1(HX,HTEMP)
+          ENDIF  
+        ENDIF
+      ENDIF
  180  CONTINUE
  190  CONTINUE
  200  CONTINUE

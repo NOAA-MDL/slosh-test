@@ -108,7 +108,7 @@ extern int inital
    char trk_name[MY_MAX_PATH], int *len_trk, char dta_name[MY_MAX_PATH],
    int *len_dta, char xxx_name[MY_MAX_PATH], int *len_env,
    char f40_name[MY_MAX_PATH], int * len_ft40, double *del_t,
-   char bsnAbrev[5], int *len_bsn, double *modelClock, short *wave);
+   char bsnAbrev[5], int *len_bsnAbrev, double *modelClock, short *wave);
 #else
 /* The order BAS_Y then BAS_X is because FORTRAN and C flip things in 2d array. */
    (int *mhalt, int *imxb, int *jmxb, float zb[BAS_Y][BAS_X],
@@ -116,7 +116,7 @@ extern int inital
    char trk_name[MY_MAX_PATH], int *len_trk, char dta_name[MY_MAX_PATH],
    int *len_dta, char xxx_name[MY_MAX_PATH], int *len_env,
    char f40_name[MY_MAX_PATH], int * len_ft40, float *del_t,
-   char bsnAbrev[5], int *len_bsn, float *modelClock, short *wave);
+   char bsnAbrev[5], int *len_bsnAbrev, float *modelClock, short *wave);
 #endif
 
 #ifdef _GCC_
@@ -239,6 +239,48 @@ extern int issubgrid
 #else
  dumb10;
  #define DUMB10 dumb10
+#endif
+#pragma pack()
+
+/* Access FORTRAN common block "wven" for EWW, ESW D.Y 2020/01 */
+#pragma pack(2)
+ extern struct {
+#ifdef DOUBLE_FORTRAN
+  double EWW1[BAS_Y][BAS_X],EWW2[BAS_Y][BAS_X],EWW3[BAS_Y][BAS_X],EWW4[BAS_Y][BAS_X],
+         EWW5[BAS_Y][BAS_X],EWW6[BAS_Y][BAS_X],EWW7[BAS_Y][BAS_X],EWW8[BAS_Y][BAS_X],
+         ESW1[BAS_Y][BAS_X],ESW2[BAS_Y][BAS_X],ESW3[BAS_Y][BAS_X],ESW4[BAS_Y][BAS_X],
+         ESW5[BAS_Y][BAS_X],ESW6[BAS_Y][BAS_X],ESW7[BAS_Y][BAS_X],ESW8[BAS_Y][BAS_X];
+#else
+  float  EWW1[BAS_Y][BAS_X],EWW2[BAS_Y][BAS_X],EWW3[BAS_Y][BAS_X],EWW4[BAS_Y][BAS_X],
+         EWW5[BAS_Y][BAS_X],EWW6[BAS_Y][BAS_X],EWW7[BAS_Y][BAS_X],EWW8[BAS_Y][BAS_X],
+         ESW1[BAS_Y][BAS_X],ESW2[BAS_Y][BAS_X],ESW3[BAS_Y][BAS_X],ESW4[BAS_Y][BAS_X],
+         ESW5[BAS_Y][BAS_X],ESW6[BAS_Y][BAS_X],ESW7[BAS_Y][BAS_X],ESW8[BAS_Y][BAS_X];
+#endif
+ }
+#ifdef _GCC_
+ wven_;
+ #define WVEN wven_
+#else
+ wven;
+ #define WVEN wven
+#endif
+#pragma pack()
+
+/* experimenting D.Y 2020/01 */
+#pragma pack(2)
+ extern struct {
+#ifdef DOUBLE_FORTRAN
+  double CMM[BAS_Y][BAS_X];
+#else
+  float CMM[BAS_Y][BAS_X];
+#endif
+ }
+#ifdef _GCC_
+ try2_;
+ #define TRY2 try2_
+#else
+ try2;
+ #define TRY2 try2
 #endif
 #pragma pack()
 
@@ -1146,24 +1188,24 @@ void MaxStatInitGrid (slosh_type *st, int imxb, int jmxb, int flag)
    if (flag == 1) {
       for (j = 0; j < jmxb - 1; j++) {
          for (i = 0; i < imxb - 1; i++) {
-            st->hb_max[j][i] = -1 * DUMB10.HMX[j][i];
-/*            st->hb_max[j][i] = -1 * DUMB5.ZB[j][i]; */
+/*            st->hb_max[j][i] = -1 * DUMB10.HMX[j][i]; */
+            st->hb_max[j][i] = -1 * DUMB5.ZB[j][i];
          }
       }
    } else if (flag == 2) {
       for (j = 0; j < jmxb - 1; j++) {
          for (i = 0; i < imxb - 1; i++) {
-            st->hb_max2[j][i] = -1 * DUMB10.HMX[j][i];
-/*            st->hb_max2[j][i] = -1 * DUMB5.ZB[j][i]; */
+/*            st->hb_max2[j][i] = -1 * DUMB10.HMX[j][i]; */
+            st->hb_max2[j][i] = -1 * DUMB5.ZB[j][i];
          }
       }
    } else {
       for (j = 0; j < jmxb - 1; j++) {
          for (i = 0; i < imxb - 1; i++) {
-            st->hb_max[j][i] = -1 * DUMB10.HMX[j][i];
-            st->hb_max2[j][i] = -1 * DUMB10.HMX[j][i];
-/*            st->hb_max[j][i] = -1 * DUMB5.ZB[j][i]; */
-/*            st->hb_max2[j][i] = -1 * DUMB5.ZB[j][i]; */
+/*            st->hb_max[j][i] = -1 * DUMB10.HMX[j][i]; */
+/*            st->hb_max2[j][i] = -1 * DUMB10.HMX[j][i]; */
+            st->hb_max[j][i] = -1 * DUMB5.ZB[j][i];
+            st->hb_max2[j][i] = -1 * DUMB5.ZB[j][i];
          }
       }
    }
@@ -1227,6 +1269,15 @@ void RunLoopStep (int teamSize,
 #ifdef _MPI_
                   MPI_Win win_HB7, MPI_Datatype dstType[9], MPI_Datatype srcType[9],
                   topoType *topo,
+                  /* window for windsea and swell energy D.Y 2020/01 */
+                  MPI_Win win_EWW1, MPI_Win win_EWW2,
+                  MPI_Win win_EWW3, MPI_Win win_EWW4,
+                  MPI_Win win_EWW5, MPI_Win win_EWW6,
+                  MPI_Win win_EWW7, MPI_Win win_EWW8,
+                  MPI_Win win_ESW1, MPI_Win win_ESW2,
+                  MPI_Win win_ESW3, MPI_Win win_ESW4,
+                  MPI_Win win_ESW5, MPI_Win win_ESW6,
+                  MPI_Win win_ESW7, MPI_Win win_ESW8,
 #endif
                   char * bsnAbrev, slosh_type * st, int imxb, int jmxb,
                   int *itime, int *mhalt,
@@ -1298,6 +1349,135 @@ void RunLoopStep (int teamSize,
             }
          }
          MPI_Win_fence(0,win_HB7);
+
+         MPI_Win_fence(0,win_EWW1);
+         for (i=0; i < 8; i++)
+            if (topo->r[i] != -1) {
+               MPI_Get(WVEN.EWW1,1,dstType[i],topo->r[i],0,1,srcType[i],win_EWW1);
+
+            }
+         MPI_Win_fence(0,win_EWW1);
+
+         MPI_Win_fence(0,win_EWW2);
+         for (i=0; i < 8; i++)
+            if (topo->r[i] != -1) {
+               MPI_Get(WVEN.EWW2,1,dstType[i],topo->r[i],0,1,srcType[i],win_EWW2);
+
+            }
+         MPI_Win_fence(0,win_EWW2);
+
+         MPI_Win_fence(0,win_EWW3);
+         for (i=0; i < 8; i++)
+            if (topo->r[i] != -1) {
+               MPI_Get(WVEN.EWW3,1,dstType[i],topo->r[i],0,1,srcType[i],win_EWW3);
+
+            }
+         MPI_Win_fence(0,win_EWW3);
+
+         MPI_Win_fence(0,win_EWW4);
+         for (i=0; i < 8; i++)
+            if (topo->r[i] != -1) {
+               MPI_Get(WVEN.EWW4,1,dstType[i],topo->r[i],0,1,srcType[i],win_EWW4);
+
+            }
+         MPI_Win_fence(0,win_EWW4);
+
+         MPI_Win_fence(0,win_EWW5);
+         for (i=0; i < 8; i++)
+            if (topo->r[i] != -1) {
+               MPI_Get(WVEN.EWW5,1,dstType[i],topo->r[i],0,1,srcType[i],win_EWW5);
+
+            }
+         MPI_Win_fence(0,win_EWW5);
+
+         MPI_Win_fence(0,win_EWW6);
+         for (i=0; i < 8; i++)
+            if (topo->r[i] != -1) {
+               MPI_Get(WVEN.EWW6,1,dstType[i],topo->r[i],0,1,srcType[i],win_EWW6);
+
+            }
+         MPI_Win_fence(0,win_EWW6);
+
+         MPI_Win_fence(0,win_EWW7);
+         for (i=0; i < 8; i++)
+            if (topo->r[i] != -1) {
+               MPI_Get(WVEN.EWW7,1,dstType[i],topo->r[i],0,1,srcType[i],win_EWW7);
+
+            }
+         MPI_Win_fence(0,win_EWW7);
+
+         MPI_Win_fence(0,win_EWW8);
+         for (i=0; i < 8; i++)
+            if (topo->r[i] != -1) {
+               MPI_Get(WVEN.EWW8,1,dstType[i],topo->r[i],0,1,srcType[i],win_EWW8);
+
+            }
+         MPI_Win_fence(0,win_EWW8);
+
+
+         MPI_Win_fence(0,win_ESW1);
+         for (i=0; i < 8; i++)
+            if (topo->r[i] != -1) {
+               MPI_Get(WVEN.ESW1,1,dstType[i],topo->r[i],0,1,srcType[i],win_ESW1);
+
+            }
+         MPI_Win_fence(0,win_ESW1);
+
+         MPI_Win_fence(0,win_ESW2);
+         for (i=0; i < 8; i++)
+            if (topo->r[i] != -1) {
+               MPI_Get(WVEN.ESW2,1,dstType[i],topo->r[i],0,1,srcType[i],win_ESW2);
+
+            }
+         MPI_Win_fence(0,win_ESW2);
+
+         MPI_Win_fence(0,win_ESW3);
+         for (i=0; i < 8; i++)
+            if (topo->r[i] != -1) {
+               MPI_Get(WVEN.ESW3,1,dstType[i],topo->r[i],0,1,srcType[i],win_ESW3);
+
+            }
+         MPI_Win_fence(0,win_ESW3);
+
+         MPI_Win_fence(0,win_ESW4);
+         for (i=0; i < 8; i++)
+            if (topo->r[i] != -1) {
+               MPI_Get(WVEN.ESW4,1,dstType[i],topo->r[i],0,1,srcType[i],win_ESW4);
+
+            }
+         MPI_Win_fence(0,win_ESW4);
+
+         MPI_Win_fence(0,win_ESW5);
+         for (i=0; i < 8; i++)
+            if (topo->r[i] != -1) {
+               MPI_Get(WVEN.ESW5,1,dstType[i],topo->r[i],0,1,srcType[i],win_ESW5);
+
+            }
+         MPI_Win_fence(0,win_ESW5);
+
+         MPI_Win_fence(0,win_ESW6);
+         for (i=0; i < 8; i++)
+            if (topo->r[i] != -1) {
+               MPI_Get(WVEN.ESW6,1,dstType[i],topo->r[i],0,1,srcType[i],win_ESW6);
+
+            }
+         MPI_Win_fence(0,win_ESW6);
+
+         MPI_Win_fence(0,win_ESW7);
+         for (i=0; i < 8; i++)
+            if (topo->r[i] != -1) {
+               MPI_Get(WVEN.ESW7,1,dstType[i],topo->r[i],0,1,srcType[i],win_ESW7);
+
+            }
+         MPI_Win_fence(0,win_ESW7);
+
+         MPI_Win_fence(0,win_ESW8);
+         for (i=0; i < 8; i++)
+            if (topo->r[i] != -1) {
+               MPI_Get(WVEN.ESW8,1,dstType[i],topo->r[i],0,1,srcType[i],win_ESW8);
+
+            }
+         MPI_Win_fence(0,win_ESW8);
 #endif
       }
       /* Momentum stage */
@@ -1777,7 +1957,7 @@ int ExtendEnvName2 (char envName2[MY_MAX_PATH], char extendName[MY_MAX_PATH + 10
    if ((ptr = strrchr (envName2, '.')) == NULL) {
       fprintf (stderr, "Couldn't find last dot in '%s'\n", envName2);
       return -1;
-   }
+  }
    *ptr = '\0';
    /* Round to the nearest hour. */
    sprintf (extendName, "%s%03d.env", envName2, (int) (projection / 3600. + .5));
@@ -1788,7 +1968,7 @@ int ExtendEnvName2 (char envName2[MY_MAX_PATH], char extendName[MY_MAX_PATH + 10
 /*****************************************************************************
 *****************************************************************************/
 
-int PerformRun (int teamRank, int teamSize,
+int PerformRun (int teamID, int teamRank, int teamSize,
 #ifdef _MPI_
                 MPI_Comm teamComm,
 #endif
@@ -1810,7 +1990,6 @@ int PerformRun (int teamRank, int teamSize,
    double tideClock;
 
    double envClock2;  /* A second timer as to when to save for use with envSave2Min */
-   char f_env;
    int itime;           /* Interval time. */
    int f_first;
    rexType rex;
@@ -1835,10 +2014,18 @@ int PerformRun (int teamRank, int teamSize,
    FILE *fp;
    int f_foundVDEF = 0;
 #ifdef _MPI_
-   int hWid = 10;
+   int hWid = 7;
    topoType topo;
-   MPI_Win win_HB7, win_hb, win_hb_max, win_hb_max2;
+   MPI_Win win_HB7=MPI_WIN_NULL;
+   MPI_Win win_hb, win_hb_max, win_hb_max2;
    MPI_Win win_zb;
+/* window for windsea and swell energy D.Y 2020/01 */
+   MPI_Win win_EWW1=MPI_WIN_NULL, win_EWW2=MPI_WIN_NULL, win_EWW3=MPI_WIN_NULL;
+   MPI_Win win_EWW4=MPI_WIN_NULL, win_EWW5=MPI_WIN_NULL, win_EWW6=MPI_WIN_NULL;
+   MPI_Win win_EWW7=MPI_WIN_NULL, win_EWW8=MPI_WIN_NULL;
+   MPI_Win win_ESW1=MPI_WIN_NULL, win_ESW2=MPI_WIN_NULL, win_ESW3=MPI_WIN_NULL;
+   MPI_Win win_ESW4=MPI_WIN_NULL, win_ESW5=MPI_WIN_NULL, win_ESW6=MPI_WIN_NULL;
+   MPI_Win win_ESW7=MPI_WIN_NULL, win_ESW8=MPI_WIN_NULL;
    MPI_Datatype dstType[9];
    MPI_Datatype srcType[9];
 #endif
@@ -2030,6 +2217,23 @@ int PerformRun (int teamRank, int teamSize,
       MPI_Win_create(st.hb, sod*BAS_Y*BAS_X, sod, MPI_INFO_NULL, teamComm, &win_hb);
       MPI_Win_create(st.hb_max, sod*BAS_Y*BAS_X, sod, MPI_INFO_NULL, teamComm, &win_hb_max);
       MPI_Win_create(st.hb_max2, sod*BAS_Y*BAS_X, sod, MPI_INFO_NULL, teamComm, &win_hb_max2);
+      /* for windsea and swell energy D.Y 2020/01 */
+      MPI_Win_create(WVEN.EWW1, sod*BAS_Y*BAS_X*DIR_N, sod, MPI_INFO_NULL, teamComm, &win_EWW1);
+      MPI_Win_create(WVEN.EWW2, sod*BAS_Y*BAS_X*DIR_N, sod, MPI_INFO_NULL, teamComm, &win_EWW2);
+      MPI_Win_create(WVEN.EWW3, sod*BAS_Y*BAS_X*DIR_N, sod, MPI_INFO_NULL, teamComm, &win_EWW3);
+      MPI_Win_create(WVEN.EWW4, sod*BAS_Y*BAS_X*DIR_N, sod, MPI_INFO_NULL, teamComm, &win_EWW4);
+      MPI_Win_create(WVEN.EWW5, sod*BAS_Y*BAS_X*DIR_N, sod, MPI_INFO_NULL, teamComm, &win_EWW5);
+      MPI_Win_create(WVEN.EWW6, sod*BAS_Y*BAS_X*DIR_N, sod, MPI_INFO_NULL, teamComm, &win_EWW6);
+      MPI_Win_create(WVEN.EWW7, sod*BAS_Y*BAS_X*DIR_N, sod, MPI_INFO_NULL, teamComm, &win_EWW7);
+      MPI_Win_create(WVEN.EWW8, sod*BAS_Y*BAS_X*DIR_N, sod, MPI_INFO_NULL, teamComm, &win_EWW8);
+      MPI_Win_create(WVEN.ESW1, sod*BAS_Y*BAS_X*DIR_N, sod, MPI_INFO_NULL, teamComm, &win_ESW1);
+      MPI_Win_create(WVEN.ESW2, sod*BAS_Y*BAS_X*DIR_N, sod, MPI_INFO_NULL, teamComm, &win_ESW2);
+      MPI_Win_create(WVEN.ESW3, sod*BAS_Y*BAS_X*DIR_N, sod, MPI_INFO_NULL, teamComm, &win_ESW3);
+      MPI_Win_create(WVEN.ESW4, sod*BAS_Y*BAS_X*DIR_N, sod, MPI_INFO_NULL, teamComm, &win_ESW4);
+      MPI_Win_create(WVEN.ESW5, sod*BAS_Y*BAS_X*DIR_N, sod, MPI_INFO_NULL, teamComm, &win_ESW5);
+      MPI_Win_create(WVEN.ESW6, sod*BAS_Y*BAS_X*DIR_N, sod, MPI_INFO_NULL, teamComm, &win_ESW6);
+      MPI_Win_create(WVEN.ESW7, sod*BAS_Y*BAS_X*DIR_N, sod, MPI_INFO_NULL, teamComm, &win_ESW7);
+      MPI_Win_create(WVEN.ESW8, sod*BAS_Y*BAS_X*DIR_N, sod, MPI_INFO_NULL, teamComm, &win_ESW8);
 
       istar = topo.hOffx + 1;
       istop = topo.hOffx + topo.hnx;
@@ -2064,7 +2268,8 @@ int PerformRun (int teamRank, int teamSize,
 #endif
 
    if (verbose >= 2) {
-      printf ("%f :: Finished Initializing\n", clock () / (double)(CLOCKS_PER_SEC));
+      printf ("%f :: Finished Initializing %d-%d\n", clock () / (double)(CLOCKS_PER_SEC),
+              teamID, teamRank);
       fflush (stdout);
    }
 
@@ -2092,7 +2297,6 @@ int PerformRun (int teamRank, int teamSize,
 /* Huiqing.Liu/MDL For reference time to adding and subtracting tide */
    tideClock = startClock;
 
-   f_env = 0;           /* 1 if this is the envelope, 0 otherwise. */
    itime = 0;
    f_first = 1;
    /* Note First time step is a "double" time step because of error in SLOSH
@@ -2116,6 +2320,9 @@ int PerformRun (int teamRank, int teamSize,
       RunLoopStep (teamSize,
 #ifdef _MPI_
                    win_HB7, dstType, srcType, &topo,
+                   /* window for windsea and swell energy D.Y 2020/01 */
+                   win_EWW1,win_EWW2,win_EWW3,win_EWW4,win_EWW5,win_EWW6,win_EWW7,win_EWW8,
+                   win_ESW1,win_ESW2,win_ESW3,win_ESW4,win_ESW5,win_ESW6,win_ESW7,win_ESW8,
 #endif
                    bsnAbrev, &st, imxb, jmxb, &itime, &mhalt,
                    f_wantRex, &modelClock, rexClock, f_first, &tgrid,

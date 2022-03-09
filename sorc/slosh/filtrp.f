@@ -33,38 +33,39 @@ C
       COMMON /HTERAIN/ HTER
       DIMENSION       HZ(M_,3)
       DIMENSION       GAMF(4)
-       DATA HT/0./
+      DATA HT/0./
 C
 C        STORE 2 OF 3 INITIAL LINES FOR SMOOTHING MIDDLE LINE
       DO 300 IPS=1,2
       KR=IPS
 C
-      GO TO (104,102),IPS
- 102  I1=2
-      I2=IMXB2
-      J1=1
-      J2=JMXB1
-      DO 100 J=1,2
-      DO 100 I=1,IMXB1
- 100  HZ(I,J+1)=HMX(I,J)
-      GO TO 105
- 104  I1=1
-      I2=IMXB1
-      J1=2
-      J2=JMXB2
-      DO 112 J=1,3
-      DO 112 I=1,IMXB1
- 112  HZ(I,J)=HMX(I,J)
- 105  CONTINUE
+      IF(IPS.EQ.2) THEN
+        I1=2
+        I2=IMXB2
+        J1=1
+        J2=JMXB1
+        DO 100 J=1,2
+        DO 100 I=1,IMXB1
+ 100    HZ(I,J+1)=HMX(I,J)
+      ELSE
+        I1=1
+        I2=IMXB1
+        J1=2
+        J2=JMXB2
+        DO 112 J=1,3
+        DO 112 I=1,IMXB1
+ 112    HZ(I,J)=HMX(I,J)
+      ENDIF
+C
       DO 220 J=J1,J2
       DO 190 I=I1,I2
 C    CHANGED BY NSM TO HTER FROM 35 11/20/2010 : Accepted 4/4/2011
-      IF(ZB(I,J).LE.(-HTER)) GO TO 190
+      IF(ZB(I,J).LE.(-HTER)) CYCLE
       HST=HMX(I,J)+ZB(I,J)
-      IF(HST.LT.HT) GO TO 190
+      IF(HST.LT.HT) CYCLE
       HSM=0.
       HDIF=0.
-       GAM0=ELPDL2(I)+(ELPCL2(I)-ELPDL2(I))*SINL2(J)
+      GAM0=ELPDL2(I)+(ELPCL2(I)-ELPDL2(I))*SINL2(J)
 C
 C**************SMOOTHING ROUTINE****************************************
       DO 150 K=KR,4,2
@@ -72,15 +73,31 @@ C**************SMOOTHING ROUTINE****************************************
       JK=J+JJH(K)
       IF (II.EQ.0.OR.JK.EQ.0) THEN
         GAMF(K)=0.
-        GOTO 160
-        ENDIF
+        HSM=HSM+HZ(I,2)
+        HZZ=HZ(I,2)
+C       WEIGHTING ADJUSTMENTS IN I-DIRECTION DUE TO POLAR GRIDS.
+        HDIF=HDIF+HZZ*GAMF(K)
+        CYCLE
+      ENDIF
       GAMFK=ELPDL2(II)+(ELPCL2(II)-ELPDL2(II))*SINL2(JK)
-c      GAMF(K)=.5*(1.+GAMFK/GAM0)-1.
+c     GAMF(K)=.5*(1.+GAMFK/GAM0)-1.
       Z=GAMFK/GAM0
       GAMF(K)=2.*Z/(1.+Z)-1.
-      IF (II.EQ.IMXB.OR.JK.EQ.JMXB) GO TO 160
+      IF (II.EQ.IMXB.OR.JK.EQ.JMXB) THEN
+        HSM=HSM+HZ(I,2)
+        HZZ=HZ(I,2)
+C       WEIGHTING ADJUSTMENTS IN I-DIRECTION DUE TO POLAR GRIDS.
+        HDIF=HDIF+HZZ*GAMF(K)
+        CYCLE
+      ENDIF
       JJ=JJH(K)+2
-      IF (HZ(II,JJ)+ZB(II,JK).LT.HT) GO TO 160
+      IF (HZ(II,JJ)+ZB(II,JK).LT.HT) THEN
+        HSM=HSM+HZ(I,2)
+        HZZ=HZ(I,2)
+C       WEIGHTING ADJUSTMENTS IN I-DIRECTION DUE TO POLAR GRIDS.
+        HDIF=HDIF+HZZ*GAMF(K)
+        CYCLE
+      ENDIF
       KK=MOD(K,4)+1
       IA=I+IP(K)
       IB=I+IP(KK)
@@ -89,35 +106,31 @@ c      GAMF(K)=.5*(1.+GAMFK/GAM0)-1.
       Z =ZBM(IA,JA)
       ZZ=ZBM(IB,JB)
       ZZZ=AMIN1(Z,ZZ)+HT
-      IF( HZ(I,2).LT.ZZZ.OR.HZ(II,JJ).LT.ZZZ) THEN
-          HSM=HSM+HZ(I,2)
-          HZZ=HZ(I,2)
-          ELSE
-          HSM=HSM+HZ(II,JJ)
-          HZZ=HZ(II,JJ)
-          ENDIF
-      GOTO 210
- 160  CONTINUE
-          HSM=HSM+HZ(I,2)
-          HZZ=HZ(I,2)
- 210  CONTINUE
+      IF(HZ(I,2).LT.ZZZ.OR.HZ(II,JJ).LT.ZZZ) THEN
+        HSM=HSM+HZ(I,2)
+        HZZ=HZ(I,2)
+      ELSE
+        HSM=HSM+HZ(II,JJ)
+        HZZ=HZ(II,JJ)
+      ENDIF
 C       WEIGHTING ADJUSTMENTS IN I-DIRECTION DUE TO POLAR GRIDS.
-        HDIF=HDIF+HZZ*GAMF(K)
+      HDIF=HDIF+HZZ*GAMF(K)
  150  CONTINUE
 C**************END SMOOTHING ROUTINE************************************
 C
       HMX(I,J)=(2.*HMX(I,J)+HSM)/4.
 C 180  HMX(I,J)=HMX(I,J)+HDIF/4.
       HMX(I,J)=AMAX1(HMX(I,J),-ZB(I,J))
-  190 CONTINUE
+ 190  CONTINUE
 C
 C        UPDATE 3 LINES FOR SMOOTHING
-      IF(J.GE.J2) GO TO 220
-      DO 200 II=1,IMXB1
-      HZ(II,1)=HZ(II,2)
-      HZ(II,2)=HZ(II,3)
-  200 HZ(II,3)=HMX(II,J+2)
-  220 CONTINUE
+      IF(J.LT.J2) THEN
+        DO 200 II=1,IMXB1
+        HZ(II,1)=HZ(II,2)
+        HZ(II,2)=HZ(II,3)
+ 200    HZ(II,3)=HMX(II,J+2)
+      ENDIF
+ 220  CONTINUE
  300  CONTINUE
       RETURN
-       END
+      END

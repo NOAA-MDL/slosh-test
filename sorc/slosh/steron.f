@@ -58,14 +58,15 @@ C        TRANSFORM LAT/LONG TO CARTESIAN (X,Y)
       X(I)=(RLZ*SIN(ANG))*FTPNM/5280.+XMOUTH
       Y(I)=(RLZ*COS(ANG))*FTPNM/5280.+YMOUTH
 C
-      IF (I.EQ.1) GOTO 120
-         SP(I-1)=SQRT((X(I-1)-X(I))**2+(Y(I-1)-Y(I))**2)
-         IF (SP(I-1).LT.1.E-5) THEN
-         DIR(I-1)=3.14159265358979323846
-         ELSE
-         DIR(I-1)=3.14159265358979323846+ATAN2(Y(I-1)-Y(I),X(I-1)-X(I))
-         ENDIF
-c      WRITE(*,*) X(I),Y(I),SP(I-1),DIR(I-1)/1.74532925E-2
+      IF (I.NE.1) THEN
+        SP(I-1)=SQRT((X(I-1)-X(I))**2+(Y(I-1)-Y(I))**2)
+        IF (SP(I-1).LT.1.E-5) THEN
+        DIR(I-1)=3.14159265358979323846
+        ELSE
+        DIR(I-1)=3.14159265358979323846+ATAN2(Y(I-1)-Y(I),X(I-1)-X(I))
+        ENDIF
+c       WRITE(*,*) X(I),Y(I),SP(I-1),DIR(I-1)/1.74532925E-2
+      ENDIF
   120 CONTINUE
       SP(iTrackLen)=SP(iTrackLen-1)
       DIR(iTrackLen)=DIR(iTrackLen-1)

@@ -1,4 +1,87 @@
 -------------------------------------------------------------------------------
+2021-05-11  v4.22   !! GITHUB-TAG
+2021-04-09  ======
+   * Fixing the bug in splint.f introduced by effort to remove "go to"
+
+2021-03-29  ======
+   * Updating variables that are reset if run multiple times with multiple
+     basins
+   * Removing sleep(1) from leader.c - Bad for P-Surge v2.8, and reduced the
+     use of 'flavor'
+   * Utilizing ZB (vs HMX) in MaxStatInitGrid() and init MPI_Win variables.
+     Use of HMX in MaxStatInitGrid was introduced by Dongming in the slosh_wave
+     code.  The MaxStatInitGrid() should only be used by P-Surge which does
+     maximums over a time-range, so it needs to reset after each time-range.
+   * Switching from -DWAVE to -DINCLUDE_WAVE for wave code
+   * Enhancing error message in P-Surge MPI mode.
+
+2021-03-25  ======
+   * Allow SLOSH to take a tideOnlyDir option in response to P-Surge bugzilla
+     #1053.  This should help (long term) with updates to the tideOnly files
+
+2020-04-03  ======
+   * Undoing the 'cycle' fix to 'flw1dm_block' to allow 1-d flow again.
+   * P-Surge separating HOR3, HSFD from HCH2 threads.
+
+2020-03-24  ======
+   * Removed "go to"s for channl, contty, crdrd2, depsfc, fhmxsv, filter,
+     filtrp, and stmval
+
+2020-03-20  ======
+   * Renamed "goto" to "go to" for contty, crdrd2, fhmxsv, filter, filtrp,
+     flt2g, flter2, wave, and xfilter
+
+2020-03-19  ======
+   * Remove "go to"s from hmxsv, inital, flw1dm, and flw1dm2
+
+2020-03-18  ======
+   * No longer need inital_GUI.f, tmstpc_GUI.f or tmstpm_GUI.f
+   * No longer need btmstr_gnu.f
+   * Removing "go to"s from momntm2, mntmbd, and mntmbd2
+   * Removing "go to"s from intlht, intlhtadd, and intlhtsub
+
+2020-03-17  ======
+   * Removing "go to" in smpt2g, steron, stmval, momntm
+
+2020-03-11  ======
+   * Cleaned up some diagnostics in crdrd2 and removed some go to in tmstp2.
+   * MPI - Default teamSize 1 (vs 2), separate thread for HT3 and EJX3 vs HCH2.
+   * Removing "go to" in channl, clnup, inital, snapsh, splint, tmstep_GUI,
+     tmstpc, tmstpc_GUI
+
+2020-03-06  ======
+   * Merging crdrd2_n and crdr2 by passing in a IVER flag
+
+2020-03-05  ======
+   * Putting FORTRAN wave code behind #ifdef
+
+2020-03-03  ======
+   * Using hWid=7 (vs 10) for the overlap window in the topology
+   * Moved "go to" => "move to" in comments to help resolve "go to" count
+
+2020-02-21  ======
+   * Checking in a version of wave model with curvilinear and MPI capabilities
+
+2020-02-10  ======
+   * Use file-unit 29 (vs 9) in crdrd2.f
+   * Adjusted read # of flows > 40,000 by not using a letter for 1000s place,
+     otherwise limited to 52,000 flows.  Now read limit is 999,999 flows.
+
+2020-01-16  ======
+   * Unused files to attic, remove dead code, added a diagnostic.
+   * Added teamID (MPI) to a few procedures for diagnostics
+
+2020-01-15  ======
+   * Added SLOSH man page (vs the pseudo- one in /docs)
+
+2020-01-13  ======
+   * Cygwin MPI needs FORTRAN to use units >=10.  Forgot to correct crdrd2.f
+   * Removed some compiler warnings for C code.
+
+2020-01-09  ======
+   * Cygwin MPI needed FORTRAN to use units >= 10, which is a best practice.
+
+-------------------------------------------------------------------------------
 2020-01-08  v4.21   !! GITHUB-TAG
    * BSNDEV
      - Minor updates to HCH2, HMS8, HOR3, HPA2, HSFD, HSFE, HSFF defin

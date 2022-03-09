@@ -67,6 +67,8 @@
  * which contains [0..(256*256-1)].  XColor.red = Small_XColor.red * 257
  * This sets both the 1st and 2nd byte of XColor to the value in Small_XColor.
  */
+/* Wave directional component number D.Y 2020/01 */
+#define DIR_N 8
 typedef struct {
   unsigned char red, green, blue;
 } Small_XColor;

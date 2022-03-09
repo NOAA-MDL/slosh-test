@@ -59,7 +59,7 @@ c      GAMF(K)=.5*(1.+GAMFK/GAM0)-1.
       ELSE
       GAMF(K)=GAMFP(K)
       ENDIF
-      IF (II.EQ.IMXB) GOTO 160
+      IF (II.EQ.IMXB) GO TO 160
 C        THE NEIGHBORING SQUARE IS MERELY WET(LESS THAN 1 FT).
       IF (HSUB(II,JJ)+ZB(II,JJ).LT.HCRT) GO TO 160
       KK=MOD(K,4)+1
@@ -80,7 +80,7 @@ C        LEAST 1 FT.
           HSM=HSM+HSUB(II,JJ)
           HZZ=HSUB(II,JJ)
           ENDIF
-      GOTO 212
+      GO TO 212
  160  CONTINUE
           HSM=HSM+HSUB(I,J)
           HZZ=HSUB(I,J)

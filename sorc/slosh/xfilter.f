@@ -471,7 +471,7 @@ C              --------------------------------------------------------
                   JX = J + JJX(KM)
                   II = I + IIH(KM)
                   JJ = J + JJH(KM)
-CC                  IF (M .EQ. 1) GOTO 158
+CC                  IF (M .EQ. 1) GO TO 158
 CC                  IF (II.EQ.0.OR.JJ.EQ.0) THEN
 CC                    GAMF(K)=0.
 CC                    GO TO 160

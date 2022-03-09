@@ -1,21 +1,24 @@
 #!/bin/bash
 #------------------------------------------------------------------------------
-# getGuiLib.sh                                          Last Change: 2022-02-28
+# getGuiLib.sh                                          Last Change: 2022-03-08
 #                                                        Arthur.Taylor@noaa.gov
 #                                                              NWS/OSTI/MDL/DSD
 #------------------------------------------------------------------------------
 DOWN=${HOME:?}/Downloads
 URL="api.github.com/repos/NOAA-MDL/slosh/releases"
-LATEST=v4.21
+LATEST=v4.22
 PAT_FILE=$HOME/.ssh/gitHub_pat
 if [[ ! -e $PAT_FILE ]] ; then
    PAT_FILE=$HOME/.ssh2/gitHub_pat
 fi
 
 #--------------------------------------------------------------- PACKAGES -----
+V=v4.22; D="2021-05-11"; vers+=($V); ds+=($D)
 V=v4.21; D="2020-01-08"; vers+=($V); ds+=($D)
 V=v4.20; D="2019-11-13"; vers+=($V); ds+=($D); T420="${V}_$D"
 V=v4.12; D="2014-09-03"; vers+=($V); ds+=($D); T412="${V}_$D"
+
+F_v422+=($T420:SLOSH-GuiLib)
 
 F_v421+=($T420:SLOSH-GuiLib)
 

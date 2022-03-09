@@ -1,15 +1,16 @@
 #!/bin/bash
 #------------------------------------------------------------------------------
-# getStorms.sh                                          Last Change: 2022-02-28
+# getStorms.sh                                          Last Change: 2022-03-08
 #                                                        Arthur.Taylor@noaa.gov
 #                                                              NWS/OSTI/MDL/DSD
 #------------------------------------------------------------------------------
 DOWN=${HOME:?}/Downloads
 URL="api.github.com/repos/NOAA-MDL/slosh/releases"
-LATEST=v4.21
+LATEST=v4.22
 PAT_FILE=$HOME/.ssh/gitHub_pat
 
 #--------------------------------------------------------------- PACKAGES -----
+V=v4.22; D="2021-05-11"; vers+=($V); ds+=($D)
 V=v4.21; D="2020-01-08"; vers+=($V); ds+=($D)
 V=v4.20; D="2019-11-13"; vers+=($V); ds+=($D); T420="${V}_$D"
 V=v4.12; D="2014-09-03"; vers+=($V); ds+=($D)
@@ -18,6 +19,8 @@ V=v3.97; D="2012-01-20"; vers+=($V); ds+=($D); T397="${V}_$D"
 V=v3.96; D="2011-02-17"; vers+=($V); ds+=($D)
 V=v3.95; D="2010-10-19"; vers+=($V); ds+=($D); T395="${V}_$D"
 V=v3.94; D="2009-10-08"; vers+=($V); ds+=($D); T394="${V}_$D"
+
+F_v422+=($T420:1989-Hugo $T420:1992-Andrew)
 
 F_v421+=($T420:1989-Hugo $T420:1992-Andrew)
 

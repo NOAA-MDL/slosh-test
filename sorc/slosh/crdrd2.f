@@ -1,4 +1,4 @@
-      SUBROUTINE CRDRD2
+      SUBROUTINE CRDRD2(IVER)
       INCLUDE 'parm.for'
 C      INCLUDE 'parmmsy.for'
 C
@@ -16,6 +16,13 @@ C
       COMMON /IPRX/   IX60
       COMMON /GPRT1/  DOLLAR,EBSN
       CHARACTER*1  EBSN
+!-------------------------------------------------------
+! Added Basin Name Variable by Huiqing.Liu/MDL June/2015
+! for Modifying Cd wind drag coefficient parameter only
+! in New Bering Sea extra-tropical basin (ENO3)
+!-------------------------------------------------------
+      COMMON /GPRT/   STA
+      CHARACTER*16  STA
 C
       CHARACTER*16 STATS
       DIMENSION   IANG(L_)
@@ -23,6 +30,7 @@ C      CHARACTER*16 AAA
       DIMENSION   INW(7),JNW(7),HW(7)
       DIMENSION   IBNK(NBK_),JBNK(NBK_),ISBNK(NBK_),BKI(NBK_),
      1            BKE(NBK_),WCHN(NBK_)
+      INTEGER IVER
       CHARACTER*2   AC,BC,IX60,YA1,ZA1,DOLLAR,SIG_
       DATA YA1/'Y'/,ZA1/'Z'/,SIG_/'$'/
 C      CHARACTER*2   AC,BC,IX60,XA1,YA1,ZA1,DOLLAR,SIG_
@@ -42,41 +50,46 @@ C             2    8    8    8    9    9    9    1    1
 C DEEP WATER-) (-INTERMEDIATE----) (-SHALLOW----) (--LAND----
 C
       IF (IMXB.GT.M_.OR.JMXB.GT.N_) THEN
-      WRITE (*,*) ' BASIN DIMENSIONS ',IMXB,JMXB
-      WRITE (*,*) ' HAS EXCEEDS THE COMPILE DIMENSIONS',M_,N_
-      STOP
-      endif
+        WRITE (*,*) ' BASIN DIMENSIONS ',IMXB,JMXB
+        WRITE (*,*) ' HAS EXCEEDS THE COMPILE DIMENSIONS',M_,N_
+        STOP
+      ENDIF
 C        INITIALIZE ZBM(I,J) FOR ENTIRE GRIDS
       DO 120 J=1,JMXB
       DO 120 I=1,IMXB
  120  ZBM(I,J)=-300.
 C
 C         READING IN BARRIER HEIGHTS AT SELECTED GRID POINTS
-      READ (9,520) INWP,AC
-       IF(AC.EQ.'X') INWP=INWP+1000
-       IF(AC.EQ.'Y') INWP=INWP+2000
-       IF(AC.EQ.'Z') INWP=INWP+3000
-       IF(AC.EQ.'W') INWP=INWP+4000
-       IF(AC.EQ.'V') INWP=INWP+5000
-       IF(AC.EQ.'U') INWP=INWP+6000
-C     WRITE (*,520) INWP
-      IF (INWP.EQ.0) GO TO 220
-      INWX=(INWP-1)/7+1
-      I7X=INWP-(INWX-1)*7
-      I7=7
-      DO 210 IP=1,INWX
-      IF(IP.EQ.INWX) I7=I7X
-      READ (9,550) (INW(I),JNW(I),HW(I),I=1,I7)
-      DO 200 N=1,I7
-      I=INW(N)
-      J=JNW(N)
- 200  ZBM(I,J)=HW(N)
- 210  CONTINUE
+      READ (29,520) INWP,AC
+      IF(AC.EQ.'X') INWP=INWP+1000
+      IF(AC.EQ.'Y') INWP=INWP+2000
+      IF(AC.EQ.'Z') INWP=INWP+3000
+      IF(AC.EQ.'W') INWP=INWP+4000
+      IF(AC.EQ.'V') INWP=INWP+5000
+      IF(AC.EQ.'U') INWP=INWP+6000
+      IF(AC.EQ.'T') INWP=INWP+7000
+C     WRITE (*,*) INWP,AC
+      IF (INWP.NE.0) THEN
+        INWX=(INWP-1)/7+1
+        I7X=INWP-(INWX-1)*7
+        I7=7
+        DO 210 IP=1,INWX
+        IF(IP.EQ.INWX) I7=I7X
+        IF (IVER.EQ.199201) THEN
+          READ (29,'(7(I3,I3,F3.0))') (INW(I),JNW(I),HW(I),I=1,I7)
+        ELSE
+          READ (29,'(7(I4,I4,F3.0))') (INW(I),JNW(I),HW(I),I=1,I7)
+        END IF
+        DO 200 N=1,I7
+        I=INW(N)
+        J=JNW(N)
+ 200    ZBM(I,J)=HW(N)
+ 210    CONTINUE
+      ENDIF
 C
 C        COMPLETE DEFINING ZBM( , ) IN SUBROUTINE 'DEPSFC'
 C
 C         READ IN DATA FOR 1-DIM FLOW, (I,J) POINTS, SIDES 1-4
- 220  CONTINUE
 C
 C       INITIALIZE DATA FOR REGULAR 1D FLOW
       DO 230 I=1,L_
@@ -86,8 +99,9 @@ C       INITIALIZE DATA FOR REGULAR 1D FLOW
       DELCUT(I)=1.
  230  CONTINUE
 C       AC='X' IF 1D-FLOW POINTS EXCEED 1000 .
-      READ (9,520) NSQRS,AC,BC
-C     WRITE (*,520) NSQRS,AC,BC
+      READ (29,525) NSQRS,AC,BC,NNSQR
+      NSQRS=NNSQR*1000+NSQRS
+C     WRITE (*,*) NSQRS,AC,BC
       IF (AC.EQ.'X') NSQRS=1000+NSQRS
       IF (AC.EQ.'Y') NSQRS=2000+NSQRS
       IF (AC.EQ.'Z') NSQRS=3000+NSQRS
@@ -129,150 +143,203 @@ C     WRITE (*,520) NSQRS,AC,BC
       IF (AC.EQ.'n') NSQRS=39000+NSQRS
 C
       IF (NSQRS.GT.L_) THEN
-      WRITE(*,*)' NO. OF 1D FLOW POINTS ',NSQRS
-      WRITE(*,*)' EXCEEDS THE MAXIMUM ALLOWED. MAX= ',L_
-      STOP
+        WRITE(*,*)' NO. OF 1D FLOW POINTS ',NSQRS
+        WRITE(*,*)' EXCEEDS THE MAXIMUM ALLOWED. MAX= ',L_
+        STOP
       ENDIF
-      IF (NSQRS.EQ.0) GO TO 300
-      READ (9,540) (ISQR(I),JSQR(I),KTREE(I),ISIDE(I),IANG(I),I=1,NSQRS)
+      IF (NSQRS.NE.0) THEN
+        IF (IVER.EQ.199201) THEN
+          READ (29,'(6(2I3,A1,I1,I3))')(ISQR(I),JSQR(I),KTREE(I),
+     1          ISIDE(I),IANG(I),I=1,NSQRS)
+        ELSE
+          READ (29,'(6(2I4,A1,I1,I3))')(ISQR(I),JSQR(I),KTREE(I),
+     1          ISIDE(I),IANG(I),I=1,NSQRS)
+        END IF
+        DO I=1,NSQRS
+          IF (ISQR(I).LT.1.OR.ISQR(I).GT.IMXB) THEN
+            WRITE (*,*) 'ERROR: Flow bounds', IMXB, ISQR(I), I
+          END IF
+          IF (JSQR(I).LT.1.OR.JSQR(I).GT.JMXB) THEN
+            WRITE (*,*) 'ERROR: Flow bounds', JMXB, JSQR(I), I
+          END IF
+        END DO
 C
 C        FOR BC='X' ENTER SPECIAL 1D FLOW SQUARES,BE SURE OF THE SAME
 C        ORDER AS IN 1D FLOW
-      IF (BC.NE.'X') GO TO 300
+        IF (BC.EQ.'X') THEN
 C
 C       READ IN BANK DATA
-      READ(9,520) NBNKS,AC
-      IF (AC.EQ.'X') NBNKS=1000+NBNKS
-      IF (AC.EQ.'Y') NBNKS=2000+NBNKS
-      IF (AC.EQ.'Z') NBNKS=3000+NBNKS
-      IF (AC.EQ.'W') NBNKS=4000+NBNKS
-      IF (AC.EQ.'V') NBNKS=5000+NBNKS
-      IF (AC.EQ.'U') NBNKS=6000+NBNKS
-      IF (AC.EQ.'T') NBNKS=7000+NBNKS
-      IF (AC.EQ.'S') NBNKS=8000+NBNKS
-      IF (AC.EQ.'R') NBNKS=9000+NBNKS
-      IF (AC.EQ.'Q') NBNKS=10000+NBNKS
-      IF (AC.EQ.'P') NBNKS=11000+NBNKS
+          READ(29,520) NBNKS,AC
+          IF (AC.EQ.'X') NBNKS=1000+NBNKS
+          IF (AC.EQ.'Y') NBNKS=2000+NBNKS
+          IF (AC.EQ.'Z') NBNKS=3000+NBNKS
+          IF (AC.EQ.'W') NBNKS=4000+NBNKS
+          IF (AC.EQ.'V') NBNKS=5000+NBNKS
+          IF (AC.EQ.'U') NBNKS=6000+NBNKS
+          IF (AC.EQ.'T') NBNKS=7000+NBNKS
+          IF (AC.EQ.'S') NBNKS=8000+NBNKS
+          IF (AC.EQ.'R') NBNKS=9000+NBNKS
+          IF (AC.EQ.'Q') NBNKS=10000+NBNKS
+          IF (AC.EQ.'P') NBNKS=11000+NBNKS
 C    WRITE(*,520) NBNKS
-      READ(9,250)(IBNK(I),JBNK(I),AC,ISBNK(I),BKI(I),BKE(I),
-     1 WCHN(I),I=1,NBNKS)
- 250  FORMAT (4(2I3,A1,I1,2F3.0,F4.2))
+          IF (IVER.EQ.199201) THEN
+            READ(29,'(4(2I3,A1,I1,2F3.0,F4.2))')(IBNK(I),JBNK(I),AC,
+     1           ISBNK(I),BKI(I),BKE(I),WCHN(I),I=1,NBNKS)
+          ELSE
+            READ(29,'(4(2I4,A1,I1,2F3.0,F4.2))')(IBNK(I),JBNK(I),AC,
+     1           ISBNK(I),BKI(I),BKE(I),WCHN(I),I=1,NBNKS)
+          END IF
+          DO I=1,NBNKS
+            IF (IBNK(I).LT.1.OR.IBNK(I).GT.IMXB) THEN
+              WRITE (*,*) 'ERROR: Bank bounds', IMXB, IBNK(I), I
+            END IF
+            IF (JBNK(I).LT.1.OR.JBNK(I).GT.JMXB) THEN
+              WRITE (*,*) 'ERROR: Bank bounds', JMXB, JBNK(I), I
+            END IF
+          END DO
 C
 C       REPOSITION BANKS WITH RESPECT TO 1D FLOW SQUARES
 C       LIST OF BANK POINTS MUST BE IN THE SAME ORDER AS 1D FLOW PT.
-      LLL=1
-      DO 290 I=1,NBNKS
-      II=IBNK(I)
-      JJ=JBNK(I)
-      K=ISBNK(I)
-      LL=LLL
-      DO 280 L=LL,NSQRS
-      ISET=ISQR(L)
-      IF (ISET.NE.II) GO TO 260
-      JSET=JSQR(L)
-      IF (JSET.NE.JJ) GO TO 260
-      KSET=ISIDE(L)
-      IF (KSET.NE.K) GO TO 260
-      LLL=L+1
-      BANK(L,1)=BKI(I)
-      BANK(L,2)=BKE(I)
-      DELCUT(L)=WCHN(I)
-      GO TO 290
- 260  IF (L.NE.NSQRS) GO TO 280
-C     WRITE(*,270) IBNK(I),JBNK(I),ISBNK(I)
+          LLL=1
+          DO 290 I=1,NBNKS
+          II=IBNK(I)
+          JJ=JBNK(I)
+          K=ISBNK(I)
+          LL=LLL
+          DO 280 L=LL,NSQRS
+          ISET=ISQR(L)
+          IF (ISET.EQ.II) THEN
+            JSET=JSQR(L)
+            IF (JSET.EQ.JJ) THEN
+              KSET=ISIDE(L)
+              IF (KSET.EQ.K) THEN
+                LLL=L+1
+                BANK(L,1)=BKI(I)
+                BANK(L,2)=BKE(I)
+                DELCUT(L)=WCHN(I)
+                EXIT
+              ENDIF
+            ENDIF
+          ENDIF
+ 260      IF (L.NE.NSQRS) CYCLE
+          WRITE(*,270) IBNK(I),JBNK(I),ISBNK(I)
  270  FORMAT('   THE SPECIAL FLOW POINT FOR BANKS AT I=',I3,' J=',
      1I3,' SIDE=',I3,' DOES NOT EXIST IN THE 1D FLOW REGION')
- 280  CONTINUE
- 290  CONTINUE
+ 280      CONTINUE
+ 290      CONTINUE
+        ENDIF
+      ENDIF
 C
 C         READ IN DATA FOR RAISED WEIRS FOR 1-DIM FLOW
- 300  READ (9,520) NWEIRS,AC
+      READ (29,520) NWEIRS,AC
       IF (AC.EQ.'X') NWEIRS=NWEIRS+1000
       IF (AC.EQ.'Y') NWEIRS=NWEIRS+2000
       IF (AC.EQ.'Z') NWEIRS=NWEIRS+3000
-      IF (NWEIRS.EQ.0) GO TO 320
-      READ (9,530)(ISQR(NSQRS+I),JSQR(NSQRS+I),KTREE(NSQRS+I),
-     1 ISIDE(NSQRS+I),HWEIR(NSQRS+I),I=1,NWEIRS)
-      DO 310 I=1,NWEIRS
- 310  IANG(I+NSQRS)=0
- 320  NSQRW=NSQRS+NWEIRS
+      IF (NWEIRS.NE.0) THEN
+        READ (29,530)(ISQR(NSQRS+I),JSQR(NSQRS+I),KTREE(NSQRS+I),
+     1   ISIDE(NSQRS+I),HWEIR(NSQRS+I),I=1,NWEIRS)
+        DO 310 I=1,NWEIRS
+ 310    IANG(I+NSQRS)=0
+      ENDIF
+      NSQRW=NSQRS+NWEIRS
 C
 C
 C         READ IN DATA FOR 10 SELECTED POINTS (SURGE HISTORY)
-      READ (9,630) (STATS(I),I=1,10)
+      READ (29,630) (STATS(I),I=1,10)
 C     WRITE(*,630) (STATS(I),I=1,10)
-      READ (9,610) (IPN(I) ,I=1,10)
-      READ (9,610) (JPN(I) ,I=1,10)
+      READ (29,610) (IPN(I) ,I=1,10)
+      READ (29,610) (JPN(I) ,I=1,10)
 C
 C         READ IN DATA FOR CHANNELS
-      READ (9,520) NPSS
-      IF (NPSS.EQ.0) GO TO 340
-      READ (9,650) (CHLNH(I),I=1,NPSS)
-      READ (9,680) (CHWTH(I),I=1,NPSS)
-      READ (9,690) (CHDPH(I),I=1,NPSS)
-      READ (9,700) ((IPT0(I,J),I=1,2),J=1,NPSS)
-      READ (9,700) ((JPT0(I,J),I=1,2),J=1,NPSS)
-      READ (9,700) ((IPTL(I,J),I=1,2),J=1,NPSS)
-      READ (9,700) ((JPTL(I,J),I=1,2),J=1,NPSS)
- 340  CONTINUE
+      READ (29,520) NPSS
+      IF (NPSS.NE.0) THEN
+        READ (29,650) (CHLNH(I),I=1,NPSS)
+        READ (29,680) (CHWTH(I),I=1,NPSS)
+        READ (29,690) (CHDPH(I),I=1,NPSS)
+        READ (29,700) ((IPT0(I,J),I=1,2),J=1,NPSS)
+        READ (29,700) ((JPT0(I,J),I=1,2),J=1,NPSS)
+        READ (29,700) ((IPTL(I,J),I=1,2),J=1,NPSS)
+        READ (29,700) ((JPTL(I,J),I=1,2),J=1,NPSS)
+      ENDIF
 C
 C         READ IN DATA FOR FLOW ACROSS CUTS
-      READ (9,520) NCUT,AC
+      READ (29,520) NCUT,AC
       IF (AC.EQ.'X') NCUT=1000+NCUT
       IF (AC.EQ.'Y') NCUT=2000+NCUT
       NSQRWC=NSQRW+NCUT
       IF (NSQRWC.GT.L_) THEN
-      WRITE(*,*)' NO. OF 1D FLOW POINTS + CUTS',NSQRWC
-      WRITE(*,*)' EXCEEDS THE MAXIMUM ALLOWED. MAX= ',L_
-      STOP
-        ENDIF
+        WRITE(*,*)' NO. OF 1D FLOW POINTS + CUTS',NSQRWC
+        WRITE(*,*)' EXCEEDS THE MAXIMUM ALLOWED. MAX= ',L_
+        STOP
+      ENDIF
 C
-      IF (NCUT.EQ.0) GO TO 390
+      IF (NCUT.NE.0) THEN
 C
-      DO 380 I=1,NCUT
-      M=I+NSQRW
-      READ (9,370)ISQR(M),JSQR(M),KTREE(M),ISIDE(M),BANK(M,1),BANK(M,2),
-     1 CUTL(I),CUTLI(I),CUTLE(I),IANG(M),HWEIR(M)
- 370  FORMAT(2I3,A1,I1,2F4.0,3F5.2,I3,F5.1)
-      IF (CUTL(I).EQ.0.) CUTL(I)=1.
-      IF (CUTLI(I).EQ.0.) CUTLI(I)=1.
-      IF (CUTLE(I).EQ.0.) CUTLE(I)=1.
- 380  CONTINUE
- 390  CONTINUE
+        DO 380 I=1,NCUT
+        M=I+NSQRW
+        IF (IVER.EQ.199201) THEN
+          READ (29,'(2I3,A1,I1,2F4.0,3F5.2,I3,F5.1)')ISQR(M),JSQR(M),
+     1          KTREE(M),ISIDE(M),BANK(M,1),BANK(M,2),CUTL(I),CUTLI(I),
+     2          CUTLE(I),IANG(M),HWEIR(M)
+        ELSE
+          READ (29,'(2I4,A1,I1,2F4.0,3F5.2,I3,F5.1)')ISQR(M),JSQR(M),
+     1          KTREE(M),ISIDE(M),BANK(M,1),BANK(M,2),CUTL(I),CUTLI(I),
+     2          CUTLE(I),IANG(M),HWEIR(M)
+        END IF
+        IF (ISQR(I).LT.1.OR.ISQR(I).GT.IMXB) THEN
+          WRITE (*,*) 'ERROR: cut bounds', IMXB, ISQR(I), I
+        END IF
+        IF (JSQR(I).LT.1.OR.JSQR(I).GT.JMXB) THEN
+          WRITE (*,*) 'ERROR: cut bounds', JMXB, JSQR(I), I
+        END IF
+        IF (CUTL(I).EQ.0.) CUTL(I)=1.
+        IF (CUTLI(I).EQ.0.) CUTLI(I)=1.
+        IF (CUTLE(I).EQ.0.) CUTLE(I)=1.
+ 380    CONTINUE
+      ENDIF
 C
 C        COMPUTE SINE AND COSINE OF THE ANGLE THAT IS USED TO
 C        ROTATE WIND STRESS DIRECTION FROM ACTUAL TO MODEL'S 1D FLOW
 C        DIRECTIONS.
       DO 410 N=1,NSQRWC
-      IF (IANG(N).EQ.0) GO TO 400
-      ANG=IANG(N)*1.74532925199433E-2
-      COS1D(N)=COS(ANG)
-      SIN1D(N)=SIN(ANG)
-      GO TO 410
- 400  COS1D(N)=1.
-      SIN1D(N)=0.
+      IF (IANG(N).NE.0) THEN
+        ANG=IANG(N)*1.74532925199433E-2
+        COS1D(N)=COS(ANG)
+        SIN1D(N)=SIN(ANG)
+      ELSE
+        COS1D(N)=1.
+        SIN1D(N)=0.
+      ENDIF
  410  CONTINUE
- 420  CONTINUE
 C        READ IN DATA FOR MANGROVE POINTS OR TREE LOCATIONS (MGPT=-1)
-      READ (9,520) MGPT
-      IF (MGPT.EQ.0) GOTO 470
+      READ (29,520) MGPT
+      IF (MGPT.NE.0) THEN
 C        READ IN LOCATIONS OF TREE POINTS (0 OR 1)
-      DO 460 J=1,JMXB
-      READ (9,450) (ITREE(I,J),I=1,IMXB)
- 450  FORMAT(60A1)
- 460  CONTINUE
+        DO 460 J=1,JMXB
+        READ (29,450) (ITREE(I,J),I=1,IMXB)
+ 450    FORMAT(60A1)
+ 460    CONTINUE
+C        READ IN MANNING N VALUES.
+        IF (IVER.EQ.201903) THEN
+          READ (29,520) ITMP
+C        Actual manning reads.
+          DO J=1,JMXB
+          READ (29,'(20I3)') (IMANN(I,J),I=1,IMXB)
+          END DO
+        END IF
 C        SET UP BOUNDARY VALUES TO ZBM( , ) TO BE CHECKED FOR OPEN
 C        BOUNDARY CALCULATIONS.
-       IF (DOLLAR.NE.SIG_) THEN
-      DO 160 J=1,JMXB,JMXB1
-      DO 160 I=1,IMXB
-      ZBM(I,J)=100.
- 160  CONTINUE
-          ENDIF
-      DO 180 I=1,IMXB,IMXB1
-      DO 180 J=1,JMXB
-      ZBM(I,J)=100.
- 180  CONTINUE
+        IF (DOLLAR.NE.SIG_) THEN
+          DO 160 J=1,JMXB,JMXB1
+          DO 160 I=1,IMXB
+          ZBM(I,J)=100.
+ 160      CONTINUE
+        ENDIF
+        DO 180 I=1,IMXB,IMXB1
+        DO 180 J=1,JMXB
+        ZBM(I,J)=100.
+ 180    CONTINUE
+      ENDIF
 C
 C         READ IN DATA FOR PRINT OUT OF SHEETS OF MAX SURGES
 C        OPTIONAL FORMATS TO ACCOMMODATE DIFFERENT BASINS DATA
@@ -281,12 +348,12 @@ C        IX60--' ' FOR DISPLAYING I=1,IXB,WHERE IXB < 60
 C              'X' FOR DISPLAYING I=1,IXB,WHERE IXB >=60
 C              'Y' FOR I=1,IPGF(I)
 C              'Z' FOR I=IPGS(I),IPGF(I)  MOST GENERAL
- 470  READ (9,520) NSHEET,IX60
+ 470  READ (29,520) NSHEET,IX60
       NSHEET=MIN(NSHEET,6)
 C     WRITE(*,520) NSHEET,IX60
-      READ (9,610) (JPGS(I),I=1,NSHEET)
+      READ (29,610) (JPGS(I),I=1,NSHEET)
 C     WRITE(*,610) (JPGS(I),I=1,NSHEET)
-      READ (9,610) (JPGF(I),I=1,NSHEET)
+      READ (29,610) (JPGF(I),I=1,NSHEET)
 C     WRITE(*,610) (JPGF(I),I=1,NSHEET)
       DO 480 N=1,NSHEET
       IPGS(N)=1
@@ -294,11 +361,11 @@ C     WRITE(*,610) (JPGF(I),I=1,NSHEET)
       IF (IX60.EQ.'X') IPGF(N)=IMXB1
  480  CONTINUE
       IF (IX60.EQ.'Z') THEN
-      READ (9,610) (IPGS(I),I=1,NSHEET)
-C      WRITE (*,610) (IPGS(I),I=1,NSHEET)
+        READ (29,610) (IPGS(I),I=1,NSHEET)
+C       WRITE (*,610) (IPGS(I),I=1,NSHEET)
       ENDIF
       IF (IX60.EQ.YA1.OR.IX60.EQ.ZA1) THEN
-      READ (9,610) (IPGF(I),I=1,NSHEET)
+        READ (29,610) (IPGF(I),I=1,NSHEET)
 C       WRITE (*,610) (IPGF(I),I=1,NSHEET)
       ENDIF
 C
@@ -308,37 +375,46 @@ C         READING IN DEPTH VALUES
       IST=(K-1)*15+1
       IFN=MIN0(IST+14,IMXB)
       DO 490 J=1,JMXB
-      READ (9,710) (ZB(I,J),I=IST,IFN)
-CC      IF (J.EQ.JMXB) WRITE(*,710) (ZB(I,J),I=IST,IFN)
+      IF (IVER.EQ.199201) THEN
+        READ (29,'(15F4.0,A16)') (ZB(I,J),I=IST,IFN)
+C        IF (J.EQ.JMXB) WRITE(*,'(15F4.0,A16)') (ZB(I,J),I=IST,IFN)
+      ELSE
+        READ (29,'(15F5.0,A16)') (ZB(I,J),I=IST,IFN)
+C        IF (J.EQ.JMXB) WRITE(*,'(15F5.0,A16)') (ZB(I,J),I=IST,IFN)
+      END IF
       DO 405 I=IST,IFN
  405  ZB(I,J)=MIN(600.,ZB(I,J))
  490  CONTINUE
  500  CONTINUE
-c------------ FOR BIX BASIN ONLY
+C     READ IN THE INIT DRY CELLS
+      NODRY=0
       IF (DOLLAR.EQ.'1$') THEN
-      READ (9,'(i4)') NODRY
-      IF(NODRY.GT.ND_) THEN
-        WRITE(*,*) "Too many Dry cells"
-        STOP
-      ENDIF
-      IF(NODRY.GT.1)THEN
-      READ (9,'(9(I3,1X,I3,1X))')(IDRY(K),JDRY(K),K=1,NODRY)
-      ENDIF
+        READ (29,'(i4)') NODRY
+        IF(NODRY.GT.ND_) THEN
+          WRITE(*,*) "Too many Dry cells"
+          STOP
+        ENDIF
+        IF(NODRY.GT.1)THEN
+          IF(IVER.EQ.199201) THEN
+            READ (29,'(9(I3,1X,I3,1X))')(IDRY(K),JDRY(K),K=1,NODRY)
+          ELSE
+            READ (29,'(9(I4,1X,I4,1X))')(IDRY(K),JDRY(K),K=1,NODRY)
+          END IF
+        ENDIF
       ENDIF
 C
       IF (DOLLAR.EQ.'$') THEN
-      DO 510 I=1,IMXB
- 510  ZB(I,JMXB)=ZB(I,1)
+        DO 510 I=1,IMXB
+ 510    ZB(I,JMXB)=ZB(I,1)
       ELSE
-      DO 512 I=1,IMXB
- 512  ZB(I,JMXB)=ZB(I,JMXB1)
+        DO 512 I=1,IMXB
+ 512    ZB(I,JMXB)=ZB(I,JMXB1)
       ENDIF
 C
-      CLOSE (9)
+      CLOSE (29)
  520  FORMAT (I3,2A1)
+ 525  FORMAT (I3,2A1,I3)
  530  FORMAT (5(2I3,A1,I1,F5.1))
- 540  FORMAT (6(2I3,A1,I1,I3))
- 550  FORMAT (7(I3,I3,F3.0))
  560  FORMAT (A10,2X,A1)
  570  FORMAT (F10.6)
  580  FORMAT (2F10.6)
@@ -354,6 +430,5 @@ C
  680  FORMAT (5F6.0)
  690  FORMAT (5F5.0)
  700  FORMAT (10I3)
- 710  FORMAT (15F4.0,A16)
       RETURN
-       END
+      END

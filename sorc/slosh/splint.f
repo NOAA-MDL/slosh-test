@@ -17,18 +17,16 @@ c     order or the interpolation will fail
 
 c     determine the indices of array XA that bracket the input X value
 
-1     IF (KHI-KLO.GT.1) THEN
+      DO WHILE (KHI-KLO.GT.1)
         K=(KHI+KLO)/2
         IF(XA(K).GT.X)THEN
           KHI=K
         ELSE
           KLO=K
         ENDIF
-      GOTO 1
-      ENDIF
+      END DO
 
 c     determine the finite difference along the X dimension
-
       H=XA(KHI)-XA(KLO)
       IF (H.EQ.0.) STOP 'Bad XA input in routine SPLINE.'
 

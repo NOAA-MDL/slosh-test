@@ -110,7 +110,6 @@ C
      1     IBB(3,1),         IBB(3,3)/1,  1/,
      2     IBB(4,1),IBB(4,2),IBB(4,3)/2,1,1/,
      3     IBB(6,1),IBB(6,2)         /1,1  /
-C      write (*,*) "Inside filter"
       IBB(2,1)=JMXB2
       IBB(2,3)=JMXB2
       IBB(3,2)=JMXB2
@@ -122,6 +121,7 @@ C      write (*,*) "Inside filter"
       DO 100 J=1,JMXB1
       DO 100 I=1,IMXB1
  100  HSUB(I,J)=HB(I,J)
+      
       DO 210 M=1,3
       JL  =IBB(1,M)
       JM  =IBB(2,M)
@@ -133,10 +133,10 @@ C      write (*,*) "Inside filter"
       DO 190 I=IL,IM,INCR
 C        SKIP COMPUTATIONS FOR TERRAIN HIGHER THAN 35 FT.
 C    CHANGED BY NSM TO HTER FROM 35 11/20/2010 : Accepted 4/4/2011
-      IF(ZB(I,J).LE.-HTER) GO TO 190
+      IF(ZB(I,J).LE.-HTER) CYCLE
       HST=HSUB(I,J)+ZB(I,J)
 C        TEST FOR LAND WETTED LESS THAN 1 FT.
-      IF(HST.LT.HCRT) GO TO 190
+      IF(HST.LT.HCRT) CYCLE
       HSM=0.
       HDIF=0.
 C
@@ -145,23 +145,39 @@ C******** 'LOOP' FOR SMOOTHING******************************************
       DO 170 K=1,4
       II=I+IIH(K)
       JJ=J+JJH(K)
-      IF (M.EQ.1) GOTO 158
+      IF (M.NE.1) THEN
         IF (II.EQ.0.OR.JJ.EQ.0) THEN
-        GAMF(K)=0.
-        GO TO 160
+          GAMF(K)=0.
+          HSM=HSM+HSUB(I,J)
+          HZZ=HSUB(I,J)
+C       WEIGHTING ADJUSTMENTS IN I-DIRECTION DUE TO POLAR GRIDS.
+          HDIF=HDIF+HZZ*GAMF(K)
+          CYCLE
         ENDIF
- 158  CONTINUE
-      IF (EBSN.EQ.'$'.OR.EBSN.EQ.'+') THEN
-      GAMFK=ELPDL2(II)+(ELPCL2(II)-ELPDL2(II))*SINL2(JJ)
-C      GAMF(K)=.5*(1.+GAMFK/GAM0)-1.
-      Z=GAMFK/GAM0
-      GAMF(K)=2.*Z/(1.+Z)-1.
-      ELSE
-      GAMF(K)=GAMFP(K)
       ENDIF
-      IF (II.EQ.IMXB.OR.JJ.EQ.JMXB) GOTO 160
+      IF (EBSN.EQ.'$'.OR.EBSN.EQ.'+') THEN
+        GAMFK=ELPDL2(II)+(ELPCL2(II)-ELPDL2(II))*SINL2(JJ)
+C       GAMF(K)=.5*(1.+GAMFK/GAM0)-1.
+        Z=GAMFK/GAM0
+        GAMF(K)=2.*Z/(1.+Z)-1.
+      ELSE
+        GAMF(K)=GAMFP(K)
+      ENDIF
+      IF (II.EQ.IMXB.OR.JJ.EQ.JMXB) THEN
+        HSM=HSM+HSUB(I,J)
+        HZZ=HSUB(I,J)
+C       WEIGHTING ADJUSTMENTS IN I-DIRECTION DUE TO POLAR GRIDS.
+        HDIF=HDIF+HZZ*GAMF(K)
+        CYCLE
+      ENDIF
 C        THE NEIGHBORING SQUARE IS MERELY WET(LESS THAN 1 FT).
-      IF (HSUB(II,JJ)+ZB(II,JJ).LT.HCRT) GO TO 160
+      IF (HSUB(II,JJ)+ZB(II,JJ).LT.HCRT) THEN
+        HSM=HSM+HSUB(I,J)
+        HZZ=HSUB(I,J)
+C       WEIGHTING ADJUSTMENTS IN I-DIRECTION DUE TO POLAR GRIDS.
+        HDIF=HDIF+HZZ*GAMF(K)
+        CYCLE
+      ENDIF
       KK=MOD(K,4)+1
       IA=I+IP(K)
       IB=I+IP(KK)
@@ -169,25 +185,20 @@ C        THE NEIGHBORING SQUARE IS MERELY WET(LESS THAN 1 FT).
       JB=J+JP(KK)
       Z =ZBM(IA,JA)
       ZZ=ZBM(IB,JB)
-C      ZZZ=AMIN1(Z,ZZ)+1.
+C     ZZZ=AMIN1(Z,ZZ)+1.
 C     AAT Modified on 4/5/2011: So it is 0.5 feet (ie what HCRT is)
       ZZZ=AMIN1(Z,ZZ)+HCRT
 C        WATER ON EITHER SIDE MUST EXCEED THE BARRIER(LOWER) BY AT
 C        LEAST 1 FT.
-      IF( HSUB(I,J).LT.ZZZ.OR.HSUB(II,JJ).LT.ZZZ) THEN
-          HSM=HSM+HSUB(I,J)
-          HZZ=HSUB(I,J)
-          ELSE
-          HSM=HSM+HSUB(II,JJ)
-          HZZ=HSUB(II,JJ)
-          ENDIF
-      GOTO 212
- 160  CONTINUE
-          HSM=HSM+HSUB(I,J)
-          HZZ=HSUB(I,J)
- 212  CONTINUE
+      IF(HSUB(I,J).LT.ZZZ.OR.HSUB(II,JJ).LT.ZZZ) THEN
+        HSM=HSM+HSUB(I,J)
+        HZZ=HSUB(I,J)
+      ELSE
+        HSM=HSM+HSUB(II,JJ)
+        HZZ=HSUB(II,JJ)
+      ENDIF
 C       WEIGHTING ADJUSTMENTS IN I-DIRECTION DUE TO POLAR GRIDS.
-       HDIF=HDIF+HZZ*GAMF(K)
+      HDIF=HDIF+HZZ*GAMF(K)
 C
  170  CONTINUE
       HTEMP=.5*HSUB(I,J)+(HSM+HDIF)/8.

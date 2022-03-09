@@ -9,31 +9,32 @@ C
       CHARACTER*2     DOLLAR
       CHARACTER*1     EBSN
 C        REPLACE HMX BY 999 IF THE SQUARE IS DRY.
-       DO 1 J=1,JMXB
-       DO 1 I=1,IMXB
-        IF (HMX(I,J)+ZB(I,J).EQ.0) THEN
-         IHMX(I,J)=999
-         ELSE
-         IHMX(I,J)=HMX(I,J)*10.+.5
-         ENDIF
-  1    CONTINUE
+      DO 1 J=1,JMXB
+      DO 1 I=1,IMXB
+      IF (HMX(I,J)+ZB(I,J).EQ.0) THEN
+        IHMX(I,J)=999
+      ELSE
+        IHMX(I,J)=HMX(I,J)*10.+.5
+      ENDIF
+  1   CONTINUE
       DO 20 J=1,JMXB
       DO 20 I=1,IMXB
-      IF (IHMX(I,J).EQ.999) GOTO 20
-      IF (DOLLAR.EQ.'2$') IHMX(I,J)=(HMX(I,J)-ZSUB(J))*10.+.5
+      IF (IHMX(I,J).NE.999) THEN
+        IF (DOLLAR.EQ.'2$') IHMX(I,J)=(HMX(I,J)-ZSUB(J))*10.+.5
+      ENDIF
  20   CONTINUE
       IF(IOPERL(1).NE.2) THEN
-      NGRP=(JMXB1-1)/25+1
-      DO 1130 NN=1,NGRP
-      J1=1+(NN-1)*25
-      J2=J1+MIN0(24,JMXB1-J1  )
-CC      WRITE(*,180)(J,J=J1,J2)
- 180  FORMAT(/I6,26I5)
+        NGRP=(JMXB1-1)/25+1
+        DO 1130 NN=1,NGRP
+        J1=1+(NN-1)*25
+        J2=J1+MIN0(24,JMXB1-J1)
+C       WRITE(*,180)(J,J=J1,J2)
+C180    FORMAT(/I6,26I5)
 C
-C      DO 1120 I=1,IMXB1
-CC      WRITE(*,'(1H ,I2,26I5)') I,(IHMX(I,J),J=J1,J2)
-C1120  CONTINUE
- 1130  CONTINUE
+C       DO 1120 I=1,IMXB1
+C       WRITE(*,'(1H ,I2,26I5)') I,(IHMX(I,J),J=J1,J2)
+C1120   CONTINUE
+ 1130   CONTINUE
        ENDIF
 C
        RETURN

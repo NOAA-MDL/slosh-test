@@ -63,7 +63,7 @@ C
       JJ=J+JJH(K)
       IF (II.EQ.0.OR.JJ.EQ.0) THEN
         GAMF(K)=0.
-        GOTO 160
+        GO TO 160
         ENDIF
       IF (EBSN.EQ.'$'.OR.EBSN.EQ.'+') THEN
       GAMFK=ELPDL2(II)+(ELPCL2(II)-ELPDL2(II))*SINL2(JJ)
@@ -74,7 +74,7 @@ c      GAMF(K)=.5*(1.+GAMFK/GAM0)-1.
       GAMF(K)=GAMFP(K)
       ENDIF
 c
-      IF (II.EQ.IMXB.OR.JJ.EQ.JMXB) GOTO 160
+      IF (II.EQ.IMXB.OR.JJ.EQ.JMXB) GO TO 160
       IF (HSUB(II,JJ).EQ.999.) GO TO 160
       IF (HSUB(II,JJ)+ZB(II,JJ).LE.HCT) GO TO 160
       KK=MOD(K,4)+1
@@ -94,7 +94,7 @@ C        WATER ON EITHER SIDE MUST EXCEED THE BARRIER(LOWER) BY AT
           HSM=HSM+HSUB(II,JJ)
           HZZ=HSUB(II,JJ)
           ENDIF
-      GOTO 210
+      GO TO 210
  200  IF( HSUB(I,J).LT.ZZZ.AND.HSUB(II,JJ).LT.ZZZ) THEN
           HSM=HSM+HSUB(I,J)
           HZZ=HSUB(I,J)
@@ -102,7 +102,7 @@ C        WATER ON EITHER SIDE MUST EXCEED THE BARRIER(LOWER) BY AT
           HSM=HSM+HSUB(II,JJ)
           HZZ=HSUB(II,JJ)
           ENDIF
-      GOTO 210
+      GO TO 210
  160  CONTINUE
           HSM=HSM+HSUB(I,J)
           HZZ=HSUB(I,J)

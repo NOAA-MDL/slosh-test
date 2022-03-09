@@ -87,6 +87,13 @@ static int _cmpTrack (const void *A, const void *B)
  *    processes.  The bugs were due to initialization of the basins, and may no
  *    longer be valid due to improved checks to the init dry points, but we'd
  *    need through testing before removing.
+ *
+ *    3/6/2020: Due to '2016-Arthur14-Adv2', found that HT3 and EJX3 were both
+ *    interfering with HCH2.  The bugs are not due to initialization.  Moving
+ *    HT3 and EJX3 to 'flavor' 0 resolved it.
+ *
+ *    4/6/2020: Changed code to allow 1-d flow (bug in parallelization efforts)
+ *    Also set all variables to 0 in initalcommon.f.  Re-testing.
  * }
  * ARGUMENTS {
  *       wSize = Number of processes to communicate with. (Input)
@@ -111,7 +118,6 @@ int leader (int wSize, int *teamLeadRay, const char *mstFile,
       char *track;            /* Pointer to memory allocated in rank 0 */
       int imsg;               /* Message received from thread. */
       int status;             /* -1=unknown, 0=idle, 1=busy, 2=quitting */
-      int flavor;             /* (0 or 1) for matching with trkType.flavor */
    } procType;
 
 #define TIME (time(NULL) - startTime)
@@ -133,8 +139,6 @@ int leader (int wSize, int *teamLeadRay, const char *mstFile,
    char *ptr;                 /* Help parse storm for <priority>;<mstFile> */
    char bsn[5];               /* Track's basin for determining 'flavor' */
    int numMsg;                /* Number of MPI messages. */
-   int flavor = 0;            /* Flavor of the process (0 or 1) or track (-1 =>
-                               * flavorless, 0 => CP5,LF2, 1 => HCH2,EOK3 */
    int T;                     /* Loop counter over tracks. */
    int P;                     /* Loop counter over processes. */
    int M;                     /* Loop counter over messages. */
@@ -166,12 +170,6 @@ int leader (int wSize, int *teamLeadRay, const char *mstFile,
          numReqs++;           /* numReqs should be the number of teams - 1 */
          procs[P].status = MSG_UNDEF; /* UNDEF => haven't heard from process. */
          procs[P].track = NULL; /* No track assigned. */
-         procs[P].flavor = flavor;
-         if (flavor == 0) {
-            flavor = 1;
-         } else if (flavor == 1) {
-            flavor = 0;
-         }
       }
    }
 
@@ -191,6 +189,10 @@ int leader (int wSize, int *teamLeadRay, const char *mstFile,
       if (state < 2) {
          state = mstGetStorms (mstFile, &offset, doneFile, &numStorm,
                                &stormList);
+         if (verbose) {
+            printf ("[%ld] 0 - Read mstFile.  numStorm - new=%d, old=%d\n",
+                    TIME, numStorm, numTrk);
+         }
          if (state == -1) {
             free (procs);
             free (reqs);
@@ -204,12 +206,26 @@ int leader (int wSize, int *teamLeadRay, const char *mstFile,
             return -2;
          }
          /*********************************************************************
+          * State 2 means we have a doneFile, but numStorm == 0 means nhctrk
+          * created no storms (likely advisory is at sea?).
+          * --> Exit with a FATAL ERROR message.
+          ********************************************************************/
+         if ((state == 2) && (numStorm == 0)) {
+            fprintf (stderr, "%s:%d: FATAL ERROR: %s exists, but no hypothetical storms in %s\n",
+                     __FILE__, __LINE__, doneFile, mstFile);
+            free (procs);
+            free (reqs);
+            free (stats);
+            free (indexes);
+            return -1;
+         }
+         /*********************************************************************
           * State 0 means mstFile doesn't exist.  Sleep and try again.  Give
           * up after 10 minutes (600 seconds) of waiting.
           ********************************************************************/
          if (state == 0) {
             if (tryAgain >= 600) {
-               fprintf (stderr, "%s:%d: Couldn't find %s after waiting %d "
+               fprintf (stderr, "%s:%d: FATAL ERROR: Couldn't find %s after waiting %d "
                         "seconds\n", __FILE__, __LINE__, mstFile, tryAgain);
                free (procs);
                free (reqs);
@@ -233,7 +249,7 @@ int leader (int wSize, int *teamLeadRay, const char *mstFile,
             for (T = numTrk; T < numStorm; T++) {
                trkList[T].status = MSG_IDLE;
                if ((ptr = strchr (stormList[T], ';')) == NULL) {
-                  fprintf (stderr, "%s:%d: Expecting %s to be of form:"
+                  fprintf (stderr, "%s:%d: FATAL ERROR: Expecting %s to be of form:"
                            " '<priority>;<trk>\n", __FILE__, __LINE__, mstFile);
                   free (procs);
                   free (reqs);
@@ -254,6 +270,28 @@ int leader (int wSize, int *teamLeadRay, const char *mstFile,
                   /* Had problems parsing the abbreviation.  Abort. */
                   exit (1);
                }
+               /* 3/6/2020: Replication problems with hch2 and
+                * '2016-Arthur14-Adv2'.  ht3 is interfering with hch2, so
+                * put on separate threads.  First few 6-hr chunks matched, but
+                * last few (more than 1) didn't.  Same thing happening with
+                * ejx3 and hch2.
+                *
+                * 4/1/2020: Replication problems with hch2 and hor3 with
+                * '2018-Florence-Adv50' and '2018-Michael-Adv11'
+                *
+                * 4/1/2020: Replication problems with hch2 and hsfd with
+                * '2018-Florence-Adv52' and '2018-Florence-Adv54'
+                *
+                * 4/6/2020: Invalidated previous tests due to code change...
+                *   Start with cp5 || hch2 ; lf2 || eok3 based on psurge 2.7.2
+                *
+                * 4/6/2020: 2018-Florence-Adv61 appears to have de3 interfere with ny3
+                * 4/6/2020: 2018-Gordon-Adv10 appears to have emo2 interfere with ms7
+                * 4/6/2020: 2018-Gordon-Adv10 appears to have either hpa2,ebp3 interfere with lf2
+                *
+                * 4/6/2020: Tried setting all variables to 0 in initalcommon.f -> resolved Florence Adv61
+                */
+               trkList[T].flavor = -1;
                if (strcmp (bsn, "cp5") == 0) {
                   trkList[T].flavor = 0;
                } else if (strcmp (bsn, "hch2") == 0) {
@@ -262,8 +300,6 @@ int leader (int wSize, int *teamLeadRay, const char *mstFile,
                   trkList[T].flavor = 0;
                } else if (strcmp (bsn, "eok3") == 0) {
                   trkList[T].flavor = 1;
-               } else {
-                  trkList[T].flavor = -1;
                }
             }
             numTrk = numStorm;
@@ -277,10 +313,8 @@ int leader (int wSize, int *teamLeadRay, const char *mstFile,
       for (M = 0; M < numMsg; M++) {
          procs[stats[M].MPI_SOURCE].status = MSG_IDLE;
          if (verbose) {
-            printf ("[%ld] 0 - Heard from team-%d, status %d, flavor %d\n",
-                    TIME, teamLeadRay[stats[M].MPI_SOURCE],
-                    procs[stats[M].MPI_SOURCE].status,
-                    procs[stats[M].MPI_SOURCE].flavor);
+            printf ("[%ld] 0 - Heard from team-%d\n",
+                    TIME, teamLeadRay[stats[M].MPI_SOURCE]);
          }
       }
       /************************************************************************
@@ -298,13 +332,11 @@ int leader (int wSize, int *teamLeadRay, const char *mstFile,
          for (P = 1; P < wSize; P++) {
             if (teamLeadRay[P]) {
                /* Make sure process is idle. */
-               if (procs[P].status != MSG_IDLE) {
-                  continue;
-               }
-               if ((trkList[T].flavor == -1) ||
-                   (trkList[T].flavor == procs[P].flavor)) {
-                  f_found = 1;
-                  break;
+               if (procs[P].status == MSG_IDLE) {
+                  if ((trkList[T].flavor == -1) || (trkList[T].flavor == (P % 2))) {
+                     f_found = 1;
+                     break;
+                  }
                }
             }
          }
@@ -335,13 +367,14 @@ int leader (int wSize, int *teamLeadRay, const char *mstFile,
       }
 
       /* If no more tracks possible (state=2) and no tracks waiting for
-       * processes then go to state=3 */
+       * processes then move to state=3 */
       if ((state == 2) && (numWaitTrk == 0)) {
          state = 3;
-      } else {
-         sleep (1);           /* Sleep for 1 second to avoid too much i/o on
-                               * master.txt. */
       }
+/*      else {
+         sleep (1);*/           /* Sleep for 1 second to avoid too much i/o on
+                               * master.txt. */
+/*      } */
    }
 
    /***********************************
@@ -387,7 +420,7 @@ int leader (int wSize, int *teamLeadRay, const char *mstFile,
          if (verbose) {
             printf ("[%ld] 0 - Waiting for %d team(s)\n", TIME, numBusy);
          }
-         sleep (1);           /* Sleep for 1 sec to avoid too much 'churn'. */
+         /* sleep (1); */   /* Sleep for 1 sec to avoid too much 'churn'. */
       }
    }
 

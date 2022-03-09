@@ -36,7 +36,7 @@ C                     3,FOR J=JMXB1 FOR RIGHT BOUNDARY
 C              JUMP = CONDITIONAL INTEGER FOR STANDARD LOOP,
 C                     OR RETRIEVAL OF PREVIOUSLY COMPUTED SURGES,
 C                     SEE DIAGRAM ABOVE FOR AFFECTED SQUARES
-C              LEAP = CONDITIONAL 'GO TO' TO DRY AN (I,J) SQUARE,
+C              LEAP = CONDITIONAL JUMP TO DRY AN (I,J) SQUARE,
 C                     SEE DIAGRAM ABOVE FOR AN (I,J) SQUARE
 C         IFST ISND = BEGIN/END I SUBSCRIPT ON UPDATED (J-1) SQUARES
 C             IPASS = CONDITIONAL INTEGER, TO SET A SQUARE DRY
@@ -89,9 +89,10 @@ C        GROUND.
 C        SET UB,VB TO LOWER BOUNDS OR ZEROS TO AVOID UNDERFLOW.
       DO 110 J=2,JMXB1
       DO 110 I=2,IMXB1
-      IF(ABS(UB(I,J)).GT.1.E-10) GO TO 110
-      UB(I,J)=0.
-      VB(I,J)=0.
+      IF(ABS(UB(I,J)).LE.1.E-10) THEN
+        UB(I,J)=0.
+        VB(I,J)=0.
+      ENDIF
  110  CONTINUE
 C
 C         SET PARAMETERS FOR J=1
@@ -101,119 +102,114 @@ C
       IFN=IE(J)
       JUMP=4
       LEAP=1
-      GO TO 130
-C
-C        BEGINNING LOOP WHEN J DESCENDS BY ONE FOR DRYING OF A SQUARE
-C
- 120  IB=IFST
-      IFN=ISND
 C
 C        BEGINNING OF REGULAR J LOOP FROM 1 THRU JMXB1
 C
  130  CONTINUE
-      IF (IFN.LT.IB) GOTO 330
-      DO 320 I=IB,IFN
+      IF (IFN.GE.IB) THEN
+        DO 320 I=IB,IFN
 C
-      IF (KSKP(I,J).EQ.'0') GOTO 320
+        IF (KSKP(I,J).EQ.'0') CYCLE
 C       LEAP=1, REGULAR CASE. LEAP=2, RETURN TO THE SQUARE BEING DRIED.
 C
-      GO TO (170,160),LEAP
- 160  IF(I.NE.IPASS) GO TO 170
-      HB(I,J)=-ZB(I,J)
-      LEAP=1
-      GO TO 320
-C
- 170  CONTINUE
-C
+        IF(LEAP.EQ.2) THEN
+          IF(I.EQ.IPASS) THEN
+            HB(I,J)=-ZB(I,J)
+            LEAP=1
+            CYCLE
+          ENDIF 
+        ENDIF
+C       
 C        BYPASS CHECKING FOR DEPTH > 30 FT, OR TERRAIN > 35 FT.
 C
-      DUX=-UB(I,J)+UB(I+1,J)+UB(I+1,J+1)-UB(I,J+1)
+        DUX=-UB(I,J)+UB(I+1,J)+UB(I+1,J+1)-UB(I,J+1)
 C
 C        TEST FOR DEPTH > 30 FT
-      IF(ZB(I,J).GT.30.) GO TO 210
+        IF(ZB(I,J).LE.30.) THEN
 C
 C        TEST FOR DRY SQUARES, IF U'S AT 4 CORNERS ARE 0., OR DUX=0.
 C        IN EQUIVALENCE.
-      IF (DUX.EQ.0.) GO TO 320
+          IF (DUX.EQ.0.) CYCLE
+        ENDIF 
 C
 C        CONTINUITY EQUATION.
- 210  HPST=HSUB(I,J)
-      Z=ELPDL2(I)+(ELPCL2(I)-ELPDL2(I))*SINL2(J)
-      FCT=X1B(5)/Z
-      DVY=-VB(I,J)-VB(I+1,J)+VB(I+1,J+1)+VB(I,J+1)
-      HBJ=HPST-FCT*(DUX+DVY)
+        HPST=HSUB(I,J)
+        Z=ELPDL2(I)+(ELPCL2(I)-ELPDL2(I))*SINL2(J)
+        FCT=X1B(5)/Z
+        DVY=-VB(I,J)-VB(I+1,J)+VB(I+1,J+1)+VB(I,J+1)
+        HBJ=HPST-FCT*(DUX+DVY)
 C
 C        TEST IF SURGE IS BELOW DRY LAND, IF SO, SET SURGE TO LAND HGT.
 C        REVISE SURROUNDING TRANSPORTS TO GIVE ZERO TOTAL DEPTH.
 C
-      CHNG=HBJ+ZB(I,J)
-      IF (CHNG.GE.0.) GO TO 220
+        CHNG=HBJ+ZB(I,J)
+        IF (CHNG.LT.0.) THEN
 CCCCCC     MODIFICATION 10/27/99  RE-TESTED by Pro Fortran 09/20/01
-      IF (-CHNG.LT.1E-3) THEN
-      HB(I,J)=-ZB(I,J)
-      GOTO 320
-      ENDIF
+          IF (-CHNG.LT.1E-3) THEN
+            HB(I,J)=-ZB(I,J)
+            CYCLE
+          ENDIF
 CCCCCC
-      GO TO 230
- 220  HB(I,J)=HBJ
-      GO TO 320
+        ELSE
+          HB(I,J)=HBJ
+          CYCLE
+        ENDIF
 C**********END OF LOOP FOR REGULAR RETURN*******************************
 C
 C***********************************************************************
 C
 C        READJUST TRANSPORTS TO ACCOUNT FOR SQUARES DESCENDING BELOW TERRAIN.
 C
- 230  CONTINUE
-      IF (HSUB(I,J).EQ.-ZB(I,J)) GO TO 320
-      DENM=HBJ-HPST
-      DENM=SIGN(AMAX1(1.E-5,ABS(DENM)),DENM)
- 240  ANUM=-ZB(I,J)-HPST
-      RFCT=ANUM/DENM
- 250  IF (RFCT.LT.0.) GO TO 260
+        IF (HSUB(I,J).EQ.-ZB(I,J)) CYCLE
+        DENM=HBJ-HPST
+        DENM=SIGN(AMAX1(1.E-5,ABS(DENM)),DENM)
+        ANUM=-ZB(I,J)-HPST
+        RFCT=ANUM/DENM
 C        RFCT SHOULD NORMALLY BE POSITIVE.
-      IF (ABS(RFCT).LT.1.) GO TO 290
- 260  CONTINUE
-CC      WRITE(*,270)I,J,ZB(I,J),HPST,HBJ
-CC      WRITE(*,280)RFCT,ANUM,DENM
- 270  FORMAT (2I5,3F15.10)
- 280  FORMAT (3F20.10)
- 290  IF(ABS(RFCT).LT.1.E-5) RFCT=0.
-      DO 300 K=1,4
-      IA=I+IP(K)
-      JA=J+JP(K)
-      UB(IA,JA)=RFCT*UB(IA,JA)
-      VB(IA,JA)=RFCT*VB(IA,JA)
- 300  CONTINUE
+        IF(ABS(RFCT).LT.1.E-5) RFCT=0.
+        DO 300 K=1,4
+        IA=I+IP(K)
+        JA=J+JP(K)
+        UB(IA,JA)=RFCT*UB(IA,JA)
+        VB(IA,JA)=RFCT*VB(IA,JA)
+ 300    CONTINUE
 C        RECOMPUTE 3 SQUARES ON J-1 LINE
-      J=J-1
-      JUMP=1
-      ISET=I
-      LEAP=1
-      IF (J.EQ.0) GO TO 330
-      IF (KSKP(I,J).EQ.'0') GOTO 330
- 310  IF (IS(J).GT.I) GO TO 330
-      IFST=MAX0(I-1,IS(J))
-      ISND=MIN0(I+1,IE(J))
-      GO TO 120
- 320  CONTINUE
+        J=J-1
+        JUMP=1
+        ISET=I
+        LEAP=1
+        IF (J.EQ.0) EXIT
+        IF (KSKP(I,J).EQ.'0') EXIT
+        IF (IS(J).GT.I) EXIT
+        IFST=MAX0(I-1,IS(J))
+        ISND=MIN0(I+1,IE(J))
+C
+C        BEGINNING LOOP WHEN J DESCENDS BY ONE FOR DRYING OF A SQUARE
+C
+        IB=IFST
+        IFN=ISND
+        GO TO 130
+ 320    CONTINUE
+      ENDIF
  330  CONTINUE
 C        INCREMENT J, OR CONTINUE ON OLD J LINE
       JUMP=JUMP+1
       LEAP=1
 C        TEST FOR INCREMENTED OR OLD J
-      IF (JUMP.NE.2) GO TO 340
+      IF (JUMP.EQ.2) THEN
 C        OLD J LINE, WITH 2 OLD SQUARES TO BE UPDATED
-      J=J+1
-      LEAP=2
-      IB=MAX0(ISET-1,IS(J))
-      IFN=IE(J)
-      IPASS=ISET
-      GO TO 130
+        J=J+1
+        LEAP=2
+        IB=MAX0(ISET-1,IS(J))
+        IFN=IE(J)
+        IPASS=ISET
+      ELSE
 C        INCREMENT J FOR NEW COMPUTATION LINE
- 340  J=J+1
-      IF (J.GT.JMXB1) GO TO 350
-      IB=IS(J)
-      IFN=IE(J)
+ 340    J=J+1
+        IF (J.GT.JMXB1) GO TO 350
+        IB=IS(J)
+        IFN=IE(J)
+      ENDIF
       GO TO 130
 C
 C***********  RETURN WITH A NEW J-LINE  **********************

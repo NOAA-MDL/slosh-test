@@ -34,7 +34,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-long int TclpGetTimeZone (long int clock)
+static long int TclpGetTimeZone (void)
 {
    struct tm time;
    time_t ansTime;
@@ -554,13 +554,14 @@ void Clock2_Print (char *buffer, int n, double clock, const char *format, char f
   long int sec;
   double float_sec;
   int month, day;
-  int i, j;
+  unsigned int i;
+  int j;
   char f_perc;
   char locBuff[100];
 
   /* handle gmt problems. */
   if (f_gmt != 0) {
-    clock = clock - TclpGetTimeZone((unsigned long) clock)*60;
+    clock = clock - TclpGetTimeZone()*60;
     if ((f_gmt == 1) && (Clock2_IsDaylightSaving (clock, 0) == 1)) {
       clock = clock + 3600;
     }
@@ -874,11 +875,13 @@ int Clock2_PreRelative (char *ptr, int *adj) {
         *adj = -1;
         return 0;
       }
+      /* fall through */
     case 'N':
       if (strcmp (ptr, "NEXT") == 0) {
         *adj = 1;
         return 0;
       }
+      /* fall through */
     case 'T':
       if (strcmp (ptr, "THIS") == 0) {
         *adj = 0;
@@ -1049,7 +1052,7 @@ int Clock2_GetNextWord (char **Ptr, char **Ptr2, char *word, char *old_char) {
   /* find start of next word (first non-space non-',' non-'.' char.) */
   while ((*ptr == ' ') || (*ptr == ',') || (*ptr == '.'))
     ptr++;
-  if (ptr == '\0') {  /* There is no next word. */
+  if (*ptr == '\0') {  /* There is no next word. */
     *Ptr = ptr;
     *Ptr2 = ptr2;
     return -1;
@@ -1097,7 +1100,7 @@ int Clock2_Scan (double *clock, const char *Buffer, char f_gmt, char f_base) {
   char *ptr, *ptr2, *ptr3;
   long int year;
   int i, mon, day, i_val;
-  long int TimeZone = TclpGetTimeZone((unsigned long) clock)*60;
+  long int TimeZone = TclpGetTimeZone()*60;
   char word[11];
 /*  long int sec; */
   ii_type *ii = NULL;
@@ -1106,7 +1109,7 @@ int Clock2_Scan (double *clock, const char *Buffer, char f_gmt, char f_base) {
   int len_rel = 0;
   char lastWord_type, old_char, old_char2, weekday, unit;
   int adj, mon_adj, year_adj;
-  double cur_time;
+  double cur_time = 0;
 
   char f_year = 0;
   char f_time = 0, f_dateWord = 0, f_slashWord = 0;
@@ -1495,7 +1498,6 @@ int Clock2_Scan (double *clock, const char *Buffer, char f_gmt, char f_base) {
     } else {
       if (f_am || f_pm)
         goto errorReturn;
-      cur_time = 0;
     }
   }
 

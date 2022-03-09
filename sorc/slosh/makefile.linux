@@ -1,6 +1,6 @@
 #!/bin/make
 #------------------------------------------------------------------------------
-# makefile.linux                                        Last Change: 2022-02-28
+# makefile.linux                                        Last Change: 2022-03-08
 #                                                        Arthur.Taylor@noaa.gov
 #                                                              NWS/OSTI/MDL/DSB
 #
@@ -25,7 +25,8 @@ DOUBLE=true#                  # Use double precision flags
 BIT=32#                       # Use 32 (vs 64) bit compilation
 COMPLEX_16=original#          # Use COMPLEX*16 (original) or COMPLEX(16) (new)
 #------------------------------------------------------------------------------
-VER=4.21#                     # Be compatible with 4.21 version (1/8/2020)
+VER=4.22#                     # Be compatible with 4.22 version (2021-05-11)
+WAVE=no#                      # Include wave code
 
 #-------------------------------------------
 # Set up the called executables and version
@@ -49,11 +50,12 @@ CFLAGS=-O3#                   # Optimization level
 CFLAGS+=-Wall#                # Activate all warnings
 ifeq ($(B),intel)
    CFLAGS+=-strict-ansi -fp-model strict# Activate more warnings
+   CFLAGS+=-D_LINUX_#         # Operating system (_LINUX_,_UNIX_,_WINDOWS_)
 endif
 ifeq ($(B),gcc)
    CFLAGS+=-Wextra -pedantic -ansi# Activate more warnings
+   CFLAGS+=-D_LINUX_#         # Operating system (_LINUX_,_UNIX_,_WINDOWS_)
 endif
-CFLAGS+=-D_LINUX_#            # Operating system (_LINUX_,_UNIX_,_WINDOWS_)
 ifeq ($(BIT),64)
   CFLAGS+=-DSIZEOF_LONG_INT=8#  # Compile on a 64 bit platform
 endif
@@ -78,12 +80,23 @@ endif
 # Set up the FORTRAN compiler flags
 #-----------------------------------
 FFLAGS=-O3#                   # Optimization level
+ifeq ($(B),intel)
+   FFLAGS+=-fpp#              # Run the ifort Pre-processor (similar to -cpp)
+else
+   FFLAGS+=-cpp#              # Turn on Pre-processing in FORTRAN code
+endif
+ifeq ($(WAVE),yes)
+   FFLAGS+=-DINCLUDE_WAVE#    # Include Wave code
+endif
 ifeq ($(DOUBLE),true)
    ifeq ($(B),intel)
       FFLAGS+=-r8#            # Use double precision flags
    else
       FFLAGS+=-fdefault-real-8# Use double precision flags
    endif
+endif
+ifeq ($(COMPLEX_16),new)
+   FFLAGS+=-DCOMPLEX_p16
 endif
 ifeq ($(B),intel)
    FFLAGS+=-fp-model strict#  # Activate more warnings
@@ -154,12 +167,13 @@ FSRC+=mapshift.f
 #----------------------------------
 # Intrface.f :: Was in this order.
 #----------------------------------
-# FSRC+=parm2.f#                 # Compile FORTRAN modules first.
+FSRC+=inital.f
 FSRC+=wind.f
 FSRC+=wav.f
+FSRC+=tmstpc.f#               # First part of tmstep.f
+FSRC+=tmstpm.f#               # Second part of tmstep.f
 FSRC+=clnup.f
 FSRC+=cln_hs.f
-# FSRC+=dealloc.f
 FSRC+=xy2llx.f
 FSRC+=staticht.f
 FSRC+=issubgrid.f
@@ -184,11 +198,7 @@ FSRC+=extrpt.f
 FSRC+=intdlt.f
 FSRC+=intval.f
 FSRC+=cnstnt.f
-ifeq ($(COMPLEX_16),new)
-FSRC+=btmstr_gnu.f
-else
 FSRC+=btmstr.f
-endif
 FSRC+=setcmp.f
 FSRC+=stmval.f
 FSRC+=cnsdlt.f
@@ -196,7 +206,6 @@ FSRC+=force1.f
 FSRC+=intwnd.f
 FSRC+=prtstm.f
 FSRC+=crdrd1.f
-# FSRC+=alloc.f
 FSRC+=ttimer.f
 FSRC+=initlz.f
 FSRC+=inputn.f
@@ -205,10 +214,9 @@ FSRC+=setdst.f
 FSRC+=depmsy.f
 FSRC+=intlht.f
 FSRC+=crdrd2.f
-FSRC+=crdrd2_n.f
 FSRC+=contty.f
 FSRC+=bdryht.f
-FSRC+=flw1dm_block.f#         # subblock and flw1dm combined.
+FSRC+=flw1dm_block.f#            # subblock and flw1dm combined.
 FSRC+=depsfc.f
 FSRC+=channl.f
 FSRC+=frcpnt.f
@@ -240,15 +248,9 @@ FSRC+=hbuv_hs.f
 #-------------------------------------
 # FORTRAN code for command line only.
 #-------------------------------------
-FSRC1=wave.f
-FSRC1+=inital.f
-FSRC1+=tmstpc.f#               # First part of tmstep.f
-FSRC1+=tmstpm.f#               # Second part of tmstep.f
-
-# FORTRAN code for GUI only.
-FSRC2=inital_GUI.f
-FSRC2+=tmstpc_GUI.f
-FSRC2+=tmstpm_GUI.f
+ifeq ($(WAVE),yes)
+   FSRC+=wave.f
+endif
 
 #----------------
 # C header files
@@ -280,7 +282,9 @@ HEADERS+=winBuffer.h
 #------------------------------------
 FORT_HEADERS+=parm.for
 FORT_HEADERS+=parmmsy.for
-FORT_HEADERS+=wav1.for
+ifeq ($(WAVE),yes)
+   FORT_HEADERS+=wav1.for
+endif
 
 #---------------------------------
 # Setup OBJ1 list and CMD1 target
@@ -295,7 +299,7 @@ ifeq ($(MPI),true)
    OBJS1+=winBuffer.o
 endif
 OBJS1+=$(FSRC:.f=.o)
-OBJS1+=$(FSRC1:.f=.o)
+
 MAIN1=cstart.c
 CMD1=sloshLinux
 

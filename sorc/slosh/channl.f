@@ -112,12 +112,12 @@ C
  130  YL=YL+.5*HB(II,JJ)
       YL=YL+CHDPH(NPASS)
       SIG=1.
-      IF(Y0.GT.YL) GO TO 140
-      Z=Y0
-      Y0=YL
-      YL=Z
-      SIG =-1.
- 140  CONTINUE
+      IF(Y0.LE.YL) THEN
+        Z=Y0
+        Y0=YL
+        YL=Z
+        SIG =-1.
+      ENDIF
       DELY=Y0-YL
 C
 C        DO NOT CONSIDER HEAD LESS THAN .1 FT,
@@ -129,39 +129,45 @@ C         INITIAL GUESS FOR NEWTON'S METHOD.  TEST FOR SUPER-CRITICAL FLOW.
       AF=GL+GB*(Y**(4./3.))
       AF3=3.*AF
       AE=AMAN*(Y**(13./3.))
- 150  HITO3=HIT**(1./3.)
-      HIT2=HIT*HIT
-      HIT3=HIT*HIT2
-      HIT10=HIT3*HITO3
-      HIT13=HIT*HIT10
-      CNUM=AF*HIT3+AGB*HIT13-AE
-      CDNM=AF3*HIT2+AGB13*HIT10
-      HCRIT=HIT-CNUM/CDNM
-      IF (ABS(HCRIT-HIT).LT.(.001)) GO TO 180
-      J=J+1
-      IF (J.GT.10) GO TO 160
-      HIT=HCRIT
-      GO TO 150
- 160  CONTINUE
-CC      WRITE(*,170)HCRIT,HIT
+C Infinite loop is [exit]ed first time through if abs().LT.(.001)
+C Otherwise it [cycle]s for up to 10 times.
+      DO 
+        HITO3=HIT**(1./3.)
+        HIT2=HIT*HIT
+        HIT3=HIT*HIT2
+        HIT10=HIT3*HITO3
+        HIT13=HIT*HIT10
+        CNUM=AF*HIT3+AGB*HIT13-AE
+        CDNM=AF3*HIT2+AGB13*HIT10
+        HCRIT=HIT-CNUM/CDNM
+        IF (ABS(HCRIT-HIT).GE.(.001)) THEN
+          J=J+1
+          IF (J.LE.10) THEN
+            HIT=HCRIT
+            CYCLE
+          ENDIF
+CC        WRITE(*,170)HCRIT,HIT
  170  FORMAT (10X,'TOO MAY ITERATIONS. HCRIT=',F10.3,' HIT=',F10.3)
- 180  HIT=HCRIT
+        ENDIF
+        EXIT
+      END DO  
+      HIT=HCRIT
 C
 C        DO NOT PERMIT SUPER-CRITICAL FLOW.
-      IF(YL.GT.HCRIT) GO TO 190
-      QFLW= SQRT(G*HCRIT)*HCRIT
-      GO TO 200
- 190  Y0TRD=Y0**(1./3.)
-      YLTRD=YL**(1./3.)
-      Y04=Y0*Y0TRD
-      YL4=YL*YLTRD
-      Z=Y0*Y0
-      Y013=Z*Z*Y0TRD
-      Z=YL*YL
-      YL13=Z*Z*YLTRD
-      QFLWSQ=AMAN*(Y013-YL13)/(CLNGTH+BMAN*(Y04-YL4))
-      QFLW=SQRT(ABS(QFLWSQ))
- 200  CONTINUE
+      IF(YL.LE.HCRIT) THEN
+        QFLW= SQRT(G*HCRIT)*HCRIT
+      ELSE
+        Y0TRD=Y0**(1./3.)
+        YLTRD=YL**(1./3.)
+        Y04=Y0*Y0TRD
+        YL4=YL*YLTRD
+        Z=Y0*Y0
+        Y013=Z*Z*Y0TRD
+        Z=YL*YL
+        YL13=Z*Z*YLTRD
+        QFLWSQ=AMAN*(Y013-YL13)/(CLNGTH+BMAN*(Y04-YL4))
+        QFLW=SQRT(ABS(QFLWSQ))
+      ENDIF
       Q(NPASS)=QFLW*SIG
       Q(NPASS)=Q(NPASS)*CHWTH(NPASS)
 C        FOR HEAD < .1 FT,INTERPOLATE LINEARLY BETWEEN .1 AND 0.

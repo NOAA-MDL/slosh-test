@@ -63,8 +63,10 @@ void SloshAbout (char *buffer)
       strcpy (PRG_DATE, "2019-11-13");
    } else if (strcmp (PRG_VER, "4.21") == 0) {
       strcpy (PRG_DATE, "2020-01-08");
+   } else if (strcmp (PRG_VER, "4.22") == 0) {
+      strcpy (PRG_DATE, "2021-05-11");
    } else {
-      strcpy (PRG_DATE, "2020-01-08");
+      strcpy (PRG_DATE, "2021-05-11");
    }
 
    sprintf (buffer, "\nVersion: %s\nDate: %s\nAuthors: "

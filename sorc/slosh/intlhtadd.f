@@ -29,26 +29,27 @@ C
 C        INITIALIZE WATER HEIGHTS ACCORDING TO LAKE DATUM
       DO 90 J=1,JMXB1
       DO 90 I=1,IMXB1
-      IF (ITREE(I,J).EQ.'2'.OR.ITREE(I,J).EQ.'5') GOTO 95
-      IF (ITREE(I+1,J).EQ.'2'.OR.ITREE(I+1,J).EQ.'5') GOTO 95
-      IF (ITREE(I,J+1).EQ.'2'.OR.ITREE(I,J+1).EQ.'5') GOTO 95
-      IF (ITREE(I+1,J+1).EQ.'2'.OR.ITREE(I+1,J+1).EQ.'5') GOTO 95
-C      HB(I,J)=AMAX1(-ZB(I,J),AMAX1(DTMLAK,-ZB(I,J)))
-      GOTO 90
+      IF (ITREE(I,J).EQ.'2'.OR.ITREE(I,J).EQ.'5'.OR.
+     1    ITREE(I+1,J).EQ.'2'.OR.ITREE(I+1,J).EQ.'5'.OR.
+     2    ITREE(I,J+1).EQ.'2'.OR.ITREE(I,J+1).EQ.'5'.OR.
+     3    ITREE(I+1,J+1).EQ.'2'.OR.ITREE(I+1,J+1).EQ.'5') THEN
 C        STATIC HEIGHTS ON OCEAN,SEA OR GULF; NOT ON INLAND WATER BODIES
- 95   XR=ELPCL(I)*COSL(J)
-      YR=ELPDL(I)*SINL(J)
-      X=XR-C1-AX
-      Y=YR-C2-AY
-      RSQ=X*X+Y*Y
-      R1=SQRT(RSQ)/5280.+1.
-      K=R1
-      R2=K
-      DR=R1-R2
-      K=MIN0(K,790)
-      IF (HB(I,J)+ZB(I,J).NE.0) THEN
-         HB(I,J)=HB(I,J)+DELP(K)+DR*(DELP(K+1)-DELP(K))
-         HB(I,J)=AMAX1(HB(I,J),-ZB(I,J))
+        XR=ELPCL(I)*COSL(J)
+        YR=ELPDL(I)*SINL(J)
+        X=XR-C1-AX
+        Y=YR-C2-AY
+        RSQ=X*X+Y*Y
+        R1=SQRT(RSQ)/5280.+1.
+        K=R1
+        R2=K
+        DR=R1-R2
+        K=MIN0(K,790)
+        IF (HB(I,J)+ZB(I,J).NE.0) THEN
+          HB(I,J)=HB(I,J)+DELP(K)+DR*(DELP(K+1)-DELP(K))
+          HB(I,J)=AMAX1(HB(I,J),-ZB(I,J))
+        ENDIF
+      ELSE
+C        HB(I,J)=AMAX1(-ZB(I,J),AMAX1(DTMLAK,-ZB(I,J)))
       ENDIF
  90   CONTINUE
       RETURN

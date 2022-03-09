@@ -50,129 +50,126 @@ C
       CHARACTER*2     DOLLAR
       CHARACTER*1     EBSN
 C
-      IF (XOKE.EQ.'X') GOTO 1111
-      IF (DOLLAR.EQ.'2$') GOTO 1211
-
+      IF (XOKE.NE.'X') THEN
+        IF (DOLLAR.NE.'2$') THEN
 C        INITIALIZE WATER HEIGHTS ACCORDING TO LAKE DATUM
-      DO 90 J=1,JMXB1
-      DO 90 I=1,IMXB1
-      IF (ITREE(I,J).EQ.'2'.OR.ITREE(I,J).EQ.'5') GOTO 95
-      IF (ITREE(I+1,J).EQ.'2'.OR.ITREE(I+1,J).EQ.'5') GOTO 95
-      IF (ITREE(I,J+1).EQ.'2'.OR.ITREE(I,J+1).EQ.'5') GOTO 95
-      IF (ITREE(I+1,J+1).EQ.'2'.OR.ITREE(I+1,J+1).EQ.'5') GOTO 95
-      HB(I,J)=AMAX1(-ZB(I,J),AMAX1(DTMLAK,-ZB(I,J)))
-      GOTO 90
+          DO 90 J=1,JMXB1
+          DO 90 I=1,IMXB1
+          IF (ITREE(I,J).EQ.'2'.OR.ITREE(I,J).EQ.'5'.OR.
+     1        ITREE(I+1,J).EQ.'2'.OR.ITREE(I+1,J).EQ.'5'.OR.
+     2        ITREE(I,J+1).EQ.'2'.OR.ITREE(I,J+1).EQ.'5'.OR.
+     3        ITREE(I+1,J+1).EQ.'2'.OR.ITREE(I+1,J+1).EQ.'5') THEN
 C        STATIC HEIGHTS ON OCEAN,SEA OR GULF; NOT ON INLAND WATER BODIES
- 95   XR=ELPCL(I)*COSL(J)
-      YR=ELPDL(I)*SINL(J)
-      X=XR-C1-AX
-      Y=YR-C2-AY
-      RSQ=X*X+Y*Y
-      R1=SQRT(RSQ)/5280.+1.
-      K=R1
-      R2=K
-      DR=R1-R2
-      K=MIN0(K,790)
-      HB(I,J)=DELP(K)+DR*(DELP(K+1)-DELP(K))+SEADTM
-      HB(I,J)=AMAX1(HB(I,J),-ZB(I,J))
- 90   CONTINUE
- 100  CONTINUE
- 110  CONTINUE
+            XR=ELPCL(I)*COSL(J)
+            YR=ELPDL(I)*SINL(J)
+            X=XR-C1-AX
+            Y=YR-C2-AY
+            RSQ=X*X+Y*Y
+            R1=SQRT(RSQ)/5280.+1.
+            K=R1
+            R2=K
+            DR=R1-R2
+            K=MIN0(K,790)
+            HB(I,J)=DELP(K)+DR*(DELP(K+1)-DELP(K))+SEADTM
+            HB(I,J)=AMAX1(HB(I,J),-ZB(I,J))
+          ELSE
+            HB(I,J)=AMAX1(-ZB(I,J),AMAX1(DTMLAK,-ZB(I,J)))
+          ENDIF
+ 90       CONTINUE
 C
 C--------------- FOR OCEAN SPRING BASIN ONLY ---------
-      IF (DOLLAR.EQ.'1$') THEN
+          IF (DOLLAR.EQ.'1$') THEN
 C
 C        DRY OUT LAND SQUARES BELOW SEA LEVEL.
-      DO  L=1,NODRY
-      I=IDRY(L)
-      J=JDRY(L)
-      IF (I.GT.0.AND.J.GT.0.AND.I.LE.IMXB1.AND.J.LE.JMXB1) THEN
-        HB(I,J)=-ZB(I,J)
-      ENDIF
-      ENDDO
-      ENDIF
+            DO  L=1,NODRY
+              I=IDRY(L)
+              J=JDRY(L)
+              IF (I.GT.0.AND.J.GT.0.AND.I.LE.IMXB1.AND.J.LE.JMXB1) THEN
+                HB(I,J)=-ZB(I,J)
+              ENDIF
+            ENDDO
+          ENDIF
 C-----------------------------------------------------
-      GOTO 1112
+        ELSE
+C
+C ------------------------ FOR MSY ONLY -----------------
+C
+C        INITIALIZE WATER HEIGHTS ACCORDING TO LAKE DATUM
+          DO 190 J=1,JMXB1
+          IFN=LDTMG(J)
+          DO 190 I=1,IMXB1
+          IF (I.LE.IFN) THEN
+            HB(I,J)=AMAX1(-ZB(I,J),AMAX1(DTMLAK,-ZB(I,J)))
+          ELSE IF (ITREE(I,J).EQ.'2'.OR.ITREE(I,J+1).EQ.'2'.OR.
+     1             ITREE(I+1,J).EQ.'2'.OR.ITREE(I+1,J+1).EQ.'2') THEN
+           XR=ELPCL(I)*COSL(J)
+           YR=ELPDL(I)*SINL(J)
+           X=XR-C1-AX
+           Y=YR-C2-AY
+           RSQ=X*X+Y*Y
+           R1=SQRT(RSQ)/5280.+1.
+           K=R1
+           R2=K
+           DR=R1-R2
+           K=MIN0(K,790)
+           HB(I,J)=DELP(K)+DR*(DELP(K+1)-DELP(K))+SEADTM
+           HB(I,J)=AMAX1(HB(I,J),-ZB(I,J))
+          ELSE
+            HB(I,J)=AMAX1(-ZB(I,J),AMAX1(SEADTM,-ZB(I,J)))
+          ENDIF
+ 190      CONTINUE
+C
+C        DRY OUT LAND SQUARES BELOW SEA LEVEL.
+          DO 195 L=1,NODRY
+          I=IDRY(L)
+          J=JDRY(L)
+          HB(I,J)=-ZB(I,J)
+ 195      CONTINUE
+C
+        ENDIF
 C---------------------- FOR OKEECHOBEE BASIN ONLY ----
- 1111 CONTINUE
-      DO 10 J=1,JMXB1
-      DO 10 I=1,IMXB1
+      ELSE
+        DO 10 J=1,JMXB1
+        DO 10 I=1,IMXB1
 C The Tree test is to see if the cell is in the lake.
-      IF (ITREE(I,J).EQ.'7'.OR.ITREE(I+1,J).EQ.'7'.OR.
-     1   ITREE(I,J+1).EQ.'7'.OR.ITREE(I+1,J+1).EQ.'7') THEN
-        HB(I,J)=AMAX1(-ZB(I,J),AMAX1(DTMLAK,-ZB(I,J)))
+        IF (ITREE(I,J).EQ.'7'.OR.ITREE(I+1,J).EQ.'7'.OR.
+     1     ITREE(I,J+1).EQ.'7'.OR.ITREE(I+1,J+1).EQ.'7') THEN
+          HB(I,J)=AMAX1(-ZB(I,J),AMAX1(DTMLAK,-ZB(I,J)))
 C The -10 is to test if the cell is < 10 feet above datum
 C So it is a potential channel.
         ELSE IF (ZB(I,J).GT.-10.) THEN
           HB(I,J)=AMAX1(DTMCHN,-zb(i,j))
 C Else the cell is >= 10 feet above datum so it is dry.
 C EOKE (v2) North West Channel wasn't completely wet.
-          ELSE
+        ELSE
           HB(I,J)=-ZB(I,J)
-          ENDIF
- 10   CONTINUE
+        ENDIF
+ 10     CONTINUE
 
 C Start added Arthur for EOK3...
-      DO  L=1,NODRY
-      I=IDRY(L)
-      J=JDRY(L)
-      HB(I,J)=-ZB(I,J)
-      ENDDO
+        DO L=1,NODRY
+          I=IDRY(L)
+          J=JDRY(L)
+          HB(I,J)=-ZB(I,J)
+        ENDDO
 C Finished added Arthur for EOK3...
 
 C       RESET CANAL WATER LEVEL AS LAKE LEVEL
 C       SUPPRESS WIND FOR ALL CANALS WITH 'TREE' OPTION IN 1D FLOW.
-      DO 12 L=1,NSQRWC
-      IF (KTREE(L).EQ.'T') THEN
-       I=ISQR(L)
-       J=JSQR(L)
-       HB(I,J)=AMAX1(DTMLAK,-ZB(I,J))
-       K=ISIDE(L)
-       II=I+IHH(K)
-       JJ=J+JHH(K)
-       HB(II,JJ)=AMAX1(DTMLAK,-ZB(II,JJ))
-      ENDIF
- 12   CONTINUE
-C
-      GOTO 1112
-C
-C ------------------------ FOR MSY ONLY -----------------
-C
- 1211 CONTINUE
-C        INITIALIZE WATER HEIGHTS ACCORDING TO LAKE DATUM
-      DO 190 J=1,JMXB1
-      IFN=LDTMG(J)
-      DO 190 I=1,IMXB1
-        IF (I.LE.IFN) THEN
-        HB(I,J)=AMAX1(-ZB(I,J),AMAX1(DTMLAK,-ZB(I,J)))
-        ELSE IF (ITREE(I,J).EQ.'2'.OR.ITREE(I,J+1).EQ.'2'.OR.
-     1  ITREE(I+1,J).EQ.'2'.OR.ITREE(I+1,J+1).EQ.'2') THEN
-        XR=ELPCL(I)*COSL(J)
-        YR=ELPDL(I)*SINL(J)
-        X=XR-C1-AX
-        Y=YR-C2-AY
-        RSQ=X*X+Y*Y
-        R1=SQRT(RSQ)/5280.+1.
-        K=R1
-        R2=K
-        DR=R1-R2
-        K=MIN0(K,790)
-        HB(I,J)=DELP(K)+DR*(DELP(K+1)-DELP(K))+SEADTM
-        HB(I,J)=AMAX1(HB(I,J),-ZB(I,J))
-        ELSE
-        HB(I,J)=AMAX1(-ZB(I,J),AMAX1(SEADTM,-ZB(I,J)))
+        DO 12 L=1,NSQRWC
+        IF (KTREE(L).EQ.'T') THEN
+          I=ISQR(L)
+          J=JSQR(L)
+          HB(I,J)=AMAX1(DTMLAK,-ZB(I,J))
+          K=ISIDE(L)
+          II=I+IHH(K)
+          JJ=J+JHH(K)
+          HB(II,JJ)=AMAX1(DTMLAK,-ZB(II,JJ))
         ENDIF
- 190   CONTINUE
+ 12     CONTINUE
 C
-C        DRY OUT LAND SQUARES BELOW SEA LEVEL.
-      DO 195  L=1,NODRY
-      I=IDRY(L)
-      J=JDRY(L)
-      HB(I,J)=-ZB(I,J)
- 195  CONTINUE
+      ENDIF
 C
-C
- 1112 CONTINUE
 C        INITIALIZE U/V/HMX
 C
       DO 320 I=1,IMXB1
@@ -181,50 +178,47 @@ C
       DO 200 I=1,IMXB
       UB(I,J)=0.
   200 VB(I,J)=0.
-      IF (HTSTRT) GO TO 211
-      DO 210 J=1,JMXB1
-      DO 210 I=1,IMXB1
-      HMX(I,J)=HB(I,J)
- 210  CONTINUE
- 211  CONTINUE
-C
+      IF (.NOT.HTSTRT) THEN
+        DO 210 J=1,JMXB1
+        DO 210 I=1,IMXB1
+        HMX(I,J)=HB(I,J)
+ 210    CONTINUE
+      ENDIF
 C
 C        INITIALIZE FLWSQR TO BE ZERO.
 C
       DO 220 L=1,NSQRWC
  220  FLWSQR(L)=0.
 C        REDUCE PRINTOUT IF IN OPERATIONAL MODE.
-      IF(IOPERL(1).EQ.2) GO TO 300
-CC      WRITE(*,140)
+      IF(IOPERL(1).EQ.2) RETURN
+C      WRITE(*,140)
 C        PRINT OUT INITIAL HEIGHT VALUES
-CC      WRITE(*,150)
-      NGRP=(JMXB1-1)/25+1
+C      WRITE(*,150)
+C      NGRP=(JMXB1-1)/25+1
 C
-      DO 130 NN=1,NGRP
-      J1=1+(NN-1)*25
-      J2=J1+MIN0(24,JMXB1-J1  )
-CC      WRITE(*,180)(J,J=J1,J2)
+C      DO 130 NN=1,NGRP
+C      J1=1+(NN-1)*25
+C      J2=J1+MIN0(24,JMXB1-J1  )
+C      WRITE(*,180)(J,J=J1,J2)
 C
 C      DO 120 I=1,IMXB1
-CC      WRITE(*,170) I,(HB(I,J),J=J1,J2)
+C      WRITE(*,170) I,(HB(I,J),J=J1,J2)
 C 120  CONTINUE
- 130  CONTINUE
-      DO 1130 NN=1,NGRP
-      J1=1+(NN-1)*25
-      J2=J1+MIN0(24,JMXB1-J1  )
-CC      WRITE(*,180)(J,J=J1,J2)
+C 130  CONTINUE
+C      DO 1130 NN=1,NGRP
+C      J1=1+(NN-1)*25
+C      J2=J1+MIN0(24,JMXB1-J1  )
+C      WRITE(*,180)(J,J=J1,J2)
 C
 C      DO 1120 I=1,IMXB1
-CC      WRITE(*,171) I,(HMX(I,J),J=J1,J2)
+C      WRITE(*,171) I,(HMX(I,J),J=J1,J2)
 C 171  FORMAT(1H ,I2,26I5)
 C 1120  CONTINUE
- 1130  CONTINUE
+C 1130 CONTINUE
 C
- 140  FORMAT(1H1)
- 150  FORMAT(/'   INITIAL HEIGHT VALUES')
- 160  FORMAT(1H ,I2,26F5.0)
- 170  FORMAT(1H ,I2,26F5.1)
- 180  FORMAT(/I6,26I5)
- 300  CONTINUE
+C 140  FORMAT(1H1)
+C 150  FORMAT(/'   INITIAL HEIGHT VALUES')
+C 170  FORMAT(1H ,I2,26F5.1)
+C 180  FORMAT(/I6,26I5)
       RETURN
-       END
+      END

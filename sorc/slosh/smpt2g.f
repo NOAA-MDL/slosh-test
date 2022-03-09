@@ -28,26 +28,24 @@ C
       M=0
       DO 10 J=2,JMXB2
       DO 10 I=2,IMXB2
-      IF (UB(I,J).EQ.0..OR.ZBM(I,J).LE.-30.) GOTO 10
-      IF (UB(I-1,J  ).EQ.0.) GOTO 20
-      IF (UB(I  ,J-1).EQ.0.) GOTO 20
-      IF (UB(I  ,J+1).EQ.0.) GOTO 20
-      IF (UB(I+1,J  ).EQ.0.) GOTO 20
-      GOTO 10
- 20   IF (M+1.GE.M2G_) GOTO 22
-      M=M+1
-      I2G(M)=I
-      J2G(M)=J
- 10   CONTINUE
-      GOTO 23
-C
- 22   CONTINUE
-CC      WRITE(*,998)I2G(M),J2G(M)
- 998  FORMAT(' TOTAL MOMN. POINTS FOR SMOOTHING REACHES 3000.',
+      IF (UB(I,J).NE.0..AND.ZBM(I,J).GT.-30.) THEN
+        IF (UB(I-1,J  ).EQ.0..OR.UB(I  ,J-1).EQ.0..OR.
+     1      UB(I  ,J+1).EQ.0..OR.UB(I+1,J  ).EQ.0.) THEN
+          IF (M+1.GE.M2G_) THEN
+            WRITE(*,998)I2G(M),J2G(M)
+ 998  FORMAT(' TOTAL MOMN. POINTS FOR SMOOTHING REACHES 30,000.',
      1 ' LAST I,J =',2I8)
-      STOP
+            STOP
+          ENDIF
+          M=M+1
+          I2G(M)=I
+          J2G(M)=J
+        ENDIF
+      ENDIF
+ 10   CONTINUE
+C
 C      SAVE THE TOTAL COUNT OF CORNER MOMENTUM POINTS
- 23    MM2G=M
+      MM2G=M
 C      write (*,*) "num momentum points for smooth", mm2g
 C
       DO 100 J=1,JMXB1
@@ -60,77 +58,87 @@ C
       MC=0
       DO 120 M=1,MM2G
       II=I2G(M)
-      IF(II.LE.1.OR.II.GE.IMXB) GO TO 120
-      JJ=J2G(M)
-      IF(JJ.LE.1.OR.JJ.GE.JMXB) GO TO 120
-      DO 110 K=1,4
-      I=II+IH(K)
-      J=JJ+JH(K)
-      IF(HB(I,J)+ZB(I,J).EQ.0.) GO TO 112
-      HSUB(I,J)=HB(I,J)
-      GO TO 110
- 112  IF(MC+1.GE.MCT_) GO TO 113
-      MC=MC+1
-      MCT(MC)=M
- 110  CONTINUE
- 120  CONTINUE
-      GOTO 125
- 113  CONTINUE
-CC      WRITE(*,997) I2G(M),J2G(M)
- 997  FORMAT(' TOTAL SPECIAL CORNER POINTS (MOMN) REACHES 1500.',
+      IF(II.GT.1.AND.II.LT.IMXB) THEN
+        JJ=J2G(M)
+        IF(JJ.GT.1.AND.JJ.LT.JMXB) THEN
+          DO 110 K=1,4
+          I=II+IH(K)
+          J=JJ+JH(K)
+          IF(HB(I,J)+ZB(I,J).NE.0.) THEN
+            HSUB(I,J)=HB(I,J)
+          ELSE
+            IF(MC+1.GE.MCT_) THEN
+              WRITE(*,997) I2G(M),J2G(M)
+ 997  FORMAT(' TOTAL SPECIAL CORNER POINTS (MOMN) REACHES 8000.',
      1 ' LAST I,J =',2I8)
-       STOP
- 125   MCMX=MC
+              STOP
+            ENDIF
+            MC=MC+1
+            MCT(MC)=M
+          ENDIF
+ 110      CONTINUE
+        ENDIF
+      ENDIF
+ 120  CONTINUE
+      MCMX=MC
 C      write (*,*) "num special corner points smooth", mcmx
 C
-      IF(MCMX.EQ.0) GO TO 115
-      DO 114 M=1,MCMX
-      MM=MCT(M)
-      II=I2G(MM)
-      JJ=J2G(MM)
-      DO 116 K=1,4
-      I=II+IH(K)
-      J=JJ+JH(K)
-      IF(HB(I,J)+ZB(I,J).EQ.0.) GO TO 116
-      HSUB(I,J)=888.
- 116  CONTINUE
- 114  CONTINUE
- 115  CONTINUE
+      IF(MCMX.NE.0) THEN
+        DO 114 M=1,MCMX
+        MM=MCT(M)
+        II=I2G(MM)
+        JJ=J2G(MM)
+        DO 116 K=1,4
+        I=II+IH(K)
+        J=JJ+JH(K)
+        IF(HB(I,J)+ZB(I,J).NE.0.) THEN
+          HSUB(I,J)=888.
+        ENDIF
+ 116    CONTINUE
+ 114    CONTINUE
+      ENDIF
 C
-      IF(NSQRW.EQ.0) GO TO 124
-      DO 122 L=1,NSQRW
-      IF(F1DACT(L).EQ.'T') GO TO 122
-      I=ISQR(L)
-      IF(I.LE.1.OR.I.GE.IMXB1) GO TO 122
-      J=JSQR(L)
-      IF(J.LE.1.OR.J.GE.JMXB1) GO TO 122
-      IF(HSUB(I,J).EQ.999.) GO TO 122
-      K=ISIDE(L)
-      II=I+IHH(K)
-      JJ=J+JHH(K)
-      IF(HSUB(II,JJ).EQ.999.) GO TO 122
-      IF(HSUB(I,J).LE.(ZBMIN(L)+1.)) GO TO 123
-      IF(HSUB(II,JJ).LE.(ZBMIN(L)+1.)) GO TO 123
-      GO TO 122
- 123  HSUB(I,J)=888.
-      HSUB(II,JJ)=888.
- 122  CONTINUE
- 124  CONTINUE
+      IF(NSQRW.NE.0) THEN
+        DO 122 L=1,NSQRW
+        IF(F1DACT(L).NE.'T') THEN
+          I=ISQR(L)
+          IF(I.GT.1.AND.I.LT.IMXB1) THEN
+            J=JSQR(L)
+            IF(J.GT.1.AND.J.LT.JMXB1) THEN
+              IF(HSUB(I,J).NE.999.) THEN
+                K=ISIDE(L)
+                II=I+IHH(K)
+                JJ=J+JHH(K)
+                IF(HSUB(II,JJ).NE.999.) THEN
+                  IF(HSUB(I,J).LE.(ZBMIN(L)+1.).OR.
+     1               HSUB(II,JJ).LE.(ZBMIN(L)+1.)) THEN
+                    HSUB(I,J)=888.
+                    HSUB(II,JJ)=888.
+                  ENDIF
+                ENDIF
+              ENDIF
+            ENDIF
+          ENDIF
+        ENDIF
+ 122    CONTINUE
+      ENDIF
       M=0
       MM=0
       DO 130 J=1,JMXB1
       DO 130 I=1,IMXB1
-      IF(HSUB(I,J).EQ.999.) GO TO 130
-      IF(HSUB(I,J).EQ.888.) GO TO 132
-      IF(M+MM.GE.M2G_) GO TO 140
-      M=M+1
-      I2G(M)=I
-      J2G(M)=J
-      GO TO 130
- 132  IF(MM.GE.MCT_) GO TO 140
-      MM=MM+1
-      I2GG(MM)=I
-      J2GG(MM)=J
+      IF(HSUB(I,J).NE.999.) THEN
+        IF(HSUB(I,J).NE.888.) THEN
+          IF(M+MM.GE.M2G_) GO TO 140
+          M=M+1
+          I2G(M)=I
+          J2G(M)=J
+        ELSE 
+          IF(MM.GE.MCT_) GO TO 140
+          MM=MM+1
+          I2GG(MM)=I
+          J2GG(MM)=J
+        ENDIF 
+      ENDIF
  130  CONTINUE
  140  MM2G=M
       MCMX=MM
@@ -147,12 +155,12 @@ C
       STOP
       ENDIF
 C
-      IF(MCMX.EQ.0) GO TO 400
-      DO 310 M=1,MCMX
-      I2G(M+MM2G)=I2GG(M)
-      J2G(M+MM2G)=J2GG(M)
- 310  CONTINUE
- 400  CONTINUE
+      IF(MCMX.NE.0) THEN
+        DO 310 M=1,MCMX
+        I2G(M+MM2G)=I2GG(M)
+        J2G(M+MM2G)=J2GG(M)
+ 310    CONTINUE
+      ENDIF
 C
 C      write (*,*)'  itime = ',ITIME
 C      WRITE(*,150)MM2G,MCMX
