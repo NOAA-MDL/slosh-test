@@ -1,0 +1,189 @@
+.\"
+.\" To read, please type: man ./slosh.man
+.\"
+.TH slosh 1 "Last Change: 2024-05-07" "SLOSH 4.21" "SLOSH MANUAL"
+.
+.\" Based on info from here:
+.\" http://web.archive.org/web/20060102165607/http://people.debian.org/~branden/talks/wtfm/wtfm.pdf
+.\"
+.
+.SH NAME
+slosh \- Run the Sea Lake and Overland Surges from Hurricanes model.
+.
+.SH SYNOPSIS
+.BR "slosh " { " \-help " | " \-V " }
+.br
+.B slosh
+.BI "\-rootDir " dir " \-basin " abbrev " \-trk " trk-file
+.RI "[ " OPTIONS " ]"
+.br
+.B slosh
+.BI "\-rootDir " dir " \-lst " lst-file
+.RI "[ " OPTIONS " ]"
+.
+.SH DESCRIPTION
+\fbslosh\fr runs the command line version of the Sea Lake and Overland
+Surges from Hurricanes storm surge model.
+.
+.SH OPTIONS
+.SS Main Options
+.TP
+.BI "\-help"
+Display help text and exit.
+.
+.TP
+.BI "\-V"
+Display version information and exit.
+.
+.TP
+.BI "\-verbose " level
+Set verbosity to: 0 (default) none, 1 some, 2 lots.
+.
+.TP
+.BI "\-rootDir " directory
+Set the \fIdirectory\fR that contains: basin info (/dta), grid definitions
+(/bnt), and tide info (/tidefile).
+.
+.TP
+.BI "\-basin " abbrev
+Set the basin to \fIabbrev\fR.
+.
+.TP
+.BI "\-trk " trk-file
+Set the input storm file (\fItrk-file\fR).  It should use either the 100 or
+999 point format.
+.
+.TP
+.BI "\-env " env-file
+Set the name of the output \fIenv-file\fR.
+.
+.TP
+.BI "\-rex " rex-file
+Set the name of the output \fIrex-file\fR.
+.
+.TP
+.BI "\-rexSave " frequency
+Frequency, in minutes, (default 10) to save frames to the rex-file.
+Recommend a multiple of 10.
+.
+.TP
+.BI "\-f_stat " option
+0 (default) means rex-files contain instantaneous values.
+1 means rex-files / env-files contain maximum values over \fB-rexSave\fR time
+intervals.
+.
+.TP
+.BI "\-restart " option
+Create restart files? 0 (default) no, or 1 yes.
+.
+.TP
+.BI "\-wave " version
+Wave version? 0 (default) none, 1 version-1.
+.
+.TP
+.BI "\-fullDepth " option
+Use full ocean depth or stop at -600 ft? 0 (default) no, or 1 yes.
+.
+.SS Tide Options
+.TP
+.BI "\-f_tide " tide-option
+Tide options:
+   0 (default) = surge only
+   T1 = tide V1 only
+   V1 = tide V1 + surge
+   V2 = tide V2 + surge
+   V3 = tide V3 + surge
+   VDEF = tide version from "tide_flavor.txt" + surge
+   V2.1.{ht} = -290 < depths < -{ht}: tide V2 + surge
+                      depths <= -290: tide + static height
+   V2.2.{ht} = similar to V2.1 except exclude sub-grid cells
+   V2.4.{ht} = similar to V2.2 except remove the -290 limit
+.
+.TP
+.BI "\-TideDatabase " year
+Year (default 2014) of the tidal database.  Historic choices were 2012 or 2001.
+.
+.TP
+.BI "\-spinUp " hours
+Number of hours (default 0) of tidal spin up.
+.
+.TP
+.BI "\-f_saveSpinUp " option
+Save the spin up to the rex-file? 0 (default) = no, 1 = yes.
+.
+.SS List Options
+.TP
+.BI "\-lst " lst-file
+Set the list file if running multiple storms.
+.
+.TP
+.BI "\-lstType " lstType
+Set the version of the lst-file to: 0 (default) match GUI list, 1 P-Surge list.
+.
+.SS P-Surge Options
+.TP
+.BI "\-doneFile " file
+Set the \fIfile\fR whose existence indicates lst-file is complete.
+.
+.TP
+.BI "\-envDir " directory
+Name of envelope directory, assuming -lstType 1.  If using -lst, non-null
+means replace the .trk in \fItrk-file\fR with .env.
+.
+.TP
+.BI "\-rexDir " directory
+Name of rex-file directory, assuming -lstType 1.  If using -lst, non-null
+means replace the .trk in \fItrk-file\fR with .rex.
+.
+.TP
+.BI "\-f_appendBsn"
+Append basin \fIabbrev\fR to rexDir and envDir
+.
+.TP
+.BI "\-envSave2 " frequency
+Frequency, in minutes, to save to envDir2 (default 0).  Example: -rexSave
+60, -envSave2 360.  It should be a multiple of -rexSave due to f_passdata in
+RunLoopStep().  It's intended for P-Surge to have 1-hr and 6-hr saves.
+.
+.TP
+.BI "\-envDir2 " directory
+Second envelope directory so P-Surge can have 1-hr and 6-hr saves.
+.
+.TP
+.BI "\-asOf " date-time
+Date/Time (UTC) of transition from hind-cast to fore-cast
+.
+.TP
+.BI "\-tideOnlyDir " directory
+Directory in which to look for tide only runs
+.SH EXAMPLES
+Run the storm 1991-Bob in the PN2 basin:
+.nf
+   $ cd dev
+   $ ../exec/slosh -rootDir ../parm -basin pn2 \\
+     -trk ./storms/1991-Bob-PNB.trk -rex work/1991-Bob-PNB.rex \\
+     -env work/1991-Bob-PNB.env
+.fi
+.PP
+Run the basins and storms in master.txt:
+.nf
+   $ cd dev
+   $ DATA=$(pwd)/slosh.$(date +%m%d-%H%M%S)/tmp
+   $ mkdir -p $DATA
+   $ mkdir $DATA/run $DATA/ans1hr $DATA/ans
+   $ ../exec/slosh -rootDir ../parm -lst $DATA/run/master.txt \\
+     -lstType 1 -doneFile $DATA/run/nhctrkDone.txt -env yes \\
+     -envDir $DATA/ans1hr -envDir2 $DATA/ans -rexSave 60 -envSave2 360 \\
+     -f_stat 1 -asOf "20170824 00:00:00" -f_tide VDEF \\
+     -TideDatabase 2014
+.fi
+.
+.SH BUGS
+TBD
+.
+.SH AUTHOR
+NWS/OSTI/MDL/DSB
+.br
+Arthur Taylor (arthur.taylor@noaa.gov)
+.
+.\" vim:tw=80:ft=nroff:

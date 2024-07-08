@@ -1,0 +1,277 @@
+      SUBROUTINE INITAL (MMHALT,IIMXB,JJMXB,ZZB,MBHR,MMIN,MBDY,MBNT,
+     1                   MYR,FFLE5,as1,FFLE9,as2,FFLE91,as3,FFLE40,
+     2                   as4,DDELT,BSNABREV,as5,MCLOCK,MWAVE,MFULLDEP)
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C THIS SUBROUTINE CALLS ALL THE FORTRAN SUBROUTINES WHICH ARE NEEDED TO
+C INITIALIZE THE FORTRAN VARIABLES BEFORE WE ENTER INTO THE COMPUTE LOOP.
+C
+C ORIGINALLY THIS WAS DONE IN PROGRAM MAIN AND CMPUTE.
+C THE CODE IS THE SAME EXCEPT CUT AND PASTED HERE.
+C
+C THIS ALSO RETURNS TO C THE VARIOUS INITIAL VARIABLES NEEDED SO THAT
+C IT CAN PROPERLY CONTROL THE EXECUTION OF THE PROGRAM.
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+!      use char_length
+
+      include 'parm.for'
+      REAL ZZB(M_,N_)
+      INTEGER*2 MWAVE
+      INTEGER*2 MFULLDEP
+!      CHARACTER*257 FFLE5,FFLE9,FFLE91,FFLE40
+!--------------------------------------------------------------------
+! Huiqing Liu/MDL Oct. 2018
+!
+! Declare a dynamic assigned character arrays to avoid -check bound
+! error passing from c language procedure (slosh2.c)
+!
+      integer as1,as2,as3,as4,as5
+
+      CHARACTER(len=as1),intent(in):: FFLE5
+      CHARACTER(len=as2),intent(in):: FFLE9
+      CHARACTER(len=as3),intent(in):: FFLE91
+      CHARACTER(len=as4),intent(in):: FFLE40
+      CHARACTER(len=as5),intent(in):: BSNABREV
+!----------------------------------------------------------------------
+!
+
+      COMMON /IDENT/  AIDENT(40),DACLOK(7)
+      COMMON /CESAV/  IPN(120),IPL(120),KHSPT
+      COMMON /PRHSY/  IPRHR,JUMPR,IPRT
+      COMMON /KEYS/ KEY1
+C STIME interferes with C code, so switched to STIME2
+      COMMON /STIME2/  ISTM,JHR,ITMADV,NHRAD,IBGNT,ITEND
+      COMMON /FFTH/   ITIME,MHALT
+      COMMON /EGTH/   DELS,DELT,G,COR
+      COMMON /DUMB3/  IMXB,JMXB,IMXB1,JMXB1,IMXB2,JMXB2
+      COMMON /FLES/ FLE5,FLE9,FLE8,FLE91,FLE99,FLE10,FLE20,FLE30,FLE1
+      CHARACTER*256 FLE5,FLE9,FLE8,FLE91,FLE99,FLE10,FLE20,FLE30,FLE1
+      CHARACTER*256 FLE40
+      common /landfl/ lftime
+      CHARACTER*80   lftime
+      CHARACTER*3 CMNT,TMNT(12)
+      COMMON /ABBREV/ BSNABBR
+      CHARACTER*4 BSNABBR
+
+      INTEGER NDYMNT(12)
+      DATA NDYMNT/31,28,31,30,31,30,31,31,30,31,30,31/
+      DATA TMNT/'JAN','FEB','MAR','APR','MAY','JUN',
+     1            'JUL','AUG','SEP','OCT','NOV','DEC'/
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C     ADDED FOR HOT START FILE NAMES
+      CHARACTER*80 CSNM
+      INTEGER LCS
+      COMMON /HTNM/ HTMAIN,HTHB,HTUV,HTWV,HTWVT,HTHMX
+      character*80 HTMAIN,HTHB,HTUV,HTWV,HTWVT,HTHMX
+      COMMON /HTNM2/ HTMAIN2,HTHB2,HTUV2,HTWV2,HTWVT2,HTHMX2
+      character*80 HTMAIN2,HTHB2,HTUV2,HTWV2,HTWVT2,HTHMX2
+C     ADDED FOR HOT START INITIALIZATION
+      COMMON /STRMSB/ C1,C2,C21,C22,AX,AY,PTENCY,RTENCY
+      COMMON /TMEREL/ TREAL
+      REAL DMCLOCK,MCLOCK
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C     ADDED FOR WAVE MODEL INITIALIZATION
+C     4/2017 D.Y.
+C!      COMMON/TPARM/DT,DTWIND,DTT,NHRS,NDTT
+      COMMON/TPARM/DT,DTWIND,DTT,NDTT
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C New track file Declarations for file version 2013
+      COMMON /FlgTrkFmt/ Flag_TrkFile,iMHR,iMMIN,iMDAY,iMMNT,iMYR
+C Declare integer parameters
+      INTEGER Flag_TrkFile,iMHR,iMMIN,iMDAY,iMMNT,iMYR
+      BSNABBR = BSNABREV
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C     ADDED FOR HOT START FILE NAMES
+c      CALL CASENAME1(CSNM,FFLE91,LCS)
+      WAVE=MWAVE
+      CALL CASENAME(CSNM,FFLE5,as1,BSNABREV,AS5,LCS)
+      HTMAIN = 'SLOSH_restart_'//CSNM(1:LCS-1)//'.txt'
+      HTHB = 'SLOSH_restart_HB_'//CSNM(1:LCS-1)//'.txt'
+      HTUV = 'SLOSH_restart_UV_'//CSNM(1:LCS-1)//'.txt'
+      HTWV = 'SLOSH_restart_WV_'//CSNM(1:LCS-1)//'.txt'
+      HTWVT = 'SLOSH_restart_WVT_'//CSNM(1:LCS-1)//'.txt'
+      HTHMX = 'SLOSH_restart_HMX_'//CSNM(1:LCS-1)//'.txt'
+C     Created temp files to allow for rename (to avoid corruption of
+C     files)
+      HTMAIN2 = 'SLOSH_restar2_'//CSNM(1:LCS-1)//'.txt'
+      HTHB2 = 'SLOSH_restar2_HB_'//CSNM(1:LCS-1)//'.txt'
+      HTUV2 = 'SLOSH_restar2_UV_'//CSNM(1:LCS-1)//'.txt'
+      HTWV2 = 'SLOSH_restar2_WV_'//CSNM(1:LCS-1)//'.txt'
+      HTWVT2 = 'SLOSH_restar2_WVT_'//CSNM(1:LCS-1)//'.txt'
+      HTHMX2 = 'SLOSH_restar2_HMX_'//CSNM(1:LCS-1)//'.txt'
+C     ADDED FOR HOT START INDICATOR
+C     1/2018 D.Y
+      INQUIRE(FILE=HTMAIN,EXIST=HTSTRT)
+      IF (HTSTRT)THEN
+        PRINT *, 'FOUND ',HTMAIN
+        INQUIRE(FILE=HTHB,EXIST=HTSTRT)
+        IF (HTSTRT)THEN
+          INQUIRE(FILE=HTUV,EXIST=HTSTRT)
+          PRINT *, 'FOUND ',HTHB
+        ELSE
+          PRINT *, 'MISSING ',HTHB
+          STOP
+        ENDIF
+        IF (HTSTRT)THEN
+          PRINT *, 'FOUND ',HTUV
+          PRINT *, 'ENTER HOT START MODE...'
+        ELSE
+          PRINT *, 'MISSING ',HTUV
+          STOP
+        ENDIF
+      ENDIF
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+
+C CODE FOR PROGRAM MAIN STARTS.
+C
+CC      write (*,*) '   This program is compiled with the maximum'
+CC      write (*,*) '   dimensions ',m_,n_
+c
+CC      WRITE(*,*)'   SLOSH STORM INPUT FILE'
+C      READ (*,'(A)') FLE5
+      FLE5 = FFLE5
+CC      WRITE(*,*)'   BASIN FILE *DTA'
+C      READ (*,'(A)') FLE9
+      FLE9 = FFLE9
+      KEY1=1
+C        ARCHIVE SURGE ENVELOP TO A FILE
+CC      WRITE(*,'(A)')' FINAL MAX SURGE WILL BE SAVED IN THE FORM READY '
+cc      WRITE(*,'(A)')' TO USE SLOSH FOR GRAPHICAL DISPLAY (IN FT).'
+CC      WRITE(*,'(A)')'   SPECIFY THE FILE NAME = '
+C      READ (*,'(A)') FLE91
+      FLE91 = FFLE91
+C
+c      CALL STRMPR
+C
+C      FLE40 = 'FT40'
+      FLE40 = FFLE40
+
+CCCCC Arthur: Removed "FT40" option 8/2/2004
+CCCC      CALL EXTRPT (FLE40)
+CCCCC
+CC      WRITE (*,*)' READ IN LAT/LONG OF THE GRIDS'
+C      READ (*,'(A)') FLE99
+C Commented out FLE99 which was the name of the .llx file.
+C      FLE99 = FFLE99
+      CALL INITLZ(MFULLDEP)
+
+C CODE Located at top of CMPUTE... Initialize here, do rest in time step.
+C
+C    SELECTION OF SNAPSH FROM 'C' OPTION.
+C     OPEN (77,FILE='SN001',FORM='UNFORMATTED')
+c
+c   include 'cmpgr1.for'
+C
+c Arthur: This part goes into intrface.f (but we don't need conditional.
+c
+      JUMPR=1
+C      INCSM=20                  Arthur: Moved into loop...
+C      IF (EBSN1.EQ.'+') INCSM=1       : local variable needs to be in timestep
+c
+c
+
+C     MODIFIED TO SET INITIAL PARAMETERS FOR STORM ACCORDING TO
+C     HOT START STATUS
+C     1/2018 D.Y
+      IF (HTSTRT) THEN
+        CALL SETCMP_HS(DMCLOCK)
+      ELSE
+        CALL SETCMP
+        DMCLOCK=0.
+      ENDIF
+      CALL INTLHT
+CC        CALL RDLTLG
+C
+      IF (KHSPT.EQ.0) THEN
+C      OPEN (10,FILE='$$fle10',FORM='UNFORMATTED')
+C      OPEN (20,FILE='$$fle20',FORM='UNFORMATTED')
+C      OPEN (30,FILE='$$fle30',FORM='UNFORMATTED')
+C      WRITE(10) AIDENT
+C      WRITE(20) AIDENT
+C      WRITE(30) AIDENT
+      ELSE
+      OPEN (13,FILE='$$fle13',FORM='UNFORMATTED')
+      OPEN (14,FILE='$$fle14',FORM='UNFORMATTED')
+      OPEN (15,FILE='$$fle15',FORM='UNFORMATTED')
+      WRITE(13) AIDENT
+      WRITE(14) AIDENT
+      WRITE(15) AIDENT
+      ENDIF
+C
+C     End of compute and inital... return stuff to C.
+C     CODE TO RETURN VALUES TO C CODE
+C
+      MMHALT = MHALT
+C start of time parse in FORTRAN
+      IF ( Flag_TrkFile == 1992) THEN
+        READ(LFTIME,2020) MHR,MMIN,MDAY,CMNT,MYR
+ 2020 FORMAT(2X,2I2.2,1X,I2.2,1X,A3,1X,I4)
+        DO MBNT=1,12
+          IF(CMNT.EQ.TMNT(MBNT)) THEN
+C Exit the loop.
+            EXIT
+          ENDIF
+        END DO
+      ELSE IF (Flag_TrkFile == 2013) THEN
+C Tatiana. added 2/9/16 for new file format
+        MHR=iMHR
+        MMIN=iMMIN
+        MDAY=iMDAY
+        MYR=iMYR
+        MBNT=iMMNT
+      ENDIF
+      IF(MOD(MYR,4).EQ.0) NDYMNT(2)=29
+      IF(MOD(MYR,100).EQ.0) NDYMNT(2)=28
+      IF(MOD(MYR,400).EQ.0) NDYMNT(2)=29
+      NTMLNG=JHR-IBGNT
+      MBHR=MHR-NTMLNG
+      MBDY=MDAY+MBHR/24
+      MBHR=MOD(MBHR,24)
+      IF (MBHR.LT.0) THEN
+        MBDY=MBDY-1
+        MBHR=24+MBHR
+      ENDIF
+      IF (MBDY.LT.1) THEN
+        MBNT=MBNT-1
+        IF(MBNT.LT.1) THEN
+          MYR=MYR-1
+          MBNT=MBNT+12
+        ENDIF
+        MBDY=NDYMNT(MBNT)+MBDY
+      ENDIF
+C Arthur Added... 5/26/2005
+      IF (MBDY.GT.NDYMNT(MBNT)) THEN
+        MBDY=MBDY-NDYMNT(MBNT)
+        MBNT=MBNT+1
+        IF(MBNT.GT.12) THEN
+          MYR=MYR+1
+          MBNT=MBNT-12
+        ENDIF
+      ENDIF
+C end of time parse in FORTRAN
+
+      IIMXB = IMXB
+      JJMXB = JMXB
+C The actual computation grid is jmxb-1 imxb-1
+      DO J=1,JMXB
+         DO I=1,IMXB
+            ZZB(I,J)=ZB(I,J)
+         END DO
+      END DO
+C Pass back the delt to C.
+
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C     ADDED FOR WAVE MODEL INITIALIZATION
+C     4/2017 D.Y.
+#ifdef INCLUDE_WAVE
+      IF (WAVE.EQ.1) THEN
+        CALL INITWV(BSNABREV,AS5) ! SET CONSTANTS, PARAMETERS, READ INPUTS
+        CALL WVCMPT
+        IF(.NOT. HTSTRT)CALL WINDX2            ! GET FIRST WIND INPUTS
+      ENDIF
+#endif
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      DDELT = DELT
+      MCLOCK = DMCLOCK
+      RETURN
+      END

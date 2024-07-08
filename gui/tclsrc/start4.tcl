@@ -1578,6 +1578,9 @@ proc run_SLOSHRun {ray_name} {
       $zm.f4.surge configure -state disabled
       $zm.f4.tide0 configure -state disabled
       $zm.f4.tide1 configure -state disabled
+      $zm.f4.tide2 configure -state disabled
+      $zm.f4.tideD configure -state disabled
+      $zm.f4.tide3 configure -state disabled
 
 # Set up output file locations.
       set ray(env_file) $Track($stm_num,env_file)
@@ -1611,6 +1614,9 @@ proc run_SLOSHRun {ray_name} {
             $zm.f4.surge configure -state normal
             $zm.f4.tide0 configure -state normal
             $zm.f4.tide1 configure -state normal
+            $zm.f4.tide2 configure -state normal
+            $zm.f4.tideD configure -state normal
+            $zm.f4.tide3 configure -state normal
             return
           }
         }
@@ -1708,6 +1714,8 @@ proc run_SLOSHRun {ray_name} {
       set f_wantRex 1
       # Force us to not have tide version 2 have a spin up.
       if {($f_tide == 2) || ($f_tide == -2)} {
+        set spinUp 0
+      } elseif {($f_tide == 99) || ($f_tide == -99)} {
         set spinUp 0
       } else {
         set spinUp $ray(spinUp)
@@ -1893,6 +1901,9 @@ proc run_SLOSHRun {ray_name} {
       $zm.f4.surge configure -state normal
       $zm.f4.tide0 configure -state normal
       $zm.f4.tide1 configure -state normal
+      $zm.f4.tide2 configure -state normal
+      $zm.f4.tideD configure -state normal
+      $zm.f4.tide3 configure -state normal
     }
 
     puts "Done [clock format [clock seconds] -format "%D %T"]"
@@ -2296,9 +2307,9 @@ proc run_Configuration {ray_name {flag 0}} {
     set ray(n_bnt_dir) $ray(root_dir)/../parm/bnt
     set ray(n_tide_dir) $ray(root_dir)/../parm/tidefile.ec2014
     set ray(n_dta_dir) $ray(root_dir)/../parm/dta
-    set ray(n_rex_dir) $ray(root_dir)/../dev/output
-    set ray(n_env_dir) $ray(root_dir)/../dev/output
-    set ray(n_out_dir) $ray(root_dir)/../dev/output
+    set ray(n_rex_dir) $ray(root_dir)/work
+    set ray(n_env_dir) $ray(root_dir)/work
+    set ray(n_out_dir) $ray(root_dir)/work
   }
 }
 
@@ -2883,6 +2894,12 @@ proc run_EditIcons {} {
   image create pixmap Tide2_Sel -width 20 -height 20 -bg white -useroot 1
   Tide2_Sel create text 0 2 15 "T2" \
         "-family Helvetica -weight bold -slant roman -size -12"
+  image create pixmap TideD_Img -width 22 -height 20 -bg gray75 -useroot 1
+  TideD_Img create text 0 2 15 "Def" \
+        "-family Helvetica -weight bold -slant roman -size -12"
+  image create pixmap TideD_Sel -width 22 -height 20 -bg white -useroot 1
+  TideD_Sel create text 0 2 15 "Def" \
+        "-family Helvetica -weight bold -slant roman -size -12"
   image create pixmap Tide3_Img -width 20 -height 20 -bg gray75 -useroot 1
   Tide3_Img create text 0 2 15 "T3" \
         "-family Helvetica -weight bold -slant roman -size -12"
@@ -3164,7 +3181,7 @@ proc run_rayInit {ray_name} {
   set ray(Type) "NULL"
   set ray(Ext) "---"
   set ray(surge_unit) f
-  set ray(latlon_grid) 4
+  set ray(latlon_grid) 1
   set ray(latlon_gridspace) 0
   set ray(Start_Run) 0
   set ray(slosh_grid) 1
@@ -3198,15 +3215,15 @@ proc run_rayInit {ray_name} {
   set ray(tide_dir) "$ray(root_dir)/../parm/tidefile.ec2014"
   set ray(dta_dir) "$ray(root_dir)/../parm/dta"
   set ray(track_dir) "$ray(root_dir)/../dev/storms"
-  set ray(rex_dir) "$ray(root_dir)/../dev/output"
+  set ray(rex_dir) "$ray(root_dir)/work"
   set ray(adv_dir) "$ray(root_dir)"
   set ray(imp_rex_dir) $ray(rex_dir)
-  set ray(env_dir) "$ray(root_dir)/../dev/output"
-  set ray(out_dir) "$ray(root_dir)/../dev/output"
+  set ray(env_dir) "$ray(root_dir)/work"
+  set ray(out_dir) "$ray(root_dir)/work"
 
   set ray(latlon_raised) 0
   set ray(f_surge) 1
-  set ray(f_tide) 2
+  set ray(f_tide) 99
 
   if {(! [file isfile $ray(root_dir)/sloshrun.ini])} {
     if {(! [info exists ray(path,Base)]) || ($ray(path,Base) == "Default")} {
@@ -3385,14 +3402,14 @@ proc run_main {tl ray_name} {
           radiobutton $zm.f4.tide2 -image Tide2_Img -selectimage Tide2_Sel \
                 -highlightthickness 0 -indicatoron false \
                 -variable $ray_name\(f_tide) -value 2
-#          radiobutton $zm.f4.tide3 -image Tide3_Img -selectimage Tide3_Sel \
-#                -highlightthickness 0 -indicatoron false -state disabled \
-#                -variable $ray_name\(f_tide) -value 3
+          radiobutton $zm.f4.tideD -image TideD_Img -selectimage TideD_Sel \
+                -highlightthickness 0 -indicatoron false \
+                -variable $ray_name\(f_tide) -value 99
           radiobutton $zm.f4.tide3 -image Tide3_Img -selectimage Tide3_Sel \
                 -highlightthickness 0 -indicatoron false \
                 -variable $ray_name\(f_tide) -value 3
-          pack $zm.f4.surge $zm.f4.tide0 $zm.f4.tide1 $zm.f4.tide2 $zm.f4.tide3 \
-                -side top -expand yes -fill both
+          pack $zm.f4.surge $zm.f4.tide0 $zm.f4.tide1 $zm.f4.tide2 $zm.f4.tideD \
+                $zm.f4.tide3 -side top -expand yes -fill both
 
           foreach {i j} [list $zm.f2.copy "Copy Track" \
                 $zm.f2.move "Move Track" $zm.f2.edit "Edit Track Lat/Lon" \

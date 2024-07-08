@@ -1,223 +1,339 @@
-> *README.md*           SLOSH Model Help Pages          Last Change: 2022-03-08
+**README.md**`          SLOSH Model Help Pages          Last Change: 2024-06-25`
 
 The intent of this file is to help the user start to use the SLOSH model.
 
--------------------------------------------------------------------------------
-## ASSUMPTIONS
-
-You have a git-hub Personal Access Token (PAT).  If not, see:
-   [setup-pat](../master/docs/SETUP-pat.md)
+--------------------------------------------------------------------------------
+### 1. ASSUMPTIONS - SYSTEMS
 
 **MS-WINDOWS**
 
-1. Cygwin has been installed.  If not, see:
-   [setup-cygwin](../master/docs/SETUP-cygwin.md)
+* **MSYS** has been installed.  If not, see:
+   [setup-msys](../master/docs/SETUP-msys.md)
 
-2. Your installation of 'Cygwin' includes git, curl, and python for the GitHub
-   interactions in /parm/getBasin.sh, /dev/getStorms.sh, /gui/getGuiLib.sh
+Your installation of **MSYS** should include: **git**, **curl**, and **python**
+for the GitHub interactions in (`/getGitHub.sh`).
 
-3. MinGW 4.5.0 has been installed.  If not, see:
-   [setup-mingw](../master/docs/SETUP-mingw.md)
+--------------------------------------------------------------------------------
+### 2. SCRIPT ACCESS TO GITHUB (PAT)
 
-**LINUX**
+To get script access to GitHub, one needs a Private Access Token (PAT).  For
+more info see [here](https://docs.github.com/en/github/authenticating-to-github/keeping-your-account-and-data-secure/creating-a-personal-access-token)
 
-1. GCC 4.5.0 has been installed.  If not, see:
-   [setup-gcc](../master/docs/SETUP-gcc450.md)
+#### Create a Private Access Token (PAT)
 
--------------------------------------------------------------------------------
-### SLOSH COMPILER VERSION
+1. Log into your GitHub account (via web)
+2. Choose setting (on the right pull-down menu
+3. On left sidebar choose developer settings
+4. Choose Personal access token
+5. "Tokens (classic)"
+6. Generate new token (upper right)
+   * PAT for 2024
+   * Custom: Date (Jan 1/2025)
+   * Repo, workflow
+
+#### Save token to "~/.gitHub_pat"
+
+```bash
+$ vi ~/.gitHub_pat
+  > Paste the token, save, and quit
+$ chmod 600 ~/.gitHub_pat
+```
+
+--------------------------------------------------------------------------------
+### 3. SLOSH COMPILER
+
+#### VERSION
 
 SLOSH's official compiler has evolved over time as follows:
 
-| Date        | Version          | Notes                      |
-| ----------- | ---------------- | -------------------------- |
-| Early 1990s | Lahey FORTRAN    | Pure FORTRAN code          |
-| Late 1990s  | Borland C++ 4.52 | Utilized FORTRAN to C code |
-| 2000s       | gcc v3.4.2       | Utilized g77               |
-| 2013-04-03  | gcc v4.5.0       | Utilized gfortran          |
+| Compiler                         | As of       | Notes                      |
+| -------------------------------- | ----------- | -------------------------- |
+| Lahey FORTRAN                    | Early 1990s | Pure FORTRAN code          |
+| Borland C++ 4.52                 | Late 1990s  | Utilized FORTRAN to C code |
+| gcc v3.4.2                       | 2000s       | Utilized g77               |
+| gcc v4.5.0                       | 2013-04-03  | Utilized gfortran          |
+| gcc v4.5.0, intel 14.0.3.174 (1) | 2017-04-18  | P-Surge v2.6, v2.7         |
+| gcc v4.5.0, intel 18.1.163       | 2020-09-29  | P-Surge v2.8               |
+| gcc v4.5.0, intel 19.0.5.281     | 2021-05-11  | P-Surge v2.9               |
+| gcc v4.5.0, intel 19.1.3.304     | 2022-06-28  | P-Surge v2.10, v3.0        |
 
--------------------------------------------------------------------------------
-## BUILD THE SLOSH MODEL
+(1) With the migration of NWS's simulation studies to the super computer and
+NWS's implementation of P-Surge and P-ETSS, the official compiler shifted to
+both purchased (intel) and free (gcc) options.
 
-*From a Cygwin prompt or linux command line*
+#### GET COMPILER
 
-1. Clone SLOSH repository
-```bash
-   mkdir ~/save
-   cd ~/save
-   token=$(cat ~/.ssh/gitHub_pat)
-   git clone https://${token}@github.com/NOAA-MDL/slosh.git
-
-   # Alternatively, if you have ssh keys.  (Note: the 'get' scripts
-   #     (e.g., 'parm/getBasin.sh') assume you have a PAT.)
-   git clone git@github.com:NOAA-MDL/slosh.git
-
-   cd slosh
-```
-
-2. Add the correct version of 'GCC' to the path:
-  * You may want to add this to your ~/.bash_profile (to avoid having to do
-    it in each session).
+To utilize the free (gcc v4.5.0) option:
 
 **MS-WINDOWS**
-   * Note - we can't use c:/ in the following because PATH uses ':' as a
-     seperator.  So we use 'cygdrive/c' instead.
+
+Get and run a copy of `getMinGW-450.sh` in ~/mingw32
 ```bash
-   export PATH=/cygdrive/c/sys/MinGW/MinGW-4.5.0/bin:$PATH
+$ cd ~
+$ mkdir mingw32
+$ cd mingw32
+$ token=$(cat ~/.gitHub_pat)
+$ curl -H "Authorization: token $token" https://raw.githubusercontent.com/NOAA-MDL/slosh/master/docs/util/getMinGW-450.sh -o getMinGW-450.sh
+$ ./getMinGW-450.sh go
+  # Restart the window (so path is updated)
+```
+
+If the curl command doesn't work, you can manually get a copy from:
+  [getMinGW-450.sh](../../master/docs/util/getMinGW-450.sh)
+and store it in your ~/mingw32 folder.
+
+**LINUX**
+
+* GCC 4.5.0 has been installed.  If not, see:
+   [setup-gcc](../master/docs/SETUP-gcc450.md)
+
+--------------------------------------------------------------------------------
+### 4. BUILD THE SLOSH MODEL
+
+#### A. Clone SLOSH repository
+
+From an MSYS prompt or Linux command line:
+```bash
+$ cd ~
+$ token=$(cat ~/.gitHub_pat)
+$ git clone https://${token}@github.com/NOAA-MDL/slosh.git
+
+  # Alternatively, if you have ssh keys, you can do the following.  Note: the
+  # 'get' scripts (e.g., 'parm/getBasin.sh') assume you have a PAT.
+$ git clone git@github.com:NOAA-MDL/slosh.git
+```
+
+#### B. SLOSH-GUI
+
+**MS-WINDOWS** : This is only appropriate for MS-Windows.  If you want the
+SLOSH-GUI (vs just the command line) then:
+
+```bash
+$ cd ~/slosh
+$ ./getGitHub.sh gui PAT v4.23  # Roughly 20 seconds
+
+  # Alternatively, if you want all extra assets from gitHub do the following:
+$ ./getGitHub.sh all PAT v4.23  # Roughly 8 minutes 40 seconds
+```
+
+#### C. SLOSH model (build, install, and clean up)
+
+**MS-WINDOWS**
+```bash
+  # Add gcc to your path (you may want to do this in your ~/.bash_profile)
+$ export PATH=.:$HOME/mingw32/bin:$PATH
+
+$ cd ~/slosh/sorc/slosh.fd
+  # 'Makefile.MinGW' auto detects if you've installed the 'gui' package
+$ make -f Makefile.MinGW install
+$ make -f Makefile.MinGW clean
 ```
 
 **LINUX**
 ```bash
-   export PATH=/home/$USER/gcc/gcc-4.5.0/bin:$PATH
-   export LD_LIBRARY_PATH=/home/$USER/gcc/gcc-4.5.0/lib:/home/$USER/gcc/lib64
+  # Add gcc to your path (may want to add this to your ~/.bash_profile)
+$ export PATH=/home/$USER/gcc/gcc-4.5.0/bin:$PATH
+$ export LD_LIBRARY_PATH=/home/$USER/gcc/gcc-4.5.0/lib:/home/$USER/gcc/lib64
+
+$ cd ~/slosh/sorc/slosh.fd
+$ make -f makefile.linux install
+$ make -f makefile.linux clean
 ```
 
-3. If you want the **SLOSH-GUI** (vs just the command line) then:
-```bash
-   cd ~/save/slosh/gui
-   ./getGuiLib.sh PAT v4.22
-```
+#### D. Optional: stm2trk (build, install, and clean up)
 
-4. Build, install, and clean up - SLOSH model
+**stm2trk** is a utility program used to convert a stm-file consisting of 13
+6-hr storm parameters to a trk-file consisting of 100 1-hr storm parameters
+which is used as input by the SLOSH parametric wind model.
 
 **MS-WINDOWS**
 ```bash
-   cd ~/save/slosh/sorc/slosh
-   # 'makefile.win' auto detects if you've run 'getGuiLib.sh'
-   make -f makefile.win install
-   make -f makefile.win clean
+$ cd ~/slosh/sorc/stm2trk.cd
+$ make install
+$ make clean
 ```
 
-**LINUX**
+#### E. Optional: rexout (build, install, and clean up)
+
+**rexout** is a utility program used to work with SLOSH rex-file output.  A
+SLOSH rex-file consists of model output water heights at every grid cell at
+specific time snapshots (typically at 10-min) along with the parameters to
+recreate the wind field at those same time snapshots.  **rexout** allows the
+user to probe the rex-file at specific grid cells, or convert snapshots to a
+csv-file.
+
+**MS-WINDOWS**
 ```bash
-   cd ~/save/slosh/sorc/slosh
-   make -f makefile.linux install
-   make -f makefile.linux clean
+$ cd ~/slosh/sorc/rexout.cd
+$ make install
+$ make clean
 ```
 
-5. Build, install, and clean up - stm2trk.<br>
-*stm2trk is a utility program used to convert from 13 6-hr storm (stm) files
- to 100 1-hr track (trk) files used as input by the SLOSH parametric wind*
+#### F. Optional: envutil (build, install, and clean up)
+
+**envutil** is a utility program used to work with SLOSH env-file output.  A
+SLOSH env-file consists of model output water heights at every grid cell.
+Typically the value represents the maximum the cell attained at any point during
+the model run.  However, there are modes (particularly useful with P-Surge),
+where the value represents the maximum over either a 6-hr or 1-hr time window.
+**envutil** allows the user to probe the env-file at specific points, compare
+env-files, or dump the data to txt-file.
+
+**MS-WINDOWS**
 ```bash
-   cd ../stm2trk
-   make -f makefile.win
-   mv stm2trk.exe ../../exec
-   make -f makefile.win clean
+$ cd ~/slosh/sorc/envutil.cd
+$ make install
+$ make clean
 ```
 
--------------------------------------------------------------------------------
-## GET PUBLIC SLOSH BASINS
+--------------------------------------------------------------------------------
+### 5. GET PUBLIC SLOSH BASINS
 
-These basins are provided primarily to validate the SLOSH model or a derivative
-model such as (P-Surge, P-ETSS, or ETSS).
+These basins are provided to validate the SLOSH model or a derivative model
+(e.g., P-Surge or P-ETSS).
+
+**Note** You can skip this step if you grabbed all the extra assets from
+gitHub in step 4.B.
+
 ```bash
-   cd ~/save/slosh/parm
-
-   # Don't Panic.  In the following call, there will be a few 'Notes' and
-   # 'Cautions' because some basins do not have all of the tide files (i.e.,
-   # Binary Harmonic Constants, Datum Adjustments, or Tide-Flavor).
-   ./getBasin.sh PAT v4.22
+$ cd ~/slosh
+$ ./getGitHub.sh basin PAT v4.23  # Roughly 79 seconds
 ```
 
-* Note - If you have problems automatically downloading basin assets from
-github, you can manually download the .tar.gz files from:
+**Note** If you have problems automatically downloading basin assets from
+GitHub, you can:
 
-https://github.com/NOAA-MDL/slosh/releases (Click 'Assets')
-
-and place them in "~/save/slosh/tar/".  Then run expandBasin.sh via:
+1. Manually download the .tar.gz files
+[here](https://github.com/NOAA-MDL/slosh/releases) - Click 'Assets'.
+2. Place them in "~/slosh/tar/"
+3. Install them via:
 ```bash
-   cd ~/save/slosh/parm
-   ./expandBasin.sh ../tar/a0102.pv2.tar.gz
+$ cd ~/slosh
+  # Following should detect the files in /tar and avoid downloading them again.
+$ ./getGitHub.sh basin PAT v4.23
 ```
 
--------------------------------------------------------------------------------
-## TEST THE SLOSH MODEL
+--------------------------------------------------------------------------------
+### 6. TEST THE SLOSH MODEL
 
-1. Get the required storms for the tests:
+#### A. Get the storm inputs for the tests
+
+These storm inputs are provided to ensure that the model runs in each basin.
+
+**Disclaimer** These storm inputs are **not** official SLOSH inputs of record,
+nor have their results been compared to observations.  An official SLOSH input
+of record requires a human in the loop.  The human is needed to appropriately
+adjust the inputs to the imperfect parametric wind model to better match the
+observations.  To obtain official SLOSH inputs of record, one would need to
+contact NHC.
+
+**Note** You can skip this step if you grabbed all the extra assets from gitHub
+in step 4.B.
+
 ```bash
-   cd ~/save/slosh/dev
-   ./getStorms.sh PAT v4.22
+$ cd ~/slosh
+  # You may be able to skip this if you already grabbed all extra assets from
+  # gitHub (see section 4.B.)
+$ ./getGitHub.sh storm PAT v4.23  # Roughly 3 seconds
 ```
 
-* Note - If you have problems automatically downloading test cases from github,
-you can manually download the .tar.gz files from:
+**Note** If you have problems automatically downloading test cases from GitHub,
+you can:
 
-https://github.com/NOAA-MDL/slosh/releases (Click 'Assets')
+1. Manually download the .tar.gz files
+[here](https://github.com/NOAA-MDL/slosh/releases) - Click 'Assets'
+2. Place them in "~/slosh/tar/"
 
-and place them in "~/save/slosh/tar/".  Then you'll need to look at the bottom
-of ~/save/slosh/dev/getStorms.sh for how to un-tar them.
+#### B. Run the tests:
 
-2. Run the tests:
 ```bash
-   cd ~/save/slosh/dev
-   ./runme.sh go
+  # If you want to avoid the longer tests (> 5 minutes):
+$ cd ~/slsoh/storms
+$ a1.fiveMinTest.sh go
+
+# Note: `a1.fiveMinTes.sh undo` reactivates all the tests.
+
+  # If instead you want to avoid just the longest test - EVI4:
+$ cd ~/slosh/storms/testTrk
+$ mv 1999-Lenny-W5-PV-EVI4.trk 1999-Lenny-W5-PV-EVI4.trk.skip
+
+  # Run all *trk files in ~/slosh/storms/testTrk through the SLOSH model, 4 at
+  # a time, 1-CPU each, hardest first.
+$ cd ~/slosh/dev
+$ a1.multiRun.sh all  # Roughly: 5 minutes if you chose to avoid longer ones
+                      # Roughly: 1 hour if you avoided EVI4 test
 ```
 
-* For more SLOSH command line options: `man ~/save/slosh/docs/slosh.man.gz`
+**Note** For SLOSH command line options, you can either do a
+`man ~/slosh/docs/slosh.man`, or look at the function 'doOne' inside
+'/dev/a1.multiRun.sh'.
 
-While runme.sh compares the outputs with the expected results, you can do so
-yourself via:
+#### C. Get answers:
 
-3. Compare the envelopes (max value in each grid cell for entire run):
+The tests have slightly different results depending upon which compiler and
+optimization level.  We currently have published results for:
+  * gcc450-o3 = Compiler: GCC (4.5.0), Optimization: 3
+  * gcc450-o0 = Compiler: GCC (4.5.0), Optimization: 0
+
+In the following we assume "gcc450-o3" as the default compiler and optimization
+level.
+
+**Note** You can skip this step if you grabbed all the extra assets from gitHub
+in step 4.B.
+
 ```bash
-   diff ./work/hugo.env ./sample/hugo.env
-   diff ./work/andrew.env ./sample/andrew.env
+$ cd ~/slosh
+$ ./getGitHub.sh gcc450-o3 PAT v4.23  # Roughly 15 seconds
 ```
 
-4. Compare the Rex-files (a time history at each grid cell):
+#### D. Check answers:
+
+To compare both the rex-files and env-files with the expected answers do:
+
 ```bash
-   diff ./work/hugo.rex ./sample/hugo.rex
-   diff ./work/andrew.rex ./sample/andrew.rex
+$ cd ~/slosh/dev
+$ a4.checkAns.sh go
 ```
 
--------------------------------------------------------------------------------
-## TEST THE GUI
+--------------------------------------------------------------------------------
+### 7. TEST THE GUI
 
-If you decided you wanted the **SLOSH-GUI**, then you can start it via:
+If you decided in section 4.B that you wanted the **SLOSH-GUI**, then you can
+start it via:
 ```bash
-   cd ~/save/slosh/gui
-   ./run.sh
+  # Make sure the CD2 tide files are uncompressed
+$ cd ~/slosh/parm/tidefile.ec2014
+$ gunzip cd2*.gz
+
+  # Start the GUI
+$ cd ../../gui
+$ ./run.sh
 ```
 
-You can now run Hugo in HCH2:
+You can now run **2023-Idalia** in CD2:
+
+#### A. Select a basin
+
+`File->Select Basin >> cd2dta`
+
+#### B. Select a storm
+
+`File->Add 100pt Trk >> ../../storms/testTrk/2023-Idalia-W3-CC-CD2.trk`
+
+#### C. Go
+
+```
+Press the green "G" button (middle control pannel)
+Press the fast rabbit button to go faster (no redraws)
+```
+
+#### D. After running 2023-Idalia in CD2, you can check the answers via
+
 ```bash
-   # Step 1: Select a basin
-   >> File->Select Basin >> hch2dta
-
-   # Step 2: Select a storm
-   >> File->Add 100pt Trk >> ~/save/slosh/dev/storms/hugo.trk
-
-   # Step 3: Go
-   >> Press the green "G" button (middle control pannel)
-
-   # Note: It may ask about overwritting the rex-file in gui/../dev/work
+$ cd ~/slosh/gui/work
+$ diff 2023-Idalia-W3-CC-CD2.cd2 ../../storms/testAns/gcc450-o3/2023-Idalia-W3-CC-CD2-VDEF-Wav0.env
+$ diff 2023-Idalia-W3-CC-CD2.rex ../../storms/testAns/gcc450-o3/2023-Idalia-W3-CC-CD2-VDEF-Wav0.rex
 ```
 
-Repeat with Andrew in HMI3.  After running them, you can check the answers via
-```bash
-   cd ~/save/slosh/dev/work
-   diff andrew.hm3 ../sample/andrew.env
-   diff andrew.rex ../sample/andrew.rex
-   diff hugo.ch2 ../sample/hugo.env
-   diff hugo.rex ../sample/hugo.rex
-```
-
--------------------------------------------------------------------------------
-## CLEAN UP
-
-To remove all temporary files (e.g., object files, test-results, tar files, and
-GUI config files:
-```bash
-   cd ~/save/slosh
-   ./util/cleanUp.sh tidy
-```
-
-To remove all non-repo related files (e.g., do the 'tidy' option and remove:
-executables, basin data, test answers, and GUI libraries):
-```bash
-   cd ~/save/slosh
-   util/cleanUp.sh wipe
-```
-
--------------------------------------------------------------------------------
-> vim:norl:fdm=marker:fmr=```bash,```
+--------------------------------------------------------------------------------
+> vim:norl:fdm=marker:fmr={fold},{/fold}

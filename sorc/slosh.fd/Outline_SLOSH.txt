@@ -1,0 +1,124 @@
+*Outline.txt*                   SLOSH code              Last Change: 2020-04-02
+
+The intent of this file is to be an outline of the procedure calls within the
+SLOSH model.
+
+================================================================================
+MAIN()                                                        *cstart.c::main()*
+   UserInit()
+   ParseCmdLine()
+   Usage()
+   DoOneStorm() || DoStormListV0() || DoStormListV1()
+      setFileNames()
+         INITALCOMMON~
+      |PerformRun()| 
+   UserFree()
+
+================================================================================
+PERFORM-RUN()                                           *slosh2.c::PerformRun()*
+   ParseTide()
+   ReadTrkFile()
+   InitWater_TideModeOverride()
+   RexSaveHeader()
+   RunInit()
+      tset()
+      INITAL
+         CASENAME
+         INITLZ
+            INPUTN2
+               SPLINE
+               SPLINT
+            CRDRD1
+            ALLOC~
+            STERON
+            CRDRD2 || CRDRD2_N
+            DEPMSY
+            DEPSFC
+            BTMSTR (IVER) 
+               Setup /SCND2/ AR2(2,600) ...
+               Using C7 = 0.006
+               Note: C7 is set in flw1dm_block.f, frcpnt.f, setcmp.f, stmval.f
+               Note: AR2 is used in btmstr.f, flw1dm_block.f, flw1dm2.f, 
+                                    mntmbd.f, mntmbd2.f, momntm.f, momntm2.f
+                  AR2(1,N) = water cell friction: 0.006 or 0.009 (HSF1)
+                     for N 1..30; else 0.006
+                  AR2(2,N) = land cell friction : 0.006 or 0.25 (HSF1)
+                     for N 1..56; else 0.006
+            SETDST
+            INTDLT
+            INTVAL
+            CNSTNT
+         SETCMP_HS || SETCMP
+            INTWND
+            FORCE1
+               PRTSTM
+         INTLHT
+         INITWV
+         WVCMPT
+         WINDX2
+      InitTideGrid()
+      ReadHarmonicHeader()
+      ReadHarmonicBody()
+      ReadAdjDatum()
+      SetTideUsableFlag()
+         IS_SUB_GRID::issubgrid~
+      SpinUpTideGrid()
+         INTLHTSUB~
+         RexSaveStep()
+         TMSTP2
+            CONTTY
+            SMPT2G
+            BDRYHT
+            CHANNL
+            FLW1DM2
+            FLTER2 || FILTER || XFILTER(1 or 2)
+            MOMNTM2
+         INTLHTADD~
+      CalcTideGrid2()
+         STATICHT~
+   MaxStatInitGrid()
+   LOOP {
+      RunLoopStep() 
+         TMSTEP
+            TTIMER
+            HBUV_HS :: Read 1002, 1003
+            CONTTY
+            SMPT2G
+            BDRYHT
+            CHANNL
+            FLW1DM2
+            HMXSV
+            HISTRY || HSTRY2
+            FLTER2 || FILTER || XFILTER(1 or 2)
+            MOMNTM
+               FRCPNT
+            WVSTEP
+            RSTOUT :: Save 1001(htmain), 1002(hthb), 1003(htuv), 1004(hthmx)
+            STMVAL
+            WAV (CS's wave routine)
+            XY2LLX 
+         CalcTideGrid() || CalcTideGrid2()
+         MaxStatUpdateGrid()
+      RexSaveStep()
+      EnvSave()
+      MaxStatInitGrid()
+   } 
+   if (f_stat == 1) {
+      RexSaveStep()
+      EnvSave()
+   }
+   CleanUp()
+      FreeTideGrid()
+      CLNUP
+         FHMXSV
+         ARCHIV 
+      EnvSave()
+   RexSaveEnv()
+   CLN_HS~
+      DEALLOC~
+================================================================================
+
+DEAD-CODE: LLX2PQ~
+DEAD-CODE: INPUTN~
+
+vim:ft=help:fdm=indent:tw=84:sw=3:spell!:

@@ -1,9 +1,305 @@
--------------------------------------------------------------------------------
-2021-05-11  v4.22   !! GITHUB-TAG
-2021-04-09  ======
+--------------------------------------------------------------------------------
+2024-07-08  v4.23   !! GITHUB-TAG P-Surge v3.0.6
+2024-07-08
+  * Updating README's and enabling downloading of answers from intel2023-2-0
+
+2024-06-28
+  * Switching WCOSS2 slosh_mpi run script back to mpiexec (from mpirun) to match
+    P-Surge
+
+2024-06-27
+  * Update version info and a4.checkAns.sh.  Also synchronized SLOSH compiler
+    with the one used for psurge_slosh on WCOSS.
+
+2024-06-25
+  * Adding MPI run support for Hera.
+  * Debugging MPI run support for WCOSS.
+
+2024-06-24
+  * Adding serial and poe run support for Hera.
+  * Simplifying poe run support for WCOSS.
+
+2024-06-18
+  * Updating Makefile to continue WCOSS and intel 19.1.3.304 support
+
+2024-06-17
+  * Updating get* scripts 'clean' option for gui folder
+  * Remove compiler warnings (envutil, rexout).  Enable envutil to build on a
+    64 bit machine
+  * Adding compilation support for Hera and intel=2023.2.0
+
+2024-06-13
+  * Breaking out the config files from SETUP-msys.md
+  * Adding ability to ignore tests longer than 5-min
+
+2024-06-04
+  * SETUP-msys.md - adding rsync and wget
+  * Adding scripts to run SLOSH in parallel on WCOSS.
+
+2024-06-03
+  * Adding Poe test scripts for running serial-SLOSH on non-interactive nodes
+  * Adding instructions for updating gitHub flavor of SLOSH repo.
+  * Finishing first version of README-WCOSS.md
+  * Adding support for WCOSS2 to checkAns.sh
+  * Switching from /storms/answers to /storms/testAns
+  * Separating out instructions for WCOSS.
+  * Changing exec bit for get*, /dev/a* scripts. Adjusting a1.multiRun for WCOSS
+
+2024-05-31
+  * Enabling WCOSS build.sh script to build all executables.
+  * Renaming sorc sub-directories based on NCO's conventions.
+
+2024-05-29
+  * Adding VDEF ability to GUI
+
+2024-05-28
+  * Moving GUI output from /dev/work to /gui/work
+
+2024-05-24
+  * Updating package documentation
+  * getGitHub.sh - Enabling it to mimic with gitHub asses, getVlab.sh with Vlab
+    svn repos.
+  * getVlab.sh - updating clean section
+
+2024-05-22
+  * Restructuring the test area (pre_v423)
+
+2024-05-21
+  * Adding 'envutil' to SLOSH git repo
+
+2024-05-20
+  * Adding 'rexout' to SLOSH git repo
+  * Removing SLOSH-Wave code that hasn't been touched since 2019
+  * Adding script to check the answers in /storms/testAns
+
+2024-05-17
+  * Adding script to run /storms/testTrk/*.trk through SLOSH
+
+2024-05-08
+  * Moving GUI Lib from SLOSH Git repo to dataGui svn repo
+  * Adding instructions for MSYS and tidying /docs files
+
+2024-05-02
+  * Refreshing LICENSE.md
+  * Updating dta-file documentation
+
+2024-03-13
+  * Updating basin dimension to 999x1655 (from 485x780) to accommodate all known
+    basins.  Issue could arise with wave code.
+
+2024-02-02
+  * Adjusting makefile to statically link the libgfortran library.
+
+2024-01-29  Synchronized with P-Surge v3.0.6 (2023-10-11)
+2024-01-29  Synchronized with P-Surge v3.0.4 (2023-07-26)
+  * Add CPT=0 and INTEGER*2 RESTART.  When SLOSH is run a second time in a
+    different basin than the first, there is a chance for erroneous wave flux
+    energy to creep in from the edge of the basin.  The result is slightly
+    different (order of round-off), but is detectable due to randomness of
+    P-Surge first-come-first scheduler.  Additionally, the RESTART variable is
+    set in the C code to 'short' (aka INTEGER*2) and is passed to FORTRAN.
+    Unfortunately FORTRAN didn't declare it INTEGER*2 (defaulted to INTEGER*4).
+
+2024-01-29  Synchronized with P-Surge v3.0.3 (2023-07-11)
+  * Set DMIN to 50ft (vs 0).  Wave energy is transferred between the wave model
+    and the surge model if cell depth is < DMIN.  DMIN should be 50 feet, but
+    was set in the "initial common" routine to 0, and not reset (by a DATA
+    statement).  Thus no wave energy was transferred to the surge model.
+
+2024-01-29  Synchronized with P-Surge v3.0.2 (2023-05-02)
+  * Checking in changes for restart logic.
+
+2024-01-29  Synchronized with P-Surge r4045 (2023-03-01)
+  * Correcting use of wind within wave code
+    > calcwind.f - new subroutine to diagnose the wind field (WSP, WDIR, UW, VW)
+    > frcpnt.f - Removed code to store wind speeds for wave model.  The wind
+        field for the wave code is computed in calcwind.f.
+    > parm.for - Removed COMMON WINDOUT (now internal to wave.f and calcwind.f)
+    > wav1.for - added two counters (IWCNT and IRCNT) to the common block WNDD
+        These are for writing out the wind diagnostics and wave radiation
+        stresses/ significant wave heights.
+    > wave.f -
+      > in WVSTEP changed the order so the time step is advanced before checking
+        if the WINDX2, WVCMPT, and WOUTP2 subroutines need to be called.
+      > in INITWV - initialize the output counters (IWCNT=1, IRCNT=1)
+      > in WVCMPT
+        > removed the /WNDW/ common block.
+        > added /WINDOUT/ common block.
+        > changed references to WU,WV (vs WUW,WUV)
+        > commented out setting wind boundary values (cyclical boundaries).
+        > switched from "WDIR" to "WINDDIR"
+      > in WINDX2 - call CACLWIND (vs looping over WUW, WVW) to calculate wind
+        field
+
+2024-01-29  Synchronized with P-Surge r4027 (2023-02-17)
+   * Putting tide index bound checks behind #ifdef DEBUG (for efficiency) and
+     removing excessive diagnostics.
+   * Wave - Moving ETWD,ETIO,ETWV,TWD,TIO,TWV to a common block (from save) to
+     allow them to be set in initalcommon.f.  Removing other save variables.
+     Removing dead code.
+   * Enabling StormList V1 to work, and removing unused HSIN wave common block.
+   * Wave - Clarifying TPARM/ common block and removing some unused common block
+     variables.
+   * Wave - Removing some common blocks and setting of filenames.  Also tidying
+     up initialcommon.f.
+   * Wave - Reset RSXIN and RSYIN at the start of the run.
+   * Removing slosh2.c unused common block reference.  Also adding comments in
+     parm.for as to which common blocks C code uses.
+   * Removing unused wave arrays - DSP, S1, S2; and updating initialcommon to
+     reset more wave common blocks that aren't handled in initwv
+
+2024-01-26  Synchronized with P-Surge r3971 (2023-01-27)
+   * Update Makefile.MinGW to include wave code, Minor correction to LICENSE.md,
+     and adjust dev/getStorms.sh to not check permissions on _pat file.
+   * Adjusting NxM to 485x780 to allow CP5 and HSFD to run, and removing some
+     wave diagnostics.
+   * (P-Surge r3916) Adjusting winds for wave code (appear flipped) for e- and
+     p- basins.
+   * Passing the wave windows only if working with waves (wave=1), adding a
+     -teamSize option, and removing some wave diagnostics
+   * Adding Tide indexing logic to enable cylindrical basins to work.
+   * Logic to correct out of array index in depsfc.  Also adjusting verbosity in
+     team.c
+   * Added commented out logic for do-nothing threads at rank 1,2,..,teamSize.
+   * Corrections to DoStormListV1 to handle 'weight;track' entries.
+   * Adjusting wave.f to use fixed time steps(TS) based on h- basin(HSJU) or e-
+     basin(EVIR)
+   * Calling WOUTP2 (vs WOUTP), setting HSJU TimeStep to 45, and setting
+     verbose level of teamLead and teamMember to 0.
+   * Freeing the team Communicators
+   * Fixing ESW out of bounds error due to (teamSize > (1 + waves spatial
+     averaging)) logic
+   * Correctly freeing the MPI_Window(win_zb) and including more
+     #ifdef INCLUDE_WAVE to enable compiling without wave code.
+   * Correcting the HSUB checkbound issue for TeamSize=4.  Still testing impact
+     on HSJU teamSize 2 vs teamSize 4.
+   * Adjusting wave model time step(TS) to be based on basin abbreviation.
+   * Changing commented out 'GO TO' and 'GOTO' to GO..TO to help (grep for
+     'go to') test.
+   * Cylindrical basins - correcting how stat(istic) grid is computed;
+     correcting the tideMask and how tides are stored in the env in non -f_stat
+     mode.  Also setting wave time steps for EVI2=16 (vs 8)
+
+2023-02-08
+   * Minor word smithing of LICENSE.md
+
+2023-01-13
+   * Update the wave.f to fix the S(I,J) out of bound error.
+
+#----- Synchronized with P-Surge r3890 (2022-12-22) -----
+
+2022-12-22
+   * Removing requirement that PAT is readOnly (due to MSYS)
+   * Adding exceptions for evi4 and hsju adj-files and removing some white space
+
+2022-12-02  Huiqing Liu
+   * Get wave codes to use constant time step and wave MPI version to work with
+     cylindrical basin.
+
+2022-10-21
+   * Adding a mapdup routine to copy part of the grid from the bottom to the top
+     (for cylindrical basins)
+   * Moving the determination of 'if this is a cylindrical basin' to setup.c
+   * Passing in the teamRank to winBuffer to help with diagnostics.
+   * Correcting the definition of common block /FRANK/
+   * Modifying CRDRD2 to duplicate 1-d flow type data from the bottom to the top
+     of a 'cylindrical' basin when in MPI mode.
+   * Compute correct windows and message passing (both for each time step and
+     for grid gather) for cylindrical basins
+   * Moving DEPSFC call to after MAPSHIFT.  Also adding MAPDUP call to before
+     MAPSHIFT.
+
+2022-10-07
+   * Adding ability for MSYS to compile SLOSH.
+   * Updating Makefile.parallel to work with Cygwin and correcting a bug in
+     team.c
+
+2022-10-06
+   * Correcting -fullDepth option.  if(ZMX.LT.-1499.) in depsfc.f could hurt us
+     in full depth mode and in non-full depth is 'useless' as non-full depth
+     maxes out at -600 feet.
+   * Getting rid of data variable 'SIG_' and using '$'
+
+2022-10-03
+   * Updating slosh.man with -tideOnlyDir and -fullDepth options.
+   * Handling the -fullDepth option.
+
+2022-04-08
+   * Setting default optimization in Makefile.linux to O3
+   * Making sure exe aren't tracked. Cleaning up a file name.
+
+2022-04-01
+   * Removed Basin data from git-repo (instead use vlabBasin.sh or getBasin.sh)
+   * Migrated package and version info to /versions
+   * Stopped tracking exe-files and removed some dead code
+   * Various improvements in /dev/runme.sh test script
+   * Improve reporting of program version and date
+     - also set default overlap window in MPI to 7 (instead of 10)
+
+2022-03-17
+   * Cleaned up /dev
+
+2022-03-14
+   * Syncing /parm with current bsnDev_svn
+   * Reverting ps2dta back to before 2014
+     - Dongming detected (in 2014) an inconsistency between the header of
+       ps2dta and it's basin.dta entry; however he should have treated
+       ps2dta as 'truth' since it was used in the simulation study.
+     - Note - P-Surge, ETSS, P-ETSS use the version before 2014.
+
+2022-03-09
+   * Removing Tcl/Tk source files.
+   * Removing model packaging infrastructure
+   * Removing basin packaging infrastructure
+   * Synchronizing /gui folder with gitHub version.
+   * Synchronizing /docs folder with gitHub version
+
+2022-02-17
+   * Restoring EBPT and removing EBT2
+   * Various BNT naming adjustments
+   * TIDY - hyperbolic basin definitions (caps, spaces), removing HPM2
+   * TIDY - elliptical basin definitions (caps, typos), removing EBP2, EBPT,
+     EGLF, EGM2
+   * TIDY - polar basin definitions (caps, typos), removing CP4, DEL, PB3
+   * Correcting the revised date for HCH2
+   * TIDY - adjust files to 'unix' text file-type
+   * Correcting headers for MS3, MSB, SVN (REVISED and REVISED-DATE)
+
+2022-02-16
+   * Changing some of HT3's boundary points to assist with nesting.  This
+     matches Huiqing's version from ETSS_r1178 (2014-12-08).
+   * Correcting two barriers for EGLC to match Huiqing's correction from
+     ETSS_r3026 (2020-09-11
+   * Correcting timesteps in CP5 to 10,10,10 (from 20,20,20) to match Huiqing's
+     version from ETSS_r1178 (2014-12-08)
+
+2022-01-07
+   * 'South FL' basins failed regression test
+     - The wrong slip coefficients were used for non-manning-n SOUTH-FL basins.
+       This was introduced when optimizing the setting of the slip coefficients.
+   * Corrected indexing checks on channl and 1-d flow.
+   * Copying HCH2 (hch2dta) from P-Surge v2.9.1
+
+2021-05-14  Huiqing Liu
+   * Exchanging halo values after 1-d flow continuity and before 1-d flow
+     momentum for MPI runs.
+
+2021-04-29
+   * TIDY - Intel.module use Intel v18 instead of v14, and build.sh provided a
+     module list.
+
+2021-04-16  Huiqing Liu
+   * Re-activate the Preprocessor lines in btmstr.f
+
+2021-04-13  Huiqing Liu
+   * Adding Manning-n codes to SLOSH master codes.
+
+--------------------------------------------------------------------------------
+2021-05-11  v4.22   !! GITHUB-TAG P-Surge v2.9.1
+2021-04-09
    * Fixing the bug in splint.f introduced by effort to remove "go to"
 
-2021-03-29  ======
+2021-03-29
    * Updating variables that are reset if run multiple times with multiple
      basins
    * Removing sleep(1) from leader.c - Bad for P-Surge v2.8, and reduced the
@@ -15,73 +311,73 @@
    * Switching from -DWAVE to -DINCLUDE_WAVE for wave code
    * Enhancing error message in P-Surge MPI mode.
 
-2021-03-25  ======
+2021-03-25  !! P-Surge bugzilla #1053
    * Allow SLOSH to take a tideOnlyDir option in response to P-Surge bugzilla
      #1053.  This should help (long term) with updates to the tideOnly files
 
-2020-04-03  ======
+2020-04-03
    * Undoing the 'cycle' fix to 'flw1dm_block' to allow 1-d flow again.
    * P-Surge separating HOR3, HSFD from HCH2 threads.
 
-2020-03-24  ======
+2020-03-24
    * Removed "go to"s for channl, contty, crdrd2, depsfc, fhmxsv, filter,
      filtrp, and stmval
 
-2020-03-20  ======
+2020-03-20
    * Renamed "goto" to "go to" for contty, crdrd2, fhmxsv, filter, filtrp,
      flt2g, flter2, wave, and xfilter
 
-2020-03-19  ======
+2020-03-19
    * Remove "go to"s from hmxsv, inital, flw1dm, and flw1dm2
 
-2020-03-18  ======
+2020-03-18
    * No longer need inital_GUI.f, tmstpc_GUI.f or tmstpm_GUI.f
    * No longer need btmstr_gnu.f
    * Removing "go to"s from momntm2, mntmbd, and mntmbd2
    * Removing "go to"s from intlht, intlhtadd, and intlhtsub
 
-2020-03-17  ======
+2020-03-17
    * Removing "go to" in smpt2g, steron, stmval, momntm
 
-2020-03-11  ======
+2020-03-11
    * Cleaned up some diagnostics in crdrd2 and removed some go to in tmstp2.
    * MPI - Default teamSize 1 (vs 2), separate thread for HT3 and EJX3 vs HCH2.
    * Removing "go to" in channl, clnup, inital, snapsh, splint, tmstep_GUI,
      tmstpc, tmstpc_GUI
 
-2020-03-06  ======
+2020-03-06
    * Merging crdrd2_n and crdr2 by passing in a IVER flag
 
-2020-03-05  ======
+2020-03-05
    * Putting FORTRAN wave code behind #ifdef
 
-2020-03-03  ======
+2020-03-03
    * Using hWid=7 (vs 10) for the overlap window in the topology
    * Moved "go to" => "move to" in comments to help resolve "go to" count
 
-2020-02-21  ======
+2020-02-21
    * Checking in a version of wave model with curvilinear and MPI capabilities
 
-2020-02-10  ======
+2020-02-10
    * Use file-unit 29 (vs 9) in crdrd2.f
    * Adjusted read # of flows > 40,000 by not using a letter for 1000s place,
      otherwise limited to 52,000 flows.  Now read limit is 999,999 flows.
 
-2020-01-16  ======
+2020-01-16
    * Unused files to attic, remove dead code, added a diagnostic.
    * Added teamID (MPI) to a few procedures for diagnostics
 
-2020-01-15  ======
+2020-01-15
    * Added SLOSH man page (vs the pseudo- one in /docs)
 
-2020-01-13  ======
+2020-01-13
    * Cygwin MPI needs FORTRAN to use units >=10.  Forgot to correct crdrd2.f
    * Removed some compiler warnings for C code.
 
-2020-01-09  ======
+2020-01-09
    * Cygwin MPI needed FORTRAN to use units >= 10, which is a best practice.
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 2020-01-08  v4.21   !! GITHUB-TAG
    * BSNDEV
      - Minor updates to HCH2, HMS8, HOR3, HPA2, HSFD, HSFE, HSFF defin
@@ -95,34 +391,37 @@
    * TIDY - Update make 'clean' to remove all *.o files.
    * TIDY - Removing some compiler warnings for C code and extraneous
      diagnostics.  Also improve how version numbers are handled.
+
+2019-12-27
    * REGRESSION - Updating regression tests and answers.
    * BUG - Removing possibility of segfault due to undefined length of BSNABBREV
      to inital.f
    * SPEED - Change back to static allocate (common block) vs dynamic array
      -- Remove 'USE PARM2', calls to alloc and dealloc, adjust parm.for
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 2019-11-13  v4.20   !! GITHUB-TAG
    * Packaged 2019-11-13 slosh 4.20.
 
-2019-11-12  ======
+2019-11-12
    * [BUG] Get GUI to run by removing wave memory.
    * Updating GUI version info
    * relabeled btmstr_cyg to btmstr_gnu
    * Changed default tidal database from 2012 to 2014
 
-2019-08-21  ======
+2019-08-21
    * [BUG] Correcting how btmstr in CYGWIN calculates complex number 'C1'
    * [TEST] Adding regression check-sum answers for 2004-Charley-FMY.
 
-2019-08-15  ======  !! Merged in origin/slosh_wave_curv branch
+2019-08-15  !! Merged in origin/slosh_wave_curv branch
    * Checking in version with testing output files and run time messages muted.
 
-2019-07-31  ======
+2019-07-31
    * [BUG] Enabling GUI code to run (w/o wave).  Compilation problems (stack
-     space?) exist with full wave code, so commented out part of wave.f->WVCMPT().
+     space?) exist with full wave code, so commented out part of
+     wave.f->WVCMPT().
 
-2019-07-26  ======
+2019-07-26
    * [WAVE] Checking in mechanics of uniform-wave code along with a command
        line selection option (-wave)
    * [HOT-START] Adding some extra hot-start logic.
@@ -130,16 +429,16 @@
    * [MODULE] Moving HMX back to common blocks for use in slosh2.c()
    * Expanding supported number of banks by 1000
 
-2019-07-10  ======  !! Trying out Modules (2 of 2)
+2019-07-10  !! Trying out Modules (2 of 2)
    * Removing HSUB from initalcommon.f  Concern about P-Surge code.
    * Moving KSHP, IMHX, HSUB, HMX to the parm2.f module (from common blocks)
      so they can be allocated (vs stack).
 
-2019-07-08  ======  !! Trying out Modules (1 of 2)
+2019-07-08  !! Trying out Modules (1 of 2)
    * Using modules with ITREE to dynamically allocate memory
    * Using modules with IMANN to dynamically allocate memory
 
-2019-07-05  ======  !! HOT-START
+2019-07-05  !! HOT-START
    * Prevent restart file corruption by saving to a temp file, then moving
      that file to the restart file.
    * Adding -restart flag for creating (or not) restart files.
@@ -147,7 +446,7 @@
    * Adding save state every 1 hour.
    * Allow model clock to be set by INITAL()
 
-2019-07-01  ======  !! Start in on adding Manning-n
+2019-07-01  !! Start in on adding Manning-n
    * Passing in bsnAbrev to Inital() to help with hot-start files.
    * Reading new (2019-03) dta-file format (with manning-N values)
    * Adjusting the basin size to 1655x999 (from 1550x700) for HW4 (340x1650)
@@ -155,45 +454,45 @@
    * Adding some wave, hot-start and Manning-N data structures.
    * Adjusting allocated size of input track data to 999 (vs 160)
 
-2019-06-14  ======
+2019-06-14
    * Updating allocated basin dimension to 999x1655 (vs 700x1550)
    * Setting NT_ to 999 (vs 160)
    * Setting NBCPTS to 12,000 (vs 4,500 or 2,300)
 
-2019-06-13  ======
+2019-06-13
    * Adding a draft man page for SLOSH.
 
-2019-05-31  ======
+2019-05-31
    * Switching to using a parameter for track arrays.  Using 160 (vs 999)
 
-2019-05-17  ======
+2019-05-17
    * Added SLOSH+waves source code w/ hot start functionality
 
-2018-12-11  ======  !! Start of HALO and Wave merge
+2018-12-11  !! Start of HALO and Wave merge
    * Removing segfault by declaring lengths of dynamically allocated strings.
 
-2018-10-20  ======  !! Switch from svn to git repo
+2018-10-20  !! Switch from svn to git repo
    * Switched from svn repo to git repo
 
-2018-10-05  ======
+2018-10-05
    * Increasing the grid dimension to 700x1550 (vs 500x1550) to allow for
      hMS8 (655x852) and hSF1 (425x1500).
 
-2018-10-02  ======
+2018-10-02
    * Updating the Author list and how it is presented.
    * Updating the defaults for the GUI
 
-2018-09-20  ======
+2018-09-20
   * Adjusting the libhalo.dll BAS_Y x BAS_X grids to 1550x500 (from 400x400)
 
-2018-09-14  ======
+2018-09-14
   * Updating tclslosh to use MY_MAX_PATH (vs MAX_PATH) and pass the bsnAbrev
     into RunLoopStep() and RunInit().  Also had to add a timer to the call
     to RunLoopStep().
   * Updating the NSIS install scripts based on new directory tree and moving
     runGUI.bat to the top level so NSIS shortcuts will work.
 
-2018-09-10  ======
+2018-09-10
    * Consolidating tcl scripts into /ush and moving the kickoff scripts and GUI
      config file to DEV.  Also updating start4.tcl to work with new structure.
    * Introducing the dev/DATA folder.
@@ -206,19 +505,20 @@
    * Correcting the MAPIN data array to fill the array with 1000 (vs 100).
      This is due to the number of hours in a run expanding to 1000 (from 100)
 
-2017-12-14  ======
+2017-12-14
    * Reducing grid dimension to 500x1550 (from 999x1699) as the largest basins
      in P-Surge are HSF1 (425x1500) and CP5 (481x524); and we were getting
      segfaults with "-check bounds" "-traceback"
 
-2017-12-11  ======
+2017-12-11
    * Adding a check (for LF2) to make sure init dry indexes are inside the array
 
-2017-11-22  ======
+2017-11-22
    * Correcting where the iFrict term is calculated in flw1dm2 and flw1dm
 
-2017-11-21  ======  !! New source code structure
-   * Splitting FORTRAN code into one routine per files to match MDL file conventions.
+2017-11-21  !! New source code structure
+   * Splitting FORTRAN code into one routine per files to match MDL file
+     conventions.
 
 2017-07-24  v4.17   !! P-Surge v2.6.2
    * Synchronized with P-Surge v2.6.2
@@ -228,53 +528,53 @@
    * Running EOK3 before LF2 is causing interference.  Placing LF2 and CP5 on
     the odd threads and HCH2 and EOK3 on the even threads.
 
-2017-02-06  ======
+2017-02-06
    * Update runslhg.f to allow longitude values (-180 to 180) to match nhctrk
 
-2016-11-10  ======
+2016-11-10
    * Checking in an update to the NBCPTS parameter.  It is the array for the
      boundary points and currently only needs 1300 or so for HSF1; however for
      Nesting, it needed to be larger.
 
-2016-03-24  ======  !! Updated precision of PI and E
+2016-03-24  !! Updated precision of PI and E
    * Increased the precision of PI and E by 6 more decimal places
    * Correcting how the envelope files see the datums for OKE
 
-2016-02-29  ======
+2016-02-29
    * Update the new 100hr track file format read to
        a) allow landfall-date/time hour outside the simulation hours and
        b) use 999 for the end of the file.
    * Update the Rex file save to interact with new track format
 
-2016-02-10  ======
+2016-02-10
    * Checking in the latest version of the code with Huiqing's bug fix for
      bottom friction calculations.
 
-2016-02-09  ======  !! New input track format
+2016-02-09  !! New input track format
    * Adding ability to read the HSF1 basin (new format)
    * Adding ability to use the extended track (new format).
 
 2015-11-04  v4.15   !! P-Surge v2.5.6
    * Synchronized with P-Surge v2.5.6
 
-2015-04-28  ======
+2015-04-28
    * Checking in a fix for the tideOnly run inundated levee system bug.
 
-2015-04-08  ======
+2015-04-08
    * Checking in a more targeted initialcommon.f until we can determine why the
      broader approach caused non-repeatability in other runs.  Possible reason
      is that certain variables (const etc) are calculated once in the program?
 
-2015-04-06  ======
+2015-04-06
    * Removing .adj file diagnostic errors for missing EOK3 .adj file.
 
-2015-04-03  ======
+2015-04-03
    * Checking in new logic for the Leader() routine.
 
-2015-01-22  ======
+2015-01-22
    * Enabling f_tide -1 (tideOnly version 1) to bypass TMSTEP
 
-2014-12-13  ======
+2014-12-13
    * Allowing SLOSH to read the 1-hrly and 6-hrly ensemble inputs from different
      files (-envDir2, -envSave2)
    * Merged in P-Surge version of code which had tideOnly runs default to V1
@@ -285,44 +585,44 @@
 2014-10-17  v4.13
    * Increasing BAS_Y dimensions to 1,699 (from 1,399) for Hawaii big island
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 2014-09-03  v4.12   !! GITHUB-TAG
    * Updating the BAS_Y dimension to 1,399 (from 1,400).
 
-2014-09-02  ======  !! New Basin DTA File format
+2014-09-02  !! New Basin DTA File format
    * Updated code for new DTA file (GRS80, Depths below 9999, large index)
    * Updated grid dimension to 999x1400 (from 999x999)
 
-2014-08-13  ======
+2014-08-13
    * Correcting the 'V1 tide only' bug.
 
 2014-03-18  v4.11c
-2014-03-12  ======
+2014-03-12
    * Updated number of cuts and 1d flows to 39,999 (from 37,000)
 
-2014-03-11  ======
+2014-03-11
    * Adding new tide version V2.4.x option
 
-2014-03-05  ======
+2014-03-05
    * Updated grid dimension to 999x999 (from 800x800)
    * Updated number of cuts and 1d flows to 37,000 (from 27,000)
 
-2013-08-19  ======
+2013-08-19
    * Adding ability to handle 6,999 barriers (from 5,999)
 
 2013-06-13  v4.11a  !! "P-Surge r1555"
    * Moved to EC2012 (from EC2001) for binary harmonic constituent files
 
-2013-06-05  ======
+2013-06-05
    * Updated number of cuts and 1d flows to 27,000 (from 20,000)
 
-2013-05-31  ======
+2013-05-31
    * Memory leak - 'retired/' is 8 char, but needs 1 for the \0
 
-2013-05-30  ======
+2013-05-30
    * Preventing fall through in the case of the -TideDatabase option.
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 2013-05-24  v4.11   !! GITHUB-TAG - Defaults to double precision.
    * Switch to using double precision gcc 4.50 as default compiler
 
@@ -332,14 +632,14 @@
 2013-02-15  v3.98b
    * Implemented SLOSH + Tide V2 and the beginning of V3.
 
-2013-01-30  ======
+2013-01-30
    * Added a Tidesh (static-height) to common block BCPTS to contain the tide
      value on the static boundary.
 
-2013-01-25  ======
+2013-01-25
    * Cleaned up allocation of names (adj,bhc,ft03), and removed YLT,YLG passing
 
-2013-01-23  ======
+2013-01-23
    * Correcting the way dry cells are indicated when computing with tide
      version 1 (had set to 99.9 rather than -zb)
    * Moving -bsnDir to -rootDir and assuming that ./bnt ./dta and ./tidefile
@@ -347,7 +647,7 @@
      files in the dta folder and resolves the location of the tidefiles without
      bothering the user.
 
-2013-01-18  ======
+2013-01-18
    * Updated grid dimension to 800x800 (from 600x600)
    * Updating the order of [BAS_Y][BAS_X] because C and FORTRAN swap the order
      of 2-d arrays.
@@ -356,10 +656,10 @@
    * Updated the initialize dry routine and the number of initialize dry cells
      to handle the new EOK3 basin.
 
-2012-08-27  ======
+2012-08-27
    * Correcting the way that the .stm file date/time is read in.
 
-2012-08-14  ======
+2012-08-14
    * Made it more graceful if the import rexfile directory does not exist.
    * Switched GUI to using tk_getOpenFile.
    * Un-hiding channel level datum of oke3.  Also allowing the user to select
@@ -371,7 +671,7 @@
      this was a tide, surge, tide + surge, etc, run.
    * Switching from 'tide' to 'tidefile'
 
-2012-06-29  ======
+2012-06-29
    * Adding datum values to the envelopes.  This allows the SDP to display
      whether they were tideV0, tideV1, surgeOnly, etc.  Also correcting the
      code to auto determine the datum, so user can specify anomaly vs tide.
@@ -381,12 +681,12 @@
      the FORTRAN code will still work.
    * Correcting initialization of the hb_max[][] so it can detect dry cells.
 
-2012-06-28  ======
+2012-06-28
    * Adjusting the timing so it doesn't take an extra step at the beginning in
      SETCMP (with NHRAD), but rather corrects the time at which to switch to a
      different time-step with a -1 in STMVAL
 
-2012-06-08  ======  !! Changing NHRAD creates an extra time-step
+2012-06-08  !! Changing NHRAD creates an extra time-step
    * Recalculating MHALT (stop computations) based on changes to NHRAD
    * SETCMP() was doing a time-step advance.  Since STMVAL() also did a
      time-step advance, there was a double step for delp,rmax,x,y during
@@ -405,23 +705,23 @@
    * Shifting f_tide calculation into CleanUp routine.
    * Moving the data passing logic for the tide + surge grids into slosh2.c.
 
-2012-06-01  ======
+2012-06-01
    * Moving from clock1 + etime to modelClock.
    * Moving time and tide manipulation into RunLoopStep routine.
 
-2012-05-21  ======
+2012-05-21
    * Merging in changes need to get SLOSH + Tide.
 
-2012-04-20  ======
+2012-04-20
    * Turning on enhanced output for stm2trk to provide users with more help.
 
 2012-01-24  v3.97b
    * Allow HCH2 to use the incorrect formulation of XFILTER for backward
      compatibility
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 2012-01-20  v3.97   !! GITHUB-TAG
-2011-11-09  ======
+2011-11-09
    * Updated version of XFILTER with a reformulation of the XSM2 term.
 
 2011-09-01  v3.96i
@@ -446,12 +746,12 @@
 2011-06-10  v3.96d
    * Modified GUI to display Vmax graph in knots (1 min) rather than mph (1 min).
 
-2011-04-27  ======  !! Added hybrid Laplacian filter
+2011-04-27  !! Added hybrid Laplacian filter
    * Added XFILTER smoothing routine (a modification of the filter routine to
      get the X Laplacian as well as the + Laplacian.  Works well except near
      barriers (see Ike in egm3 near the Texas border)
 
-2011-04-08  ======
+2011-04-08
    * Detect and handle whether a basin can have high terrain at 56 vs 35 feet.
    * Column 20='+' indicates it is safe to treat 56 (vs 36) as high terrain
 
@@ -463,10 +763,10 @@
 
 2011-04-04  v3.96b  !! Adjusted critical threshold for considering wet/dry
    * Adjusting critical threshold for barriers to 0.5 feet (from 1 foot).
-   * Added more smoothing options (to first line of the DTA file).  Now uses the
-     following symbols... '^', '*', '=', '+', '!', '@', '&', '#', '%'
+   * Added more smoothing options (to first line of the DTA file).  Now uses
+     the following symbols... '^', '*', '=', '+', '!', '@', '&', '#', '%'
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 2011-02-17  v3.96   !! GITHUB-TAG - (originally - FOIA_4.00)
 2011-02-09  "v4.00"
    * Switch to MinGW 4.5.0 (from 3.4.2)
@@ -474,7 +774,7 @@
 2011-01-12  "v3.96"
    * Updating # of cuts and 1d flows to 13,000 (from 12,000) to support HCH2
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 2010-10-19  v3.95   !! GITHUB-TAG
    * HCHS changed time step (20s to 10s) which impacted 1989-Hugo (in HCHS)
    * HMI3 replaced HMIA, so 1992-Andrew now uses HMI3
@@ -482,10 +782,10 @@
 2010-06-27  "v3.95"
    * Updated basin grid dimension to 600x600 (from 500x500)
 
-2010-06-09  ======
+2010-06-09
    * Updated basin grid dimension to 500x500 (from 400x400)
 
-2010-05-22  ======
+2010-05-22
    * Adjusted trk-file format so that ocean type of 150-250 indicates pure
      anomaly, while 350-450 indicates anomaly + gridded tide.
 
@@ -494,10 +794,10 @@
    * Adjusted critical threshold for smoothing to 0.5 feet (from 1 foot)
    * Updated tests (use Rex-file type 2, hmi3 (instead of hmia)
 
-2010-04-20  ======
+2010-04-20
    * Default to Rex-file type 2
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 2009-10-08  v3.94   !! GITHUB-TAG
    * Start of GitHub repository
 
@@ -552,7 +852,7 @@
      from
  JX2e JACKSONVILLE(new) 29.52000   81.33000   29.17000   81.20000  93.0 185.0  13.00  1.0333.0  1.0381.0  1.0  1.0333.0381.0
 
-2005-05-10  ======
+2005-05-10
    * Switched to IDRY(ND_) from IDRY(N_).  ND_ is 500, N_ is 400.  This
      resolved extra dry cells around New Orleans.
 
@@ -564,6 +864,6 @@
 
 2003-05-06 "v3.5"
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 # \o starts a new change log entry
 vim:ft=changelog

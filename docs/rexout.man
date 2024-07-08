@@ -1,0 +1,75 @@
+.\" rexout.man          REX-OUT MANUAL                  Last Change: 2020-01-16
+.\"                                                      Arthur.Taylor@noaa.gov
+.\"                                                            NWS/OSTI/MDL/DSB
+.\" Please type man ./rexout.man to read
+.\"
+.TH SLOSH-PAGES 1 2020-01-15 "MDL" "REX-OUT MANUAL"
+
+.SH NAME
+rexout \- Extract data from SLOSH rex-files.
+
+.SH SYNOPSIS
+rexout [ OPTIONS ] -rex \fIrex-file\fR -pnt \fIpnt-file\fR -style \fIstyle\fR
+
+.SH DESCRIPTION
+rexout extracts data from SLOSH's \fIrex-file\fR format.  Specifically it
+extracts a time series of surge at a particular grid cells.  The grid cells
+are define in a \fIpnt-file\fR which consists of the basin abbreviation
+followed by a set of x y pairs (separated by a space), one per line, of 
+grid cells to look at.
+
+.SS OPTIONS
+.TP
+-help
+Display help text and exit.
+
+.TP
+-V
+Display version information and exit.
+
+.TP
+-rex \fIrex-file\fR
+The rex-file to read from.
+
+.TP
+-pnt \fIpnt-file\fR
+The pnt-file to read from.
+
+.TP
+-style \fIstyle\fR
+   0 (default) = original output format
+   1 = original output with FORTRAN fixed fields
+   2 = fixed field, wind output, 1 point per section
+       Note: requires -bsnDir
+   3 = Same as 2, but with model depth
+       Note: requires -bsnDir and -basin
+
+.TP
+-bsnDir \fIdir\fR
+Set the directory that contains the grid definitions (parm/bnt).
+
+.TP
+-basin \fIbasin-file\fR
+Set the SLOSH basin file to use (parm/dta/file).
+
+.TP
+-out \fIout-file\fR
+The output file to write to (default stdout).
+
+.TP
+-incEnv
+Include the envelope frame (default 0).
+
+.SH EXAMPLES
+Probe camilbix.rex
+   $ cd dev
+   $ ../exec/rexout -style 0 -rex rexfiles/camilbix.rex -pnt pnt/bix.pnt
+      -out work/camil.bix
+
+.SH BUGS
+None
+
+.SH AUTHOR
+Arthur Taylor (arthur.taylor@noaa.gov)
+
+.\" vim:tw=80:ft=nroff:

@@ -1,0 +1,43 @@
+Arthur Taylor
+11/12/2010
+
+A Description of the SLOSH Envelope File Format
+
+First, the envelope file format is either big endian or little endian, or
+written in C or written in FORTRAN.  In order to detect which is the case, 
+one looks at the first 4 bytes in little endian.  If it is an 8 or a 
+134217728L, then it was written by FORTRAN.  In the case of an 8 is is 
+little endian FORTRAN, while the 134217728L would be big endian FORTRAN.
+For the C case, the first value is either < 2000 but not 8, in which case it
+is little endian C, or > 2000 but not 134217728L, in which case it is big
+endian C.  
+
+NOTE: This does assume that a basin dimmension (NX) is < 2000 and not 8.
+
+Once the type and endian of the file is established, it follows either of the
+following formats
+
+C format ...
+        (1) 4-byte integer = IMXB
+        (1) 4-byte integer = JMXB
+      (160) 1-byte char = Header
+(IMXB*JMXB) 2-byte integer = Data
+
+FORTRAN format ...
+        (1) 4-byte integer = 8 (Record Len)
+        (1) 4-byte integer = IMXB
+        (1) 4-byte integer = JMXB
+        (1) 4-byte integer = 8 (Record Len)
+        (1) 4-byte integer = 160 (Record Len)
+      (160) 1-byte char = Header
+        (1) 4-byte integer = 160 (Record Len)
+        (1) 4-byte integer = IMXB*JMXB*2 (Record Len)
+(IMXB*JMXB) 2-byte integer = Data
+        (1) 4-byte integer = IMXB*JMXB*2 (Record Len)
+
+NOTES (need to confirm the following):
+
+1) The data in the record is stored as tenths of a foot
+2) 999 indicates dry
+3) The SDP uses the little Endian C-format but adds 2 floats after the data
+   for the initial water levels (tide levels).

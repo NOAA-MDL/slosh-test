@@ -1,0 +1,55 @@
+2024-05-20  Arthur Taylor
+   * Added it to the SLOSH git repo.
+
+2020-01-16  Arthur Taylor
+   * Got it to work on WCOSS
+
+2020-01-14  Arthur Taylor
+   * Migrated to VLAB Git repository
+
+2009-08-20  "v1.3"  Arthur Taylor
+   * Refresh the basins based on latest versions
+   * Added a -incEnv option to allow one to probe the envelope frame as well as
+     others.  Date stamp on envelope frame is 4/20/2009 22:40Z
+
+2009-07-14  Arthur Taylor
+   * Refresh the basins based on latest versions
+
+2007-10-30  "v1.2.4"  Arthur Taylor
+   * Updated rexout so it can correctly find the "envelope" frame if that is
+     the first frame (i.e no animation frames).  Also put in extra safety
+     checks around the time value to try to detect corrupt rexfiles
+   * Enhanced the speed of windProbe by using static variables to reduce the
+     number of calls to force1.  This should be an order of magnitude faster
+   * Updated the libaat library, and corrected the call to ListSearch by
+     remembering to divide by the sizeof (UsrOpt[0])
+
+2007-08-07  "v1.2.3"  Arthur Taylor
+   * Realized that the release system was not packing the libaat source
+
+2007-07-13  "v1.2.2"
+
+2007-07-09  "v1.2.1"
+
+2006-09-12  "v1.2"  Arthur Taylor
+   * Did some more testing of the wind speed calculations.  The slosh display
+     appears to use the point clicked on for the lat/lon rather than the
+     center of the box.  This causes slight discrepancies of "station" wind
+     speed.
+
+2006-08-29  Arthur Taylor
+   * Finished up initial NIST edits and options.
+
+2006-08-25  Arthur Taylor
+   * Opened up "rexout.tar.gz" for serious development (for NIST purposes).
+
+2006-07-13  Arthur Taylor
+   * Started looking at rexout (for hurrevac meetings).
+
+2002-04-23  "v1.1"
+
+2001-11-27  "v1.0"
+
+-------------------------------------------------------------------------------
+# \o starts a new change log entry
+vim:ft=changelog

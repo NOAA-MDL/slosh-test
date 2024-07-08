@@ -1,30 +1,55 @@
-# Ignore the executables
-/exec
-/sorc/slosh/*.o
-/sorc/slosh/parm2.mod
-/sorc/slosh/sloshDos*
-/sorc/slosh/sloshGui*
-/sorc/slosh/sloshLinux*
-/sorc/stm2trk/*.o
-/sorc/stm2trk/stm2trk.exe
-/util/*.exe
-# Ignore the basin files
+# To apply to svn, type: 'svn propset svn:ignore -F .gitignore .'
+# ... the caveat is you'd need a .gitignore in each subfolder
+#
+# Ignore the basin data (since it is in svn)
+/parm/LICENSE.md
+/parm/README.md
+/parm/.svn
 /parm/bnt
 /parm/dta
-/parm/tidefile.ec2014/*.bhc
-/parm/tidefile.ec2014/*.adj
-/parm/tidefile.ec2014/*.txt
-/parm/tidefile.ec2014/etss/*.bhc
-/parm/tidefile.ec2014/etss/*.adj
-# Ignore the test files
-/dev/sample
-/dev/storms
-/dev/work
-# Ignore the GUI files
+/parm/dta_o
+/parm/dta_m
+/parm/tidefile.ec2014
+#
+# Ignore .o and exec files in sorc
+/sorc/envutil.cd/*.o
+/sorc/rexout.cd/*.o
+/sorc/slosh.fd/*.o
+/sorc/stm2trk.cd/*.o
+#
+# Ignore compiled executables for which we have source code
+/exec/envutil
+/exec/envutil.exe
+/exec/rexout
+/exec/rexout.exe
+/exec/slosh
+/exec/slosh_mpi
+/exec/sloshDos.exe
+/exec/sloshLinux
+/exec/stm2trk.exe
+/exec/stm2trk
+/gui/exec/sloshGui.exe
+#
+# Ignore /sample /storms /work /trk100 in dev
+/dev/work/*
+/dev/sample/*
+/dev/log/*
+/dev/workPoe/*
+/dev/workPara_n?/*
+#
+# Ignore sample storms (/trk100 and /sampleTrk)
+/storms/testTrk/*
+/storms/testAns/*
+/storms/trk100/*
+#
+# Ignore tar folders
+/tar/*
+#
+# Ignore GUI folders
+/gui/.svn
 /gui/exec
 /gui/geodata
 /gui/include
 /gui/lib
-/gui/basin?*
-# Ignore the downloads
-/tar
+/gui/sloshrun.ini
+/gui/work
