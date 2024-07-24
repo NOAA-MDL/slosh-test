@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #-------------------------------------------------------------------------------
-# b2.serialSlosh.sh                                      Last Change: 2024-06-04
+# b2.serialSlosh.sh                                      Last Change: 2024-07-12
 #                                                         Arthur.Taylor@noaa.gov
 #                                                               NWS/OSTI/MDL/DSD
 #-------------------------------------------------------------------------------
@@ -40,7 +40,7 @@ fi
 #=================================================================== START =====
 srcDir=$(cd "$(dirname "$0")" && pwd)
 testDir=${testDir:-$srcDir/../storms/testTrk}
-workDir=${workDir:-$srcDir/work}
+workDir=${workDir:-$srcDir/workActive}
 fLog=${fLog:-false}
 verbose=${verbose:-1}
 waveVer=${waveVer:-0}

@@ -30,17 +30,15 @@
 /exec/stm2trk
 /gui/exec/sloshGui.exe
 #
-# Ignore /sample /storms /work /trk100 in dev
-/dev/work/*
-/dev/sample/*
+# Ignore /work in dev
 /dev/log/*
+/dev/work/*
 /dev/workPoe/*
 /dev/workPara_n?/*
 #
-# Ignore sample storms (/trk100 and /sampleTrk)
+# Ignore sample storms (/testTrk and /testAns)
 /storms/testTrk/*
 /storms/testAns/*
-/storms/trk100/*
 #
 # Ignore tar folders
 /tar/*

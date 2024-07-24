@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #-------------------------------------------------------------------------------
-# b3.parallelSlosh.sh                                    Last Change: 2024-06-28
+# b3.parallelSlosh.sh                                    Last Change: 2024-07-12
 #                                                         Arthur.Taylor@noaa.gov
 #                                                               NWS/OSTI/MDL/DSD
 #-------------------------------------------------------------------------------
@@ -33,7 +33,8 @@ fi
 #set -x
 srcDir=$(cd "$(dirname "$0")" && pwd)
 testDir=${testDir:-$srcDir/../storms/testTrk}
-workDir=${workDir:-$srcDir/work}
+#workDir=${workDir:-$srcDir/work}
+workDir=${workDir:?}
 fLog=${fLog:-false}
 verbose=${verbose:-1}
 waveVer=${waveVer:-0}
@@ -133,8 +134,8 @@ if [[ $fLog == "true" ]] ; then
    rm -f $logFile
    if [[ "$pre" == "" ]] ; then echo "$SLOSH $ARGS >> $logFile" ; fi
    if [[ $SYSTEM == "WCOSS2" ]] ; then
-      mpiexec -n "${NCPUS:?}" -ppn "${NCPUS:?}" --cpu-bind core $SLOSH $ARGS >> $logFile ; errVal=$?
-#      mpirun -n "${NCPUS:?}" -ppn "${NCPUS:?}" --bind-to core $SLOSH $ARGS >> $logFile ; errVal=$?
+      mpiexec -n "${NCPUS:?}" -ppn "${NCPUS:?}" \
+            --cpu-bind core $SLOSH $ARGS >> $logFile ; errVal=$?
    elif [[ $SYSTEM == "HERA" ]] ; then
       srun -n "${NCPUS:?}" $SLOSH $ARGS >> $logFile ; errVal=$?
    else
@@ -146,8 +147,8 @@ if [[ $fLog == "true" ]] ; then
 else
    if [[ "$pre" == "" ]] ; then echo "$SLOSH $ARGS" ; fi
    if [[ $SYSTEM == "WCOSS2" ]] ; then
-      mpiexec -n "${NCPUS:?}" -ppn "${NCPUS:?}" --cpu-bind core $SLOSH $ARGS ; errVal=$?
-#      mpirun -n "${NCPUS:?}" -ppn "${NCPUS:?}" --bind-to core $SLOSH $ARGS ; errVal=$?
+      mpiexec -n "${NCPUS:?}" -ppn "${NCPUS:?}" --cpu-bind core $SLOSH $ARGS
+      errVal=$?
    elif [[ $SYSTEM == "HERA" ]] ; then
       srun -n "${NCPUS:?}" $SLOSH $ARGS ; errVal=$?
    else

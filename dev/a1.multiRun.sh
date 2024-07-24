@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #-------------------------------------------------------------------------------
-# a1.multiRun.sh                                         Last Change: 2024-06-24
+# a1.multiRun.sh                                         Last Change: 2024-07-23
 #                                                         Arthur.Taylor@noaa.gov
 #                                                               NWS/OSTI/MDL/DSD
 #-------------------------------------------------------------------------------
@@ -19,7 +19,7 @@ if [[ $1 == "help" ]] ; then
    echo "   -v<level> or --verbose <level> = Verbosity level"
    echo "   -p or --path  = Path to input track files for testing."
    echo "                   Defaults to ../storms/testTrk"
-   echo "   -o or --out   = Path to output folder [./work]"
+   echo "   -o or --out   = Path to output folder [./workActive]"
    echo "   -w<ver> or --wave <ver>   = Wave Version [0]=none, 1=v1"
    echo "   -t<ver> or --tide <ver>   = Tide Version"
    echo "          [0]=none,"
@@ -31,10 +31,10 @@ if [[ $1 == "help" ]] ; then
    echo "          V2.4.{ht} = similar to V2.2 except remove the -290 limit"
    echo ""
    echo "Example:"
-   echo "  $ $base all  => Run all storms, with output in /dev/work"
+   echo "  $ $base all  => Run all storms, with output in /dev/workActive"
    echo "  $ $base ls   => List all storms"
    echo "  $ $base go ../storms/testTrk/2023-Idalia-W3-CC-CD2.trk"
-   echo "    Run 2023-Idalia in CD2 basin, with output in /dev/work"
+   echo "    Run 2023-Idalia in CD2 basin, with output in /dev/workActive"
    echo "  $ $base go 2023-Idalia-W3-CC-CD2.trk"
    echo "    Same as previous"
    exit 0
@@ -42,13 +42,14 @@ fi
 
 srcDir=$(cd "$(dirname "$0")" && pwd)
 testDir=$srcDir/../storms/testTrk
-workDir=$srcDir/work
+workDir=$srcDir/workActive
 fLog=false
 fSeq=false
 verbose=1
 waveVer=0
 tideVer=VDEF
-TEMP=$(getopt -o lsv:p:o:w:t: --long log,seq,verbose:,path:,out:,wave:,tide: -n $base -- "$@")
+TEMP=$(getopt -o lsv:p:o:w:t: \
+          --long log,seq,verbose:,path:,out:,wave:,tide: -n $base -- "$@")
 if [ $? != 0 ] ; then $0 help ; exit 1 ; fi
 eval set -- "$TEMP"
 while true; do
@@ -65,11 +66,14 @@ while true; do
    esac
 done
 
-if [[ $1 != "go" && $1 != "ls" && $1 != "all" ]] ; then $0 help; exit 0; fi
-if [[ $1 == "go" && $# -ne 2 ]] ; then
+if [[ $1 != "go" && $1 != "all" && $1 != "ls" ]] ; then
+   echo "Unrecognized command '$1'"; $0 help; exit 0
+elif [[ $1 == "go" && $# -ne 2 ]] ; then
    echo "Missing argument for 'go' command"; $0 help; exit 0
-elif [[ $1 != "go" && $# -ne 1 ]] ; then
-   $0 help; exit 0
+elif [[ $1 == "all" && $# -ne 1 ]] ; then
+   echo "Unrecognized argument '$2' for 'all' command"; $0 help; exit 0
+elif [[ $1 == "ls" && $# -ne 1 ]] ; then
+   echo "Unrecognized argument '$2' for 'ls' command"; $0 help; exit 0
 fi
 
 #----- Find SLOSH Executable -----
@@ -141,7 +145,7 @@ function doJobList()
       # Start all processes
       for (( p=0; (p < $nProc) && ($job < $lastJob); p++ )) ; do
          cLine=$(( row + 1 + (job - lastJob) * nRow ))
-         b2.serialSlosh.sh row:$cLine "${JobList[$job]}" &
+         $srcDir/b2.serialSlosh.sh row:$cLine "${JobList[$job]}" &
          PID[$p]=$!
          pingRay[$p]=$(( $(date +%s%3N) + $pingMin ))
          (( job += 1 ))
@@ -156,7 +160,7 @@ function doJobList()
                kill -0 "${PID[$p]}" >/dev/null 2>&1 ; ans=$?
                if (( ans != 0 )) ; then
                   cLine=$(( row + 1 + (job - lastJob) * nRow ))
-                  b2.serialSlosh.sh row:$cLine "${JobList[$job]}" &
+                  $srcDir/b2.serialSlosh.sh row:$cLine "${JobList[$job]}" &
                   PID[$p]=$!
                   pingRay[$p]=$(( $(date +%s%3N) + $pingMin ))
                   (( job += 1 ))
@@ -173,7 +177,7 @@ function doJobList()
 }
 
 # Bring in function 'sortJobList()'
-source b1.sortJobList.sh
+source $srcDir/b1.sortJobList.sh
 
 #=================================================================== START =====
 #srcDir=$(cd "$(dirname "$0")" && pwd)
@@ -219,12 +223,12 @@ if [[ ! -e $workDir ]] ; then mkdir -p $workDir ; fi
 # Call doOne or doJobList to handle the jobs.
 BEG=$(date +%s)
 if [[ ${#JobList[@]} == 1 ]] ; then
-   b2.serialSlosh.sh "row:NULL" ${JobList[0]}
+   $srcDir/b2.serialSlosh.sh "row:NULL" ${JobList[0]}
 else
    sortJobList
    if [[ $fSeq == "true" ]] ; then
       for J in ${JobList[@]} ; do
-         b2.serialSlosh.sh "row:NULL" $J
+         $srcDir/b2.serialSlosh.sh "row:NULL" $J
       done
    else
       doJobList

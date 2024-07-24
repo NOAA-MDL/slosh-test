@@ -3214,7 +3214,7 @@ proc run_rayInit {ray_name} {
   set ray(DATA_dir) "$ray(root_dir)"
   set ray(tide_dir) "$ray(root_dir)/../parm/tidefile.ec2014"
   set ray(dta_dir) "$ray(root_dir)/../parm/dta"
-  set ray(track_dir) "$ray(root_dir)/../dev/storms"
+  set ray(track_dir) "$ray(root_dir)/../storms/testTrk"
   set ray(rex_dir) "$ray(root_dir)/work"
   set ray(adv_dir) "$ray(root_dir)"
   set ray(imp_rex_dir) $ray(rex_dir)

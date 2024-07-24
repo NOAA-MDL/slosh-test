@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #-------------------------------------------------------------------------------
-# a2.poeRun.sh                                           Last Change: 2024-06-25
+# a2.poeRun.sh                                           Last Change: 2024-07-23
 #                                                         Arthur.Taylor@noaa.gov
 #                                                               NWS/OSTI/MDL/DSD
 #-------------------------------------------------------------------------------
@@ -17,7 +17,7 @@ if [[ $1 == "help" ]] ; then
    echo "   -v<level> or --verbose <level> = Verbosity level"
    echo "   -p or --path  = Path to input track files for testing."
    echo "                   Defaults to ../storms/testTrk"
-   echo "   -o or --out   = Path to output folder [./work]"
+   echo "   -o or --out   = Path to output folder [./workPoe]"
    echo "   -w<ver> or --wave <ver>   = Wave Version [0]=none, 1=v1"
    echo "   -t<ver> or --tide <ver>   = Tide Version"
    echo "          [0]=none,"
@@ -48,7 +48,8 @@ fLog=false
 verbose=1
 waveVer=0
 tideVer=VDEF
-TEMP=$(getopt -o lv:p:o:w:t: --long log,verbose:,path:,out:,wave:,tide: -n $base -- "$@")
+TEMP=$(getopt -o lv:p:o:w:t: \
+          --long log,verbose:,path:,out:,wave:,tide: -n $base -- "$@")
 if [ $? != 0 ] ; then $0 help ; exit 1 ; fi
 eval set -- "$TEMP"
 while true; do
@@ -64,18 +65,19 @@ while true; do
    esac
 done
 
-if [[ $1 != "go" && $1 != "all" ]] ; then $0 help; exit 0; fi
-if [[ $1 == "go" && $# -ne 2 ]] ; then
+if [[ $1 != "go" && $1 != "all" ]] ; then
+   echo "Unrecognized command '$1'"; $0 help; exit 0
+elif [[ $1 == "go" && $# -ne 2 ]] ; then
    echo "Missing argument for 'go' command"; $0 help; exit 0
-elif [[ $1 != "go" && $# -ne 1 ]] ; then
-   $0 help; exit 0
+elif [[ $1 == "all" && $# -ne 1 ]] ; then
+   echo "Unrecognized argument '$2' for 'all' command"; $0 help; exit 0
 fi
 
 ulimit -s 84500
 SLOSH=$srcDir/../exec/slosh
 #=============================================================== FUNCTIONS =====
 # Bring in function 'sortJobList()'
-source b1.sortJobList.sh
+source $srcDir/b1.sortJobList.sh
 
 #=================================================================== START =====
 #srcDir=$(cd "$(dirname "$0")" && pwd)
@@ -193,7 +195,7 @@ elif [[ ${SYSTEM} == "HERA" ]] ; then
    PROJECT=${PROJECT:-mdl-sti}
    source $srcDir/../versions/build_hera.ver
    if [[ $NCPUS -gt 40 ]] ; then
-      echo "Current limit on in poescript on HERA is 40 CPUS (e.g., one node)"
+      echo "Current limit in poescript on HERA is 40 CPUS (e.g., one node)"
       exit
    fi
    sbatch << EOF

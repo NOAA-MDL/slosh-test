@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #-------------------------------------------------------------------------------
-# a4.checkAns.sh                                         Last Change: 2024-06-26
+# a4.checkAns.sh                                         Last Change: 2024-07-12
 #                                                         Arthur.Taylor@noaa.gov
 #                                                               NWS/OSTI/MDL/DSD
 #-------------------------------------------------------------------------------
@@ -16,11 +16,11 @@ if [[ $1 == "help" ]] ; then
    echo " where <option> is:"
    echo "   -p or --path  = Path to answer .env and .rex files for testing."
    echo "                   Defaults to ../storms/testAns"
-   echo "   -o or --out   = Path to output folder [./work]"
+   echo "   -o or --out   = Path to output folder [./workActive]"
    echo ""
    echo "Example:"
    echo "  $ $base go"
-   echo "      Loop through .rex and .env files in ./work and compare to"
+   echo "      Loop through .rex and .env files in ./workActive and compare to"
    echo "      sub-folder of ../storms/testAns"
    echo "  $ $base -o ./workPoe go"
    echo "      Same as before, but with ./workPoe"
@@ -28,7 +28,7 @@ if [[ $1 == "help" ]] ; then
 fi
 
 srcDir=$(cd "$(dirname "$0")" && pwd)
-workDir=$srcDir/work
+workDir=$srcDir/workActive
 ansDir=$srcDir/../storms/testAns
 
 TEMP=$(getopt -o p:o: --long path:,out: -n $base -- "$@")

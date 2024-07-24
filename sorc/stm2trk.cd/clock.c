@@ -608,7 +608,8 @@ void Clock_Print (char *buffer, int n, double clock, char *format,
    sInt4 sec;
    double floatSec;
    int month, day;
-   int i, j;
+   size_t i;
+   int j;
    char f_perc;
    char locBuff[100];
    int timeZone;        /* # of hrs to adjust the clock by because of
@@ -893,7 +894,7 @@ void Clock_PrintMonth3 (int mon, char *buffer, int buffLen)
    };
    myAssert ((mon > 0) && (mon < 13));
    myAssert (buffLen > 3);
-   strcpy (buffer, MonthName[mon - 1]);
+   snprintf (buffer, buffLen, "%s", MonthName[mon - 1]);
 }
 
 void Clock_PrintMonth (int mon, char *buffer, int buffLen)
@@ -904,7 +905,7 @@ void Clock_PrintMonth (int mon, char *buffer, int buffLen)
    };
    myAssert ((mon > 0) && (mon < 13));
    myAssert (buffLen > 9);
-   strcpy (buffer, MonthName[mon - 1]);
+   snprintf (buffer, buffLen, "%s", MonthName[mon - 1]);
 }
 
 /*****************************************************************************
@@ -1230,7 +1231,7 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
    int lastWordType;
    sInt4 TimeZone = Clock_GetTimeZone (); /* Initialize it to local time */
    char f_dayLight = 0;
-   int month;
+   int month = 0;
    int day;
    sInt4 year;
    char f_year = 0;
@@ -1250,7 +1251,6 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
    char f_ampm = -1;
    char f_timeZone = 0;
    char f_time = 0;
-   char f_date = 0;
    char f_slashWord = 0;
    char f_dateWord = 0;
    char f_monthWord = 0;
@@ -1267,7 +1267,6 @@ int Clock_Scan (double *clock, char *buffer, char f_gmt)
       return 0;
 
    f_time = 0;
-   f_date = 0;
    lastWordType = WT_NONE;
    curTime = 0;
    while (Clock_GetWord (&ptr, &ptr2, word, &wordType) == 0) {

@@ -1,4 +1,30 @@
 --------------------------------------------------------------------------------
+2024-07-24  v4.23a   !! GITHUB-TAG
+2024-07-23
+  * Add $srcDir to path of called scripts in /dev
+  * Add instructions for ssh ed25519 keys.  Correct a SYSTEM=WCOSS in HERA
+    instructions
+
+2024-07-12
+  * Switching scripts to use /dev/workActive (from /dev/work)
+  * Putting parallel log files in a common subdirectory of /dev/log
+
+2024-07-11
+  * Resolving compiler warnings from stm2trk.
+  * Minor edits to MSYS environment and instructions.
+  * Changed to 'model results' (vs 'answers') in READMEs
+  * Modified scripts for better handling of initial arguments
+  * Added an 'all' option to a3.parallelRun.sh
+
+2024-07-10
+  * Update to where GUI looks for testTrk files.
+
+2024-07-09
+  * Updating README's based on latest install experience
+  * Correcting a typo in two run-scripts.
+  * Removing old scripts which mimic'd the WCOSS-1 aprun methodology.
+
+--------------------------------------------------------------------------------
 2024-07-08  v4.23   !! GITHUB-TAG P-Surge v3.0.6
 2024-07-08
   * Updating README's and enabling downloading of answers from intel2023-2-0

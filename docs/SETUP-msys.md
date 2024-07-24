@@ -1,4 +1,4 @@
-**SETUP-msys.md**`      SLOSH Model Help Pages          Last Change: 2024-06-17`
+**SETUP-msys.md**`      SLOSH Model Help Pages          Last Change: 2024-07-11`
 
 The intent of this file is to help the user install MSYS.  For more on MSYS
 please see [here](http://www.msys2.org)
@@ -80,6 +80,8 @@ $ pacman -S --needed p7zip python curl vim
 ```bash
 $ pacman -S --needed rsync       # Syncrhonize and download file systems
 $ pacman -S --needed subversion  # Version control system (non-git)
+
+# In following, wget may already be on the system, but include just in case.
 $ pacman -S --needed wget        # Download web assets
 ```
 
@@ -128,11 +130,18 @@ Enter the following [minttyrc](../../master/docs/config/minttyrc)
 #### 1. Capture the PATH
 
 It's useful to know the MS-Windows path to the home directory in case there are
-multiple versions of MSYS on a system.
+multiple versions of MSYS on a system (It can also be handy to know how long ago
+you installed this version of MSYS).
+
 ```bash
-$ a=$(cygpath -m ~) ; d=${a:0:1}
-$ echo "/${d,,}${a:2}" > ~/PATH
+$ a=$(cygpath -m ~) ; d=${a:0:1} ; echo "/${d,,}${a:2}" > ~/PATH
 ```
+
+--------------------------------------------------------------------------------
+### CLOSE and OPEN
+
+To have the configuration files go into effect, we **recommend** closing your
+MSYS prompt and re-opening it now.
 
 --------------------------------------------------------------------------------
 > vim:norl:fdm=marker:fmr={fold},{/fold}

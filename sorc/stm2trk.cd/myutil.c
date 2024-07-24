@@ -369,7 +369,8 @@ double myRound (double data, signed char place)
  */
 void strTrim (char *str)
 {
-   int i, j;            /* loop counters for traversing str. */
+   int i;               /* loop counters for traversing str. */;
+   size_t j;            /* loop counters for traversing str. */
    int len;             /* The length of str. */
 
    /* str shouldn't be null, but if it is, we want to handle it. */

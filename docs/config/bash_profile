@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-# .bash_profile                                          Last Change: 2024-06-17
+# .bash_profile                                          Last Change: 2024-07-12
 #-------------------------------------------------------------------------------
 
 #----- Source .bashrc for aliases and functions -----
@@ -8,10 +8,13 @@ if [ -f "${HOME}/.bashrc" ] ; then
 fi
 
 #----- Set aliases for the interactive session -----
-alias vi='vim -p'       # Load a vim tab per file
-alias ls='ls -v --color=auto -F --time-style=+"%Y-%m-%d %H:%M:%S"'
+alias df='df -h'
 alias gitdiff='git difftool -y --extcmd=/usr/bin/diff'
 alias gitrevert='git checkout --'
+alias ls='ls -v --color=auto -F --time-style=+"%Y-%m-%d %H:%M:%S"'
+alias mpwd='a=$(cygpath -m $(pwd)) ; d=${a:0:1} ; echo "/${d,,}${a:2}"'
+alias svndiff='svn diff --diff-cmd diff -x--normal'
+alias vi='vim -p'       # Load a vim tab per file
 
 #----- Set the PATH for the interactive session -----
 if [ -d "$HOME/docs/bin" ] ; then export PATH="$HOME/docs/bin:$PATH" ; fi

@@ -1,4 +1,4 @@
-**README.md**`          SLOSH Model Help Pages          Last Change: 2024-06-25`
+**README.md**`          SLOSH Model Help Pages          Last Change: 2024-07-12`
 
 The intent of this file is to help the user start to use the SLOSH model.
 
@@ -96,11 +96,11 @@ From an MSYS prompt or Linux command line:
 ```bash
 $ cd ~
 $ token=$(cat ~/.gitHub_pat)
-$ git clone https://${token}@github.com/NOAA-MDL/slosh.git
+$ git clone https://${token}@github.com/NOAA-MDL/slosh.git slosh_hub
 
   # Alternatively, if you have ssh keys, you can do the following.  Note: the
   # 'get' scripts (e.g., 'parm/getBasin.sh') assume you have a PAT.
-$ git clone git@github.com:NOAA-MDL/slosh.git
+$ git clone git@github.com:NOAA-MDL/slosh.git slosh_hub
 ```
 
 #### B. SLOSH-GUI
@@ -109,7 +109,7 @@ $ git clone git@github.com:NOAA-MDL/slosh.git
 SLOSH-GUI (vs just the command line) then:
 
 ```bash
-$ cd ~/slosh
+$ cd ~/slosh_hub
 $ ./getGitHub.sh gui PAT v4.23  # Roughly 20 seconds
 
   # Alternatively, if you want all extra assets from gitHub do the following:
@@ -123,7 +123,7 @@ $ ./getGitHub.sh all PAT v4.23  # Roughly 8 minutes 40 seconds
   # Add gcc to your path (you may want to do this in your ~/.bash_profile)
 $ export PATH=.:$HOME/mingw32/bin:$PATH
 
-$ cd ~/slosh/sorc/slosh.fd
+$ cd ~/slosh_hub/sorc/slosh.fd
   # 'Makefile.MinGW' auto detects if you've installed the 'gui' package
 $ make -f Makefile.MinGW install
 $ make -f Makefile.MinGW clean
@@ -135,7 +135,7 @@ $ make -f Makefile.MinGW clean
 $ export PATH=/home/$USER/gcc/gcc-4.5.0/bin:$PATH
 $ export LD_LIBRARY_PATH=/home/$USER/gcc/gcc-4.5.0/lib:/home/$USER/gcc/lib64
 
-$ cd ~/slosh/sorc/slosh.fd
+$ cd ~/slosh_hub/sorc/slosh.fd
 $ make -f makefile.linux install
 $ make -f makefile.linux clean
 ```
@@ -148,7 +148,7 @@ which is used as input by the SLOSH parametric wind model.
 
 **MS-WINDOWS**
 ```bash
-$ cd ~/slosh/sorc/stm2trk.cd
+$ cd ~/slosh_hub/sorc/stm2trk.cd
 $ make install
 $ make clean
 ```
@@ -164,7 +164,7 @@ csv-file.
 
 **MS-WINDOWS**
 ```bash
-$ cd ~/slosh/sorc/rexout.cd
+$ cd ~/slosh_hub/sorc/rexout.cd
 $ make install
 $ make clean
 ```
@@ -181,7 +181,7 @@ env-files, or dump the data to txt-file.
 
 **MS-WINDOWS**
 ```bash
-$ cd ~/slosh/sorc/envutil.cd
+$ cd ~/slosh_hub/sorc/envutil.cd
 $ make install
 $ make clean
 ```
@@ -196,7 +196,7 @@ These basins are provided to validate the SLOSH model or a derivative model
 gitHub in step 4.B.
 
 ```bash
-$ cd ~/slosh
+$ cd ~/slosh_hub
 $ ./getGitHub.sh basin PAT v4.23  # Roughly 79 seconds
 ```
 
@@ -205,10 +205,10 @@ GitHub, you can:
 
 1. Manually download the .tar.gz files
 [here](https://github.com/NOAA-MDL/slosh/releases) - Click 'Assets'.
-2. Place them in "~/slosh/tar/"
+2. Place them in "~/slosh_hub/tar/"
 3. Install them via:
 ```bash
-$ cd ~/slosh
+$ cd ~/slosh_hub
   # Following should detect the files in /tar and avoid downloading them again.
 $ ./getGitHub.sh basin PAT v4.23
 ```
@@ -231,7 +231,7 @@ contact NHC.
 in step 4.B.
 
 ```bash
-$ cd ~/slosh
+$ cd ~/slosh_hub
   # You may be able to skip this if you already grabbed all extra assets from
   # gitHub (see section 4.B.)
 $ ./getGitHub.sh storm PAT v4.23  # Roughly 3 seconds
@@ -242,33 +242,44 @@ you can:
 
 1. Manually download the .tar.gz files
 [here](https://github.com/NOAA-MDL/slosh/releases) - Click 'Assets'
-2. Place them in "~/slosh/tar/"
+2. Place them in "~/slosh_hub/tar/"
 
-#### B. Run the tests:
+#### B. Choose tests to run:
 
+* If you want to avoid the longer tests (> 5 minutes):
 ```bash
-  # If you want to avoid the longer tests (> 5 minutes):
-$ cd ~/slsoh/storms
+$ cd ~/slosh_hub/storms
 $ a1.fiveMinTest.sh go
 
-# Note: `a1.fiveMinTes.sh undo` reactivates all the tests.
+# Note: `a1.fiveMinTest.sh undo` reactivates all the tests.
+```
 
-  # If instead you want to avoid just the longest test - EVI4:
-$ cd ~/slosh/storms/testTrk
+* If instead you want to avoid just the longest test (EVI4):
+```bash
+$ cd ~/slosh_hub/storms/testTrk
 $ mv 1999-Lenny-W5-PV-EVI4.trk 1999-Lenny-W5-PV-EVI4.trk.skip
+```
 
-  # Run all *trk files in ~/slosh/storms/testTrk through the SLOSH model, 4 at
-  # a time, 1-CPU each, hardest first.
-$ cd ~/slosh/dev
+#### C. Run the tests:
+
+Run all trk-files in ~/slosh_hub/storms/testTrk through the SLOSH model,
+4 at a time, 1-CPU each, with the hardest first.
+```bash
+$ cd ~/slosh_hub/dev
 $ a1.multiRun.sh all  # Roughly: 5 minutes if you chose to avoid longer ones
                       # Roughly: 1 hour if you avoided EVI4 test
 ```
 
-**Note** For SLOSH command line options, you can either do a
-`man ~/slosh/docs/slosh.man`, or look at the function 'doOne' inside
+**Note 1:** The model results are in ~/slosh_hub/dev/workActive
+
+**Note 2:** For SLOSH command line options, you can either do a
+`man ~/slosh_hub/docs/slosh.man`, or look at the function 'doOne' inside
 '/dev/a1.multiRun.sh'.
 
-#### C. Get answers:
+--------------------------------------------------------------------------------
+### 7. VALIDATE THE RESULTS
+
+#### A. Get answers:
 
 The tests have slightly different results depending upon which compiler and
 optimization level.  We currently have published results for:
@@ -282,35 +293,38 @@ level.
 in step 4.B.
 
 ```bash
-$ cd ~/slosh
+$ cd ~/slosh_hub
 $ ./getGitHub.sh gcc450-o3 PAT v4.23  # Roughly 15 seconds
 ```
 
-#### D. Check answers:
+#### B. Check answers:
 
 To compare both the rex-files and env-files with the expected answers do:
 
 ```bash
-$ cd ~/slosh/dev
+$ cd ~/slosh_hub/dev
+
+  # To check the results of the interactive run (/dev/workActive/*)
 $ a4.checkAns.sh go
 ```
 
 --------------------------------------------------------------------------------
-### 7. TEST THE GUI
+### 8. TEST THE GUI
+
+Pre-Requisite for the test: Please uncompress the CD2 tide files.
+```bash
+$ cd ~/slosh_hub/parm/tidefile.ec2014
+$ gunzip cd2*.gz
+```
 
 If you decided in section 4.B that you wanted the **SLOSH-GUI**, then you can
 start it via:
 ```bash
-  # Make sure the CD2 tide files are uncompressed
-$ cd ~/slosh/parm/tidefile.ec2014
-$ gunzip cd2*.gz
-
-  # Start the GUI
-$ cd ../../gui
+$ cd ~/slosh_hub/gui
 $ ./run.sh
 ```
 
-You can now run **2023-Idalia** in CD2:
+You can now run **2023-Idalia** in CD2 via:
 
 #### A. Select a basin
 
@@ -330,7 +344,7 @@ Press the fast rabbit button to go faster (no redraws)
 #### D. After running 2023-Idalia in CD2, you can check the answers via
 
 ```bash
-$ cd ~/slosh/gui/work
+$ cd ~/slosh_hub/gui/work
 $ diff 2023-Idalia-W3-CC-CD2.cd2 ../../storms/testAns/gcc450-o3/2023-Idalia-W3-CC-CD2-VDEF-Wav0.env
 $ diff 2023-Idalia-W3-CC-CD2.rex ../../storms/testAns/gcc450-o3/2023-Idalia-W3-CC-CD2-VDEF-Wav0.rex
 ```
