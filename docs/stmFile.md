@@ -3,7 +3,7 @@
 The intent of this file is to describe how to use the stm-file.
 
 --------------------------------------------------------------------------------
-### BACKGROUND
+#### BACKGROUND
 
 The stm-file was developed to provide inputs on a 6-hourly basis rather than the
 hourly basis in the original trk-file format.  This is because we typically
@@ -11,7 +11,7 @@ have information about a hurricane every 6-hours, so SLOSH users didn't want to
 manually do the interpolation to get the 1-hourly trk-file values.
 
 --------------------------------------------------------------------------------
-### STRUCTURE
+#### STRUCTURE
 
 The stm-file consists of 3 comment lines, 13x lines to describe the storm at
 6-hourly locations, 4 lines to describe the time associated with the 9th point,
@@ -25,7 +25,8 @@ delta pressure in col 20-29, and RMW in col 30-39.  Anything after col 39 is
 ignored.
 
 --------------------------------------------------------------------------------
-### EXAMPLE
+#### EXAMPLE
+```
 HUR   H U G O BEST TRK BY BRJ;   DATUMS= 2.1/2.1 FT
  DELTA-P = 76MB ; CAT 4 ; RMW= 13 ST. MI.;  NW/28MPH
 CHARLESTON HARBOR
@@ -47,9 +48,10 @@ CHARLESTON HARBOR
 SEP
 1989
 2.1  2.1    TIDAL ANOMALIES (FEET) IN- AND OUTSIDE BAY (PRESSURE HEAD).
+```
 
 --------------------------------------------------------------------------------
-### PROCESSING
+#### PROCESSING
 
 To convert an stm-file to a trk-file you would:
 
@@ -63,7 +65,7 @@ $ ../exec/stm2trk.exe hugo.stm hugo.trk 46 70 82
 ```
 
 --------------------------------------------------------------------------------
-### DETERMINE BASIN
+#### DETERMINE BASIN
 
 To find a basin, visualize the trk-file by loading it in the GUI, or use another
 method (e.g., google maps or SDP).  The basins can be visualized via the GUI
@@ -74,13 +76,13 @@ $ more < ../parm/bnt/order.txt
 ```
 
 --------------------------------------------------------------------------------
-### DETERMINE START/STOP
+#### DETERMINE START/STOP
 
 The start/stop of the model run (hr 46, and 82 from the stm2trk command) should
 be adjusted (preferably via the GUI)
 
 --------------------------------------------------------------------------------
-### RUNNING THE MODEL
+#### RUNNING THE MODEL
 
 Regardless of whether you adjust the start/stop time, the model can be run via:
 
@@ -88,8 +90,6 @@ Regardless of whether you adjust the start/stop time, the model can be run via:
 $ ../exec/sloshDos -rootDir ../parm -basin hch2 -trk hugo.trk -rex hugo.rex \
         -env hugo.env -verbose 1 -f_tide VDEF -TideDatabase 2014
 ```
-
---------------------------------------------------------------------------------
 
 That should create hugo.rex and hugo.env files in ~/slosh_hub/dev.  Those can
 then be viewed in the SDP, or manipulated via "rexout" or "envutil" described
