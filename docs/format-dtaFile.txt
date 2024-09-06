@@ -1,5 +1,5 @@
-Some quick directions on how to modify the ???dta files to use/not use the 56,
-nd/or the x-filter smooths.
+Some quick directions on how to modify the ???dta files to use/not use the
+56 foot threshold (vs 35 foot) and/or the x-filter smooths.
 
 In the first row, the following holds...
 

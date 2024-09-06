@@ -1,4 +1,4 @@
-**SETUP-msys.md**`      SLOSH Model Help Pages          Last Change: 2024-07-11`
+**SETUP-msys.md**`      SLOSH Model Help Pages          Last Change: 2024-08-13`
 
 The intent of this file is to help the user install MSYS.  For more on MSYS
 please see [here](http://www.msys2.org)
@@ -96,6 +96,17 @@ package provides graphics for doxygen with nice results, but the package needs
 780 megs (doubling your MSYS install) due to its depencencies.
 ```bash
 $ pacman -S --needed  mingw-w64-ucrt-x86_64-graphviz
+```
+
+#### 3.3 Optional: Install Fortran style package (fprettify)
+```bash
+$ cd ~
+$ pacman -S --needed python-pip
+$ python -m venv ~/pi_venv
+$ cd ~/pi_venv
+$ ./bin/python -m pip install --upgrade pip
+$ ./bin/pip install fprettify
+$ ~/pi_venv/bin/fprettify --help
 ```
 
 --------------------------------------------------------------------------------

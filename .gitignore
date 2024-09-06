@@ -32,7 +32,7 @@
 #
 # Ignore /work in dev
 /dev/log/*
-/dev/work/*
+/dev/workActive/*
 /dev/workPoe/*
 /dev/workPara_n?/*
 #
@@ -45,6 +45,7 @@
 #
 # Ignore GUI folders
 /gui/.svn
+/gui/.svnignore
 /gui/exec
 /gui/geodata
 /gui/include

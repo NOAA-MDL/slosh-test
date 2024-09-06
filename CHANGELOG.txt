@@ -1,4 +1,29 @@
 --------------------------------------------------------------------------------
+2024-09-06  v4.23b   !! GITHUB-TAG
+2024-09-06
+  * Add reference to docs/stmFile.md in README's
+
+2024-09-05
+  * Add info on stm-file (docs/stmFile.md) and minor correction to dtaFile.txt
+
+2024-08-23
+  * Enable setting of CC_OPT on sorc/slosh.fd/Makefile.MinGW command line
+  * Add 'status' option to getVlab.sh; better svn support.
+
+2024-08-14
+  * Add instructions to use 'fprettify' to SETUP-msys.md
+  * Add './' in front of some scripts in other README's
+
+2024-08-09
+  * Add './' in front of some scripts in README-WCOSS.md
+
+2024-08-07
+  * Add note about gerrit group to README's
+
+2024-08-01
+  * Add a few useful aliases to default bash_profile
+
+--------------------------------------------------------------------------------
 2024-07-24  v4.23a   !! GITHUB-TAG
 2024-07-23
   * Add $srcDir to path of called scripts in /dev

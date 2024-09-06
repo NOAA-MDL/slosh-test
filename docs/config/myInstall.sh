@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #-------------------------------------------------------------------------------
-# Install.sh                                             Last Change: 2024-06-13
+# Install.sh                                             Last Change: 2024-08-13
 #                                                         Arthur.Taylor@noaa.gov
 #                                                               NWS/OSTI/MDL/DSD
 #-------------------------------------------------------------------------------
@@ -39,6 +39,7 @@ fi
 F+=" vimrc,.vimrc"
 F+=" bash_profile,.bash_profile"
 F+=" minttyrc,.minttyrc"
+F+=" ../util/fprettify.sh,bin/fprettify.sh"
 
 # Create 'config/PATH'
 if [[ -e /usr/bin/cygpath ]] ; then

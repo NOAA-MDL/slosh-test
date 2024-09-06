@@ -1,35 +1,48 @@
 #-------------------------------------------------------------------------------
-# .bash_profile                                          Last Change: 2024-07-12
+# .bash_profile                                          Last Change: 2024-08-21
 #-------------------------------------------------------------------------------
 
 #----- Source .bashrc for aliases and functions -----
 if [ -f "${HOME}/.bashrc" ] ; then
-  source "${HOME}/.bashrc"
+   source "${HOME}/.bashrc"
 fi
 
 #----- Set aliases for the interactive session -----
+alias clear='printf "\033c"'
+alias cp='cp -p'
 alias df='df -h'
+alias du='du -h'
 alias gitdiff='git difftool -y --extcmd=/usr/bin/diff'
 alias gitrevert='git checkout --'
+alias grep='grep --color'
 alias ls='ls -v --color=auto -F --time-style=+"%Y-%m-%d %H:%M:%S"'
 alias mpwd='a=$(cygpath -m $(pwd)) ; d=${a:0:1} ; echo "/${d,,}${a:2}"'
+alias mv='mv -i'
+alias scp='scp -p'
 alias svndiff='svn diff --diff-cmd diff -x--normal'
 alias vi='vim -p'       # Load a vim tab per file
+if [ -f "${HOME}/.bash_aliases" ] ; then
+   source "${HOME}/.bash_aliases"
+fi
+
+#----- Set general environment variables -----
+export SVN_EDITOR='/usr/bin/vim'
 
 #----- Set the PATH for the interactive session -----
+if [ -d "$HOME/bin" ] ; then export PATH="$HOME/bin:$PATH" ; fi
 if [ -d "$HOME/docs/bin" ] ; then export PATH="$HOME/docs/bin:$PATH" ; fi
 export OrigPath=".:$PATH"
 alias setOrig='export PATH=$OrigPath'
 nPath=$OrigPath
 if [ -d "$HOME/12.3.0/mingw32/bin" ] ; then
-  export Ming1230Path=".:$HOME/12.3.0/mingw32/bin:$PATH"
-  alias setMing1230='export PATH=$Ming1230Path'
-  nPath=$Ming1230Path
+   export Ming1230Path=".:$HOME/12.3.0/mingw32/bin:$PATH"
+   alias setMing1230='export PATH=$Ming1230Path'
+   nPath=$Ming1230Path
 fi
 if [ -d "$HOME/mingw32/bin" ] ; then
-  export Ming450Path=".:$HOME/mingw32/bin:$PATH"
-  alias setMing450='export PATH=$Ming450Path'
-  nPath=$Ming450Path
+   export Ming450Path=".:$HOME/mingw32/bin:$PATH"
+   alias setMing450='export PATH=$Ming450Path'
+   nPath=$Ming450Path
 fi
 export PATH=$nPath
 

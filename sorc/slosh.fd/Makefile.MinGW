@@ -1,6 +1,6 @@
 #!/bin/make
 #------------------------------------------------------------------------------
-# Makefile.MinGW                                        Last Change: 2024-02-02
+# Makefile.MinGW                                        Last Change: 2024-08-23
 #                                                        Arthur.Taylor@noaa.gov
 #                                                              NWS/OSTI/MDL/DSB
 #
@@ -17,7 +17,7 @@ MPI=false#                    # Do we build with MPI?
 MINGW=true#                   # Allow MinGW specific functions
 B?=4.5.0#                     # See usage.
 DOUBLE=true#                  # Use double precision flags
-CC_OPT=3#                     # Optimization level to use (0,1,2,3)
+CC_OPT?=3#                    # Optimization level to use (0,1,2,3)
 
 #------------------------------------------------------------------------------
 # Following assumes we're still using GCC 4.5.0 32-bit

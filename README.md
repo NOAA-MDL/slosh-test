@@ -1,4 +1,4 @@
-**README.md**`          SLOSH Model Help Pages          Last Change: 2024-07-12`
+**README.md**`          SLOSH Model Help Pages          Last Change: 2024-09-05`
 
 The intent of this file is to help the user start to use the SLOSH model.
 
@@ -146,6 +146,8 @@ $ make -f makefile.linux clean
 6-hr storm parameters to a trk-file consisting of 100 1-hr storm parameters
 which is used as input by the SLOSH parametric wind model.
 
+For more on stm-files, please see [here](../master/docs/stmFile.md)
+
 **MS-WINDOWS**
 ```bash
 $ cd ~/slosh_hub/sorc/stm2trk.cd
@@ -249,7 +251,7 @@ you can:
 * If you want to avoid the longer tests (> 5 minutes):
 ```bash
 $ cd ~/slosh_hub/storms
-$ a1.fiveMinTest.sh go
+$ ./a1.fiveMinTest.sh go
 
 # Note: `a1.fiveMinTest.sh undo` reactivates all the tests.
 ```
@@ -266,8 +268,8 @@ Run all trk-files in ~/slosh_hub/storms/testTrk through the SLOSH model,
 4 at a time, 1-CPU each, with the hardest first.
 ```bash
 $ cd ~/slosh_hub/dev
-$ a1.multiRun.sh all  # Roughly: 5 minutes if you chose to avoid longer ones
-                      # Roughly: 1 hour if you avoided EVI4 test
+$ ./a1.multiRun.sh all  # Roughly: 5 minutes if you chose to avoid longer ones
+                        # Roughly: 1 hour if you avoided EVI4 test
 ```
 
 **Note 1:** The model results are in ~/slosh_hub/dev/workActive
@@ -305,7 +307,7 @@ To compare both the rex-files and env-files with the expected answers do:
 $ cd ~/slosh_hub/dev
 
   # To check the results of the interactive run (/dev/workActive/*)
-$ a4.checkAns.sh go
+$ ./a4.checkAns.sh go
 ```
 
 --------------------------------------------------------------------------------
