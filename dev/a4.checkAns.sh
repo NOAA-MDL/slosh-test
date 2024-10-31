@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #-------------------------------------------------------------------------------
-# a4.checkAns.sh                                         Last Change: 2024-07-12
+# a4.checkAns.sh                                         Last Change: 2024-10-31
 #                                                         Arthur.Taylor@noaa.gov
 #                                                               NWS/OSTI/MDL/DSD
 #-------------------------------------------------------------------------------
@@ -14,9 +14,10 @@ if [[ $1 == "help" ]] ; then
    echo "   help  = Display this message and exit"
    echo "   go    = Check the answers"
    echo " where <option> is:"
+   echo "   -o or --out   = Path to output folder [./workActive]"
    echo "   -p or --path  = Path to answer .env and .rex files for testing."
    echo "                   Defaults to ../storms/testAns"
-   echo "   -o or --out   = Path to output folder [./workActive]"
+   echo "   -r or --rex   = NO Rex file check"
    echo ""
    echo "Example:"
    echo "  $ $base go"
@@ -30,14 +31,16 @@ fi
 srcDir=$(cd "$(dirname "$0")" && pwd)
 workDir=$srcDir/workActive
 ansDir=$srcDir/../storms/testAns
+hasRex=1
 
-TEMP=$(getopt -o p:o: --long path:,out: -n $base -- "$@")
+TEMP=$(getopt -o o:p:r --long out:,path:rex -n $base -- "$@")
 if [ $? != 0 ] ; then $0 help ; exit 1 ; fi
 eval set -- "$TEMP"
 while true; do
    case "$1" in
-      -p | --path) ansDir="$2"; shift 2 ;;
       -o | --out) workDir="$2"; shift 2 ;;
+      -p | --path) ansDir="$2"; shift 2 ;;
+      -r | --rex) hasRex=0; shift ;;
       --) shift; break ;;
       *) break ;;
    esac
@@ -92,27 +95,46 @@ cRay=(${compiler//_/ })
 if [[ ${#cRay[@]} == 3 ]] ; then
    if [[ ${compiler:0:3} == "gcc" ]] ; then compiler="gcc" ; fi
    ver=${cRay[2]} ; ver2=${ver//./}
+elif [[ ${compiler:0:5} == "(GCC)" ]] ; then
+   cRay=(${compiler//-/ })
+   ver=${cRay[1]} ; ver2=${ver//./}
+   compiler="linuxGcc"
 else
    ver2=""
 fi
-ansDir="${ansDir}/${compiler}${ver2}-o${opt}"
+ansDir1="${ansDir}/${compiler}${ver2}-o${opt}"
+if [[ ! -e $ansDir1 ]] ; then
+   ansDir2="${ansDir}/${compiler}${ver2}-o0"
+   if [[ ! -e $ansDir2 ]] ; then
+      echo "Couldn't find answer dir 1: $ansDir1"
+      echo "Couldn't find answer dir 2: $ansDir2"
+      echo "Aborting..."
+      exit 1
+   fi
+   ansDir=$ansDir2
+else
+   ansDir=$ansDir1
+fi
 
 #----- Perform the comparison -----
 echo "---------------------------------------"
 echo "Comparing workDir: $workDir"
 echo "        to ansDir: $ansDir"
 echo "---------------------------------------"
-for f in $(ls $workDir/*.rex) ; do
+for f in $(ls $workDir/*.env) ; do
    fBase="${f##*/}"
    fRoot="${fBase%.*}"
    f_badRex=0
    f_badEnv=0
-   if [[ ! -e $ansDir/${fRoot}.rex ]] ; then
-      echo -e "$FAIL ${fRoot}.rex: $MISSING from ansDir" ; continue
-   fi
-   cmp -s -- $workDir/${fRoot}.rex $ansDir/${fRoot}.rex
-   if [[ $? != 0 ]] ; then
-      f_badRex=1
+
+   if [[ $hasRex == 1 ]] ; then
+      if [[ ! -e $ansDir/${fRoot}.rex ]] ; then
+         echo -e "$FAIL ${fRoot}.rex: $MISSING from ansDir" ; continue
+      fi
+      cmp -s -- $workDir/${fRoot}.rex $ansDir/${fRoot}.rex
+      if [[ $? != 0 ]] ; then
+         f_badRex=1
+      fi
    fi
 
    if [[ ! -e $ansDir/${fRoot}.env ]] ; then
@@ -133,7 +155,11 @@ for f in $(ls $workDir/*.rex) ; do
       if [[ $f_badEnv == 1 ]] ; then
          echo -e "$FAIL ${fRoot}.env does not match"
       else
-         echo -e "$GOOD rex-file and env-file match for $fRoot"
+         if [[ $hasRex == 1 ]] ; then
+            echo -e "$GOOD rex-file and env-file match for $fRoot"
+         else
+            echo -e "$GOOD env-file match for $fRoot"
+         fi
       fi
    fi
 done
