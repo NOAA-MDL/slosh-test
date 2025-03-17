@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #-------------------------------------------------------------------------------
-# gitHubAssets.sh                                        Last Change: 2024-07-08
+# gitHubAssets.sh                                        Last Change: 2025-03-17
 #                                                         Arthur.Taylor@noaa.gov
 #                                                               NWS/OSTI/MDL/DSD
 #-------------------------------------------------------------------------------
@@ -133,4 +133,4 @@ G_v412=($T412:SLOSH-GuiLib)
 G_v420=($T420:SLOSH-GuiLib)
 G_v421=("${G_v420[@]}")
 G_v422=("${G_v420[@]}")
-G_v423=("${G_v420[@]}")
+G_v423=($T423:SLOSH-GuiLib)
