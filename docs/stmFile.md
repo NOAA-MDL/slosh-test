@@ -1,17 +1,19 @@
-**stmFile.md**`         Arthur's Help Pages             Last Change: 2024-09-05`
+# stmFile.md
+<!-- stmFile.md                                      Last Change: 2026-09-30 -->
 
-The intent of this file is to describe how to use the stm-file.
+The file is intended to describe the stm-file.
 
---------------------------------------------------------------------------------
-#### BACKGROUND
+<!----------------------------------------------------------------------------->
+## ABOUT
+
+### Background
 
 The stm-file was developed to provide inputs on a 6-hourly basis rather than the
 hourly basis in the original trk-file format.  This is because we typically
 have information about a hurricane every 6-hours, so SLOSH users didn't want to
 manually do the interpolation to get the 1-hourly trk-file values.
 
---------------------------------------------------------------------------------
-#### STRUCTURE
+### Structure
 
 The stm-file consists of 3 comment lines, 13x lines to describe the storm at
 6-hourly locations, 4 lines to describe the time associated with the 9th point,
@@ -24,9 +26,9 @@ The format is a fixed Fortran format, so keep the lat in col 0-9, lon in 10-19,
 delta pressure in col 20-29, and RMW in col 30-39.  Anything after col 39 is
 ignored.
 
---------------------------------------------------------------------------------
-#### EXAMPLE
-```
+### Example
+
+```text
 HUR   H U G O BEST TRK BY BRJ;   DATUMS= 2.1/2.1 FT
  DELTA-P = 76MB ; CAT 4 ; RMW= 13 ST. MI.;  NW/28MPH
 CHARLESTON HARBOR
@@ -50,50 +52,52 @@ SEP
 2.1  2.1    TIDAL ANOMALIES (FEET) IN- AND OUTSIDE BAY (PRESSURE HEAD).
 ```
 
---------------------------------------------------------------------------------
-#### PROCESSING
+<!----------------------------------------------------------------------------->
+## RUN A STM-FILE
 
-To convert an stm-file to a trk-file you would:
+### Convert to trk-file
 
-```bash
-$ cd ~/slosh_hub/sorc/stm2trk.cd
-$ make install
-$ cd ../../dev
-$ vi hugo.stm
-... Enter in the information in the example section ...
-$ ../exec/stm2trk.exe hugo.stm hugo.trk 46 70 82
-```
-
---------------------------------------------------------------------------------
-#### DETERMINE BASIN
-
-To find a basin, visualize the trk-file by loading it in the GUI, or use another
-method (e.g., google maps or SDP).  The basins can be visualized via the GUI
-(or SDP).  To find nearby basins, it helps to know their geographical order via:
+In order to run a stm-file, it helps to first convert it to a trk-file, since
+the trk-file can be visualized in the SLOSH-Display-Program (SDP).  To convert
+a stm-file to a trk-file do:
 
 ```bash
-$ more < ../parm/bnt/order.txt
+cd ~/slosh/sorc/stm2trk.cd
+make install
+../../exec/stm2trk.exe hugo.stm hugo.trk 46 70 82
 ```
 
---------------------------------------------------------------------------------
-#### DETERMINE START/STOP
+### Choose Basin
 
-The start/stop of the model run (hr 46, and 82 from the stm2trk command) should
-be adjusted (preferably via the GUI)
+To run the trk-file you need a computational domain (e.g., basin).  To choose
+the appropriate basin, you can: load the trk-file in the SLOSH-GUI; load the
+basins in the SLOSH-Display-Program; utilize googleMaps; guess based on the
+the basin's lat/lon; or other.  To find nearby basins, it helps to know their
+geographical order, which can be seen in `../parm/bnt/sloshdsp.bnt`.
 
---------------------------------------------------------------------------------
-#### RUNNING THE MODEL
+### Determine Start/Stop
 
-Regardless of whether you adjust the start/stop time, the model can be run via:
+The start/stop hr of the model run should be adjusted appropriately.  In the
+stm2trk example above the start-hr was 46 and the stop-hr was 82.  The easiest
+way to adjust those is to bring the trk-file into the SLOSH-GUI, load the basin
+and have it compute the range.  It attempts to compute the time between 1-hr
+before tropical-storm force winds enter the basin to 1-hr after tropical-storm
+force winds leave the basin.
+
+### Run the model
+
+The model can now be run via:
 
 ```bash
-$ ../exec/sloshDos -rootDir ../parm -basin hch2 -trk hugo.trk -rex hugo.rex \
-        -env hugo.env -verbose 1 -f_tide VDEF -TideDatabase 2014
+cd ~/slosh/dev
+cp ~/slosh/sorc/stm2trk.cd/hugo.trk .
+../exec/sloshDos -rootDir ../parm -basin hch2 -trk hugo.trk -rex hugo.rex \
+      -env hugo.env -verbose 1 -f_tide VDEF -TideDatabase 2014
 ```
 
-That should create hugo.rex and hugo.env files in ~/slosh_hub/dev.  Those can
-then be viewed in the SDP, or manipulated via "rexout" or "envutil" described
-in the main README.md file.
+That should create hugo.rex and hugo.env files in `~/slosh/dev`.  Those can
+then be viewed in the SDP, or manipulated via the SLOSH-Utility-Programs
+"rexout" or "envutil" described in [README.md](../README.md).
 
---------------------------------------------------------------------------------
-> vim:norl:fdm=marker:fmr={fold},{/fold}:spell!
+<!----------------------------------------------------------------------------->
+<!-- vim: set norl fdm=marker fmr=[fd],[/fd] spell! -->
