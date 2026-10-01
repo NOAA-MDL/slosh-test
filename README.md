@@ -1,5 +1,10 @@
-# README.md
+---
+layout: default
+title: SLOSH Install
+permalink: /
+---
 <!-- README.md                                       Last Change: 2026-10-01 -->
+# GETTING STARTED
 
 This file is intended to help the user start to use the SLOSH model.
 

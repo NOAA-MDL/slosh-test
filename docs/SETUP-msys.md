@@ -1,5 +1,8 @@
-# SETUP-msys.md
-<!-- SETUP-msys.md                                   Last Change: 2026-09-30 -->
+---
+layout: default
+title: Setup - MSYS
+---
+<!-- SETUP-msys.md                                   Last Change: 2026-10-01 -->
 
 This file is intended to help the user install [MSYS](http://www.msys2.org).
 

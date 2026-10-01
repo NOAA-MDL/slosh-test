@@ -1,5 +1,8 @@
-# stmFile.md
-<!-- stmFile.md                                      Last Change: 2026-09-30 -->
+---
+layout: default
+title: stm-file
+---
+<!-- stmFile.md                                      Last Change: 2026-10-01 -->
 
 The file is intended to describe the stm-file.
 
