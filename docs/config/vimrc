@@ -1,5 +1,5 @@
 "-------------------------------------------------------------------------------
-" .vimrc                                                 Last Change: 2024-06-13
+" .vimrc                                                 Last Change: 2026-09-28
 "-------------------------------------------------------------------------------
 set modeline            " Allow files to have modelines (vim control lines)
 set modelines=4         " top and bottom lines to check for modeline
@@ -13,72 +13,5 @@ set noerrorbells vb t_vb=  " no annoying sound on errors
 set title               " Have VI update the title
 set ruler               " Display the row,col % in status-bar
 set backspace=indent,eol,start " Fix backspace in insert mode
-
-"-------------------------------------------------------------------------------
-" Function Key F5 toggles spell check
-"-------------------------------------------------------------------------------
-:map <F5> :setlocal spell! spell?<CR>
-inoremap <F5> <C-\><C-O>:setlocal spell! spell?<CR>
-
-"-------------------------------------------------------------------------------
-" Enable the color column.  Second line does it for non-color schemes.  Third
-" line prevents color schemes from overriding it
-"-------------------------------------------------------------------------------
-set colorcolumn=81      " A color column at col 81
-highlight ColorColumn ctermbg=DarkBlue guibg=DarkBlue
-autocmd ColorScheme * highlight ColorColumn ctermbg=DarkBlue guibg=DarkBlue
-
-"-------------------------------------------------------------------------------
-" Highlight trailing space as errors
-"-------------------------------------------------------------------------------
-highlight TrailSpace guibg=red ctermbg=darkred
-highlight UnwanttedTab ctermbg=red guibg=darkred
-2match UnwanttedTab /\t/
-match TrailSpace /\s\+$/
-autocmd ColorScheme * highlight TrailSpace guibg=orange ctermbg=darkyellow
-autocmd ColorScheme * highlight UnwanttedTab ctermbg=blue guibg=darkblue
-autocmd BufWinEnter * match TrailSpace /\s\+$/
-autocmd InsertEnter * match TrailSpace /\s\+\%#\@<!$/
-autocmd InsertLeave * match TrailSpace /\s\+$/
-autocmd BufWinLeave * call clearmatches()
-
-"-------------------------------------------------------------------------------
-" Turn on color schemes
-"-------------------------------------------------------------------------------
 syntax on              " Allow vim to override your color pref
 :colorscheme industry
-"----- After turning on color scheme, adjust 'SpellBad' to use underline -----
-hi clear SpellBad
-hi SpellBad cterm=underline
-hi SpellBad ctermfg=1
-hi SpellBad gui=undercurl
-hi clear SpellLocal
-hi SpellLocal cterm=underline
-hi SpellLocal ctermfg=3
-hi SpellLocal gui=undercurl
-"----- Turn color off for vimdiff ------
-if &diff
-   syntax off
-   set colorcolumn=     " A color column distracts during diffs.
-endif
-
-"-------------------------------------------------------------------------------
-" LastChange() updates any 'Last Change: ' in the first 5 lines, assuming the
-"    buffer was modified.  Up to 56 characters before 'Last Change: ' are
-"    retained.  Restores cursor and window position using save_cursor variable.
-"
-" see: https://vim.fandom.com/wiki/Insert_current_date_or_time
-"-------------------------------------------------------------------------------
-function! LastChange()
-   if &modified
-      let save_cursor = getpos(".")
-      let n = min([5, line("$")])
-      keepjumps silent exe '1,' . n . 's#^\(.\{,57}Last Change: \).\{10}#\1' .
-            \ strftime('%Y-%m-%d') . '#e'
-      call histdel('search', -1)
-      call setpos('.', save_cursor)
-   endif
-endfun
-if ! &diff
-   autocmd BufWritePre * call LastChange()
-endif
