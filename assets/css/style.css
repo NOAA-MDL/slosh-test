@@ -10,6 +10,24 @@ body {
   background: #c5E5F5;
   font-family: Arial, Helvetica, sans-serif;
 }
+h1 {
+/*  font-size: 32px;*/
+  font-size: 24px;
+}
+h2 {
+/*  font-size: 24px;*/
+  font-size: 20px;
+}
+h3 {
+/*  font-size: 20px;*/
+/*  font-size: 18px;*/
+  font-size: 16px;
+}
+h1, h2 {
+  border-bottom: 1px solid #eaecef; /* Light gray line similar to GitHub */
+  padding-bottom: 8px;              /* Adds breathing room above the line */
+  margin-bottom: 16px;              /* Adds space below the line */
+}
 
 /* Restore global link color */
 a:link {
@@ -18,7 +36,29 @@ a:link {
 }
 
 /* ========================================== */
-/* MAIN CONTENT AREA (For your README)        */
+/* TABLE STYLES                               */
+/* ========================================== */
+.main-content table {
+  border-collapse: collapse;
+  /* width: 100%;*/
+  width: auto;
+  margin-bottom: 20px;
+}
+
+.main-content th,
+.main-content td {
+  border: 1px solid #ccc;
+  padding: 6px 8px;
+  text-align: left;
+}
+
+.main-content th {
+  background-color: #f4f4f4;
+  font-weight: bold;
+}
+
+/* ========================================== */
+/* MAIN CONTENT AREA                          */
 /* ========================================== */
 .main-content {
   background: #ffffff;
@@ -26,10 +66,131 @@ a:link {
   box-sizing: border-box; /* Keeps width strictly at 1000px */
   min-height: 400px;
   font-size: 16px;
+  line-height: 1.5;
 }
+
+/* Add GitHub's default paragraph and list spacing */
+.main-content p,
+.main-content ul,
+.main-content ol {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
 /* Set the H3 headers to scale with the body */
 .main-content h3 {
   font-size: 18px;
+}
+
+/* ========================================== */
+/* CODE BLOCK STYLES                          */
+/* ========================================== */
+pre, code {
+  background-color: #f4f4f4;
+  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+  font-size: 15px;
+}
+
+/* Inline code snippets (e.g., single backticks) */
+code {
+  padding: 2px 5px;
+  border-radius: 4px;        /* Rounded corners */
+}
+
+/* Multi-line code blocks (e.g., triple backticks) */
+pre {
+  position: relative;
+  padding: 12px 15px;
+  border-radius: 6px;
+  overflow-x: auto;
+  border: 1px solid #ddd;
+  line-height: 1.4;  /*Tightens the vertical space between lines */
+/*  margin: 10px 0;*/
+}
+
+/* Prevents double-padding when code is inside pre */
+pre code {
+  padding: 0;
+  border-radius: 0;
+  background-color: transparent;
+  font-size: 15px;
+}
+
+/* ========================================== */
+/* BUTTON & TOOLTIP STYLES                    */
+/* ========================================== */
+
+/* The pre block copy button */
+.copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 6px;
+  background-color: transparent;
+  color: #555;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.copy-btn:hover {
+  background-color: #e2e2e2;
+  color: #111;
+}
+
+/* The new inline file copy button */
+.inline-copy-btn {
+  position: relative;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #555;
+  margin-left: 6px;
+  vertical-align: middle;
+  padding: 4px;
+  border-radius: 4px;
+  display: inline-flex;
+}
+
+.inline-copy-btn:hover {
+  background-color: #e2e2e2;
+  color: #111;
+}
+
+/* Custom GitHub-style Tooltip placed to the left */
+[data-tooltip]::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: 100%;       /* Pushes tooltip to the left of the icon */
+  top: 50%;
+  transform: translateY(-50%);
+  margin-right: 8px; /* Spacing between button and tooltip */
+  padding: 5px 8px;
+  background-color: #24292f; /* GitHub dark gray */
+  color: #ffffff;
+  font-size: 12px;
+  font-family: Arial, sans-serif;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+}
+
+[data-tooltip]:hover::before {
+  opacity: 1;
+}
+
+/* Override for inline copy buttons: anchor tooltip to the right */
+.inline-copy-btn[data-tooltip]::before {
+  right: auto;       /* Removes the left-anchoring */
+  left: 100%;        /* Pushes the tooltip to the right of the icon */
+  margin-right: 0;   /* Removes the right spacing */
+  margin-left: 8px;  /* Adds spacing between the icon and the tooltip */
 }
 
 /* ========================================== */
@@ -88,6 +249,15 @@ div.topSpacer {
   background: url('../images/head_shadow.png') center;
 }
 
+/* Active Tab Highlighting */
+.nav-links a.active-tab {
+  color: #000000;
+  text-decoration: none;
+  /* Use text-shadow to fake bolding without shifting layout widths */
+  text-shadow: 0.3px 0 0 #000000, -0.3px 0 0 #000000;
+  cursor: default; /* Optional: Makes it feel like a label rather than a link */
+}
+
 /* ========================================== */
 /* SITE NAVIGATION STYLES                     */
 /* ========================================== */
@@ -97,7 +267,8 @@ div.topSpacer {
 }
 
 .site-nav {
-  text-align: center;
+  text-align: left;
+  padding: 0px 10px 0px 10px;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 15px;
   font-weight: bold;

@@ -2,11 +2,10 @@
 <html lang="en">
 <head>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
-  <title>{{ page.title | default: "SLOSH Display Program" }}</title>
+  <title>{{ page.title | default: "SLOSH Model" }}</title>
 
   <!-- OMD Metadata -->
   <meta name="DC.creator" content="NWS/Office of Modeling and Development">
-  <meta name="DC.language" scheme="DCTERMS.RFC1766" content="EN-US">
   <meta name="rating" content="general">
   <meta name="resource-type" content="document">
   <meta name="distribution" content="global">
@@ -26,7 +25,7 @@
   </a>
   <div class="nwsHeadMid">
     <!-- Jekyll will dynamically insert the page title here -->
-    <span class="nwsHeadTitle">{{ page.title | default: "SLOSH DISPLAY PROGRAM" }}</span>
+    <span class="nwsHeadTitle">{{ page.title | default: "SLOSH Model" }}</span>
     <br>
     <a class="nwsHeadNoaa" href="https://www.noaa.gov" target="_blank">N A T I O N A L
       &nbsp;&nbsp;&nbsp;O C E A N I C
@@ -49,7 +48,8 @@
     </td>
     <td style="width:100px"></td>
     <td class="exLink">
-      <a class="exLink" href="{{ '/' | relative_url }}">Home</a> |
+<!--      <a class="exLink" href="{{ '/' | relative_url }}">Home</a> | -->
+      <a class="exLink" href="https://slosh.nws.noaa.gov/">Home</a> |
       <a class="exLink" href="https://slosh.nws.noaa.gov/psurge">P-Surge</a> |
       <a class="exLink" href="https://slosh.nws.noaa.gov/petss">P-ETSS</a> |
       <a class="exLink" href="https://slosh.nws.noaa.gov/etsurge2.0">ETSS</a> |
@@ -71,10 +71,17 @@
 <div class="nav-wrapper">
   <div class="site-nav">
     <hr class="nav-divider">
-    <nav class="nav-links">
-      <a href="{{ '/' | relative_url }}">SLOSH Display Program</a> |
-      <a href="{{ '/docs/storm-surge-basics.html' | relative_url }}">Storm Surge - Basics</a> |
-      <a href="{{ '/docs/history.html' | relative_url }}">SDP - History</a>
+    <nav class="nav-links" style="display: flex; justify-content: space-between;">
+      <span>
+        <a href="{{ '/' | relative_url }}" class="...">SLOSH</a> |
+        <a href="{{ '/docs/About-SLOSH.html' | relative_url }}" class="...">About</a> |
+        <a href="{{ '/docs/Setup-MSYS.html' | relative_url }}" class="...">Setup (MSYS)</a> |
+        <a href="{{ '/docs/Install.html' | relative_url }}" class="...">Install</a> |
+        <a href="{{ '/docs/File-Formats.html' | relative_url }}" class="...">File Formats</a>
+      </span>
+      <span>
+        <a href="https://noaa-mdl.github.io/sdp/" target="_blank">SLOSH Display Program ↗</a>
+      </span>
     </nav>
     <hr class="nav-divider">
   </div>
@@ -100,7 +107,7 @@
     </div>
     <div class="footCol" style="left:10px;">
       Contact us:<br>
-      <a href='mailto:Arthur.Taylor@noaa.gov'>Arthur Taylor</a><br>
+      <a href="mailto:Arthur.Taylor@noaa.gov">Arthur Taylor</a><br>
       1325 East West Highway<br>Silver Spring, MD 20910<br>
     </div>
     <div class="footCol" style="left:50px;">
@@ -117,6 +124,63 @@
     </div>
   </div>
 </div>
+<script>
+  const copyIcon = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="14" height="14" rx="2" ry="2"></rect><path d="M16 16v2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2"></path></svg>';
+  const checkIcon = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="#28a745" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
 
+  // 1. Setup copy buttons for code blocks
+  document.querySelectorAll('pre').forEach(function(codeBlock) {
+    var button = document.createElement('button');
+    button.className = 'copy-btn';
+    button.type = 'button';
+    button.setAttribute('data-tooltip', 'Copy code to clipboard');
+    button.innerHTML = copyIcon;
+
+    codeBlock.appendChild(button);
+
+    button.addEventListener('click', function() {
+      var textToCopy = codeBlock.querySelector('code').innerText.trim();
+      navigator.clipboard.writeText(textToCopy).then(function() {
+        button.innerHTML = checkIcon;
+        button.setAttribute('data-tooltip', 'Copied!');
+        setTimeout(function() {
+          button.innerHTML = copyIcon;
+          button.setAttribute('data-tooltip', 'Copy code to clipboard');
+        }, 2000);
+      });
+    });
+  });
+
+  // 2. Setup inline copy buttons for linked files
+  document.querySelectorAll('a[href*="config/"], a[href$=".sh"]').forEach(function(link) {
+    var inlineBtn = document.createElement('button');
+    inlineBtn.className = 'inline-copy-btn';
+    inlineBtn.type = 'button';
+    inlineBtn.setAttribute('data-tooltip', 'Copy file contents');
+    inlineBtn.innerHTML = copyIcon;
+
+    // Insert the button immediately after the hyperlink
+    link.parentNode.insertBefore(inlineBtn, link.nextSibling);
+
+    inlineBtn.addEventListener('click', function(e) {
+      e.preventDefault(); // Prevents the page from scrolling or jumping
+
+      // Fetch the raw text of the file linked in the href
+      fetch(link.href)
+        .then(response => response.text())
+        .then(text => {
+          navigator.clipboard.writeText(text).then(function() {
+            inlineBtn.innerHTML = checkIcon;
+            inlineBtn.setAttribute('data-tooltip', 'Copied!');
+            setTimeout(function() {
+              inlineBtn.innerHTML = copyIcon;
+              inlineBtn.setAttribute('data-tooltip', 'Copy file contents');
+            }, 2000);
+          });
+        })
+        .catch(err => console.error('Failed to fetch file: ', err));
+    });
+  });
+</script>
 </body>
 </html>

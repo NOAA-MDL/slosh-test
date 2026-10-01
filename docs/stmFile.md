@@ -1,7 +1,10 @@
-# stmFile.md
-<!-- stmFile.md                                      Last Change: 2026-09-30 -->
+---
+layout: default
+title: stm-file
+---
+<!-- stmFile.md                                      Last Change: 2026-10-06 -->
 
-The file is intended to describe the stm-file.
+This document describes the stm-file format and its usage.
 
 <!----------------------------------------------------------------------------->
 ## ABOUT
@@ -10,17 +13,17 @@ The file is intended to describe the stm-file.
 
 The stm-file was developed to provide inputs on a 6-hourly basis rather than the
 hourly basis in the original trk-file format.  This is because we typically
-have information about a hurricane every 6-hours, so SLOSH users didn't want to
-manually do the interpolation to get the 1-hourly trk-file values.
+have information about a hurricane every 6-hours, so SLOSH users do not have to
+manually interpolate the 1-hourly trk-file values.
 
 ### Structure
 
-The stm-file consists of 3 comment lines, 13x lines to describe the storm at
+The stm-file consists of 3 comment lines, 13 lines to describe the storm at
 6-hourly locations, 4 lines to describe the time associated with the 9th point,
-and a final line to describe the initial water levels.  The 13x storm
-description lines consist of lat, lon (positive west), delta pressure (mBar),
-and radius of maximum winds (RMW; statute miles).  The delta pressure typically
-assumes an ambient pressure of 1012 mBar.
+and a final line to describe the initial water levels.  The 13 storm description
+lines consist of lat, lon (positive west), delta pressure (mBar), and radius of
+maximum winds (RMW; statute miles).  The delta pressure typically assumes an
+ambient pressure of 1012 mBar.
 
 The format is a fixed Fortran format, so keep the lat in col 0-9, lon in 10-19,
 delta pressure in col 20-29, and RMW in col 30-39.  Anything after col 39 is
@@ -53,7 +56,7 @@ SEP
 ```
 
 <!----------------------------------------------------------------------------->
-## RUN A STM-FILE
+## USE STM-FILE
 
 ### Convert to trk-file
 
@@ -71,8 +74,8 @@ make install
 
 To run the trk-file you need a computational domain (e.g., basin).  To choose
 the appropriate basin, you can: load the trk-file in the SLOSH-GUI; load the
-basins in the SLOSH-Display-Program; utilize googleMaps; guess based on the
-the basin's lat/lon; or other.  To find nearby basins, it helps to know their
+basins in the SLOSH-Display-Program; utilize Google Maps; guess based on the
+basin's lat/lon; or other.  To find nearby basins, it helps to know their
 geographical order, which can be seen in `../parm/bnt/sloshdsp.bnt`.
 
 ### Determine Start/Stop
