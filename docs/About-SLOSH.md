@@ -2,7 +2,7 @@
 layout: default
 title: About SLOSH
 ---
-<!-- About-SLOSH.md                                  Last Change: 2026-10-06 -->
+<!-- About-SLOSH.md                                  Last Change: 2026-10-07 -->
 
 This page details the scientific and operational foundation of the Sea, Lake,
 and Overland Surges from Hurricanes (SLOSH) model[^1].
@@ -66,14 +66,14 @@ were initially superimposed onto the surge via tide method 1[^4]. While method 1
 remains available, we now have method 3 (tidal forcing on the boundary) and the
 more commonly used method 2 (addition and subtraction of the tide field from the
 total water field every timestep for grid cells with bathymetry deeper than a
-configurable amount of feet) to simulate fully dynamic interactions.
+configurable depth threshold) to simulate fully dynamic interactions.
 
 **Wind Waves**
 Short-period wind waves are generally omitted from core SLOSH computations to
-focus purely on the long-period gravity wave of the storm surge. While SLOSH
-has historically been coupled to SWAN and more recently to a second-generation
-wave model to account for wave set-up, those codes are not stable so have been
-omitted from this repository.
+focus purely on the long-period gravity wave of the storm surge. SLOSH has
+historically been coupled to SWAN and more recently to a second-generation wave
+model to account for wave set-up. However, because those codes are currently
+unstable, they have been omitted from this repository.
 
 ## 4. OPERATIONAL FORECAST PRODUCTS
 
@@ -114,9 +114,9 @@ and interrogate grid-specific surge heights, please visit the
 
 ### References
 
-[^1]: Jelesnianski, C. P., Chen, J., & Shaffer, W. A. (1992). [*SLOSH: Sea, Lake, and Overland Surges from Hurricanes (NOAA Technical Report NWS 48)*](./papers/SLOSH_TR48.pdf). National Weather Service.
-[^2]: Glahn, B., Taylor, A., Kurkowski, N., & Shaffer, W. A. (2009). [*The Role of the SLOSH Model in National Weather Service Storm Surge Forecasting*](./papers/Vol-33-Nu1-Glahn.pdf). National Weather Digest, 33(1), 3–14.
-[^3]: NWS Meteorological Development Laboratory. (2006). [*SLOSH: Sea, Lake, and Overland Surges from Hurricanes User & Technical Software Documentation*](./papers/SLOSH-UserTechSoftwareManual_101806_Finalv1.0.pdf).
-[^4]: Haase, A., Wang, J., Taylor, A., & Feyen, J. (2011).  [*Coupling of Tides and Storm Surge for Operational Modeling on the Florida Coast*](./papers/2011_Haase_ECM12_Nov16.pdf).
+[^1]: Jelesnianski, C. P., Chen, J., & Shaffer, W. A. (1992). <a href="/docs/papers/SLOSH_TR48.pdf" target="_blank" rel="noopener noreferrer">*SLOSH: Sea, Lake, and Overland Surges from Hurricanes (NOAA Technical Report NWS 48)*</a>. National Weather Service.
+[^2]: Glahn, B., Taylor, A., Kurkowski, N., & Shaffer, W. A. (2009). <a href="/docs/papers/Vol-33-Nu1-Glahn.pdf" target="_blank" rel="noopener noreferrer">*The Role of the SLOSH Model in National Weather Service Storm Surge Forecasting*</a>. National Weather Digest, 33(1), 3–14.
+[^3]: NWS Meteorological Development Laboratory. (2006). <a href="/docs/papers/SLOSH-UserTechSoftwareManual_101806_Finalv1.0.pdf" target="_blank" rel="noopener noreferrer">*SLOSH: Sea, Lake, and Overland Surges from Hurricanes User & Technical Software Documentation*</a>.
+[^4]: Haase, A., Wang, J., Taylor, A., & Feyen, J. (2011). <a href="/docs/papers/2011_Haase_ECM12_Nov16.pdf" target="_blank" rel="noopener noreferrer">*Coupling of Tides and Storm Surge for Operational Modeling on the Florida Coast*</a>.
 
 <!-- vim: set norl fdm=marker fmr=[fd],[/fd] spell! -->

@@ -1,8 +1,8 @@
 ---
 layout: default
-title: Setup - MSYS
+title: Setup (MSYS)
 ---
-<!-- Setup-MSYS.md                                   Last Change: 2026-10-07 -->
+<!-- Setup-MSYS.md                                   Last Change: 2026-10-08 -->
 
 This document is intended to help the user install [MSYS](http://www.msys2.org)
 and start using it.
@@ -82,7 +82,6 @@ packages, and install extra packages required by the SLOSH model.
 
     ```bash
     pacman -S --needed diffutils git make vim man
-    # pacman -S --needed p7zip curl
     ```
 
 <!----------------------------------------------------------------------------->

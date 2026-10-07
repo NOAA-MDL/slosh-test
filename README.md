@@ -3,10 +3,17 @@ layout: default
 title: SLOSH
 permalink: /
 ---
-<!-- README.md                                       Last Change: 2026-10-07 -->
+<!-- README.md                                       Last Change: 2026-10-08 -->
 
 Welcome to the repository for the **Sea, Lake, and Overland Surges from
 Hurricanes (SLOSH)** model.
+
+Please note, if you make a copy of this repository, the following files are
+required for defining the Intellectual Property (IP) protection:
+
+1. [INTENT.md](./INTENT.md) describing the intent of the IP protection.
+2. [LICENSE.md](./LICENSE.md) providing the Apache 2.0 licensing information.
+3. [NOTICE.md](./NOTICE.md) providing required copyright attribution.
 
 <!----------------------------------------------------------------------------->
 ## ABOUT SLOSH
@@ -64,7 +71,7 @@ to the following documentation:
 2. [Set up MSYS](./docs/Setup-MSYS.md):
    A pre-requisite guide for Windows users detailing how to install, update, and
    configure the MSYS environment needed to compile SLOSH.
-3. [Installation Guide](./docs/Install.md):
+3. [Installation Guide](./docs/Install-SLOSH.md):
    Step-by-step instructions for downloading the required assets, building the
    SLOSH model using `gcc`, running regression tests, and testing the SLOSH-GUI.
 4. [stm-file Specification](./docs/stmFile.md):
@@ -77,6 +84,10 @@ to the following documentation:
 **"As Is" Software:** The code, visualization tools, and regression storm inputs
 provided in this repository are for educational and development purposes and are
 provided **"as is"** without warranties of any kind.
+
+**No Technical Support:** Due to limited resources, NOAA/NWS will not provide
+technical support, troubleshooting, or training for this software unless a
+separate formal agreement is in place.
 
 **Not Official Guidance:** The storm inputs provided as part of the regression
 tests are **not** official SLOSH inputs of record, nor have their results been

@@ -1,8 +1,8 @@
 ---
 layout: default
-title: Install
+title: Install SLOSH
 ---
-<!-- Install.md                                      Last Change: 2026-10-07 -->
+<!-- Install-SLOSH.md                                Last Change: 2026-10-07 -->
 
 This document is intended to help the user start to use the SLOSH model.
 
@@ -52,6 +52,7 @@ also assume you will use gcc v4.5.0.  To get a copy of gcc v4.5.0:
 2. Run the script:
 
     ```bash
+    # Following could take a 70 seconds depending on connectivity
     ./getMinGW-450.sh go
     ```
 
@@ -62,7 +63,7 @@ also assume you will use gcc v4.5.0.  To get a copy of gcc v4.5.0:
 
 ```bash
 cd ~
-git clone https://github.com/NOAA-MDL/slosh-test.git slosh
+git clone https://github.com/NOAA-MDL/slosh.git slosh
 ```
 
 <!----------------------------------------------------------------------------->
@@ -107,10 +108,20 @@ cd slosh
 
 ### MS-Windows
 
-```bash
-# Add gcc to your path (you may want to do this in your ~/.bash_profile)
-export PATH=.:$HOME/mingw32/bin:$PATH
+**NOTE** - While `$HOME/mingw32/bin` should be in the path (based on the
+provided `.bash_profile`), it may not be able to find it.  This is likely
+because you forgot to restart the terminal after step 1.  To fix, either:
 
+1. **Restart the terminal.**
+2. Or add it to the path:
+
+    ```bash
+    export PATH=.:$HOME/mingw32/bin:$PATH
+    ```
+
+You should now be able to build SLOSH:
+
+```bash
 cd ~/slosh/sorc/slosh.fd
 # 'Makefile.MinGW' auto detects if you've installed the 'gui' package
 make -f Makefile.MinGW install
@@ -184,9 +195,10 @@ official SLOSH inputs of record, one would need to contact NHC.
 
 ### Choose tests to run
 
+To avoid the longer (> 5 minutes) tests the following script adds '.skip' to the
+names of the harder trk-files in /storms/testTrk/
+
 ```bash
-# To avoid the longer (> 5 minutes) tests the following script adds '.skip' to
-# the names of the harder trk-files in /storms/testTrk/
 cd ~/slosh/storms
 ./a1.fiveMinTest.sh go
 # ./a1.fiveMinTest.sh undo  # reactivates all the tests by removing the '.skip'
@@ -260,17 +272,20 @@ SLOSH-GUI along with the GUI assets.
 
 ### Start the SLOSH-GUI (and pre-requisite work)
 
+As a pre-requisite for the test, please uncompress the **CD2** tide files.  Note
+they may already be uncompressed due to a previous run.
+
 ```bash
-# As a pre-requisite for the test, please uncompress the CD2 tide files.  Note
-# they may already be uncompressed due to a previous run.
 cd ~/slosh/parm/tidefile.ec2014
 gunzip cd2*.gz
 # Expected output if already uncompressed: gzip: 'cd2*.gz': No such file or directory
-
 ls cd2*
 # Expected output: cd2.adj  cd2.bhc
+```
 
-# Now start the SLOSH-GUI
+Now start the SLOSH-GUI
+
+```bash
 cd ~/slosh/gui
 # The following runs it in the background.  Caution: the SLOSH-GUI outputs some
 # diagnostics which could cause chaos.  Alternative would be to drop the `&`
@@ -284,7 +299,8 @@ cd ~/slosh/gui
     2. Choose `cd2dta` and press **Done**
 2. Select a storm
     1. Click **File** -> **Add 100pt Trk**
-    2. Navigate to `c:\slosh-msys\home\<USER>\slosh\storms\testTrk`
+    2. May already be in the right folder; however navigate to
+       `c:\slosh-msys\home\<USER>\slosh\storms\testTrk`
     3. Choose `2023-Idalia-W3-CC-CD2.trk` and press **Done**
 3. Start the storm
     1. Press the green **G** button (middle control panel)
@@ -292,6 +308,8 @@ cd ~/slosh/gui
        to go faster.  Note it doesn't redraw.
 
 ### Check the results
+
+Back in the terminal:
 
 ```bash
 cd ~/slosh/gui/work
