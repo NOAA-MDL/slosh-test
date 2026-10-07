@@ -1,5 +1,5 @@
 #==============================================================================
-# Makefile                                              Last Change: 2024-06-27
+# Makefile                                              Last Change: 2026-10-07
 #                                                        Arthur.Taylor@noaa.gov
 #                                                              NWS/OSTI/MDL/DSB
 #
@@ -25,7 +25,7 @@ COMPLEX_16=new#               # Use COMPLEX*16 (original) or COMPLEX(16) (new)
 VER=$(shell source ../../versions/run.ver ; echo $$slosh_ver)
 DATE=$(shell source ../../versions/run.ver ; echo $$slosh_date)
 
-WAVE=yes#                     # Include wave code
+WAVE=no#                     # Include wave code
 
 #=======================================
 # Set up the called executables

@@ -1,6 +1,6 @@
 #!/bin/make
 #------------------------------------------------------------------------------
-# Makefile.MinGW                                        Last Change: 2024-08-23
+# Makefile.MinGW                                        Last Change: 2026-10-07
 #                                                        Arthur.Taylor@noaa.gov
 #                                                              NWS/OSTI/MDL/DSB
 #
@@ -23,7 +23,7 @@ CC_OPT?=3#                    # Optimization level to use (0,1,2,3)
 # Following assumes we're still using GCC 4.5.0 32-bit
 BIT=64#                       # Use 32 (vs 64) bit compilation
 COMPLEX_16=new#               # Use COMPLEX*16 (original) or COMPLEX(16) (new)
-WAVE=yes#                      # Include wave code
+WAVE=no#                      # Include wave code
 VER=$(shell source ../../versions/run.ver ; echo $$slosh_ver)
 DATE=$(shell source ../../versions/run.ver ; echo $$slosh_date)
 
@@ -301,8 +301,8 @@ FSRC+=setcmp_hs.f
 FSRC+=hbuv_hs.f
 ifeq ($(WAVE),yes)
    FSRC+=wave.f
+   FSRC+=calcwind.f
 endif
-FSRC+=calcwind.f
 
 #----------------
 # C header files
