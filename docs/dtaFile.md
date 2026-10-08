@@ -2,7 +2,7 @@
 layout: default
 title: dta-file
 ---
-<!-- dtaFile.md                                      Last Change: 2026-10-07 -->
+<!-- dtaFile.md                                      Last Change: 2026-10-08 -->
 
 This document describes the SLOSH Basin Definition File (`dta-file`) format,
 structure, and configuration options.
@@ -17,7 +17,7 @@ There have been three major versions of the `dta-file`:
 
 * **v1:** 199201
 * **v2:** 201408 (Added version and horizontal projection info before Line 1)
-* **v3:** 201903 (Introduced the Manning-N friction section)
+* **v3:** 201903 (Introduced the Manning-n friction section)
 
 ### File Properties
 
@@ -26,8 +26,8 @@ There have been three major versions of the `dta-file`:
 * **Locations:**
   * `/parm/dta`: Active high-resolution basins.
   * `/parm/dta/etss`: Active coarse-resolution extra-tropical basins.
-  * `/parm/dta_m`: In-active Manning-n basins.
-  * `/parm/dta_o`: In-active original basins (replaced in March 2023).
+  * `/parm/dta_m`: Inactive Manning-n basins.
+  * `/parm/dta_o`: Inactive original basins (replaced in March 2023).
 
 <!----------------------------------------------------------------------------->
 ## STRUCTURE & SECTIONS
@@ -35,10 +35,10 @@ There have been three major versions of the `dta-file`:
 A standard `dta-file` is composed of 12 sequential sections. Note that newer
 versions (v2, v3) utilize expanded indexing (4-digit vs 3-digit) and deeper
 depth definitions (5-digit vs 4-digit) to accommodate higher-resolution data.
-Negative heights are stored natively (e.g., Challenger Deep is `36200`, Mount
-Everest is `-29029`).
+Elevations above sea level are stored as negative depths (e.g., Challenger Deep
+is `36200`, Mount Everest is `-29029`).
 
-1. **Header:** Contains "Line-1" configuration, grid definitions, and time-steps.
+1. **Header:** Contains "Line 1" configuration, grid definitions, and time-steps.
 2. **Barriers:** Uses 4-digit indexes in v2/v3.
 3. **1-D Flow Points:** Uses 4-digit indexes in v2/v3.
 4. **1-D Flow with Banks:** Uses 4-digit indexes in v2/v3.
@@ -46,7 +46,7 @@ Everest is `-29029`).
 6. **Channels:** *Deprecated.*
 7. **Cuts / Chokes:** Uses 4-digit indexes in v2/v3.
 8. **Trees:** Defines areas with high friction canopies.
-9. **Manning-N:** Added in v3 for variable bottom friction.
+9. **Manning-n:** Added in v3 for variable bottom friction.
 10. **Printed Panels:** *Deprecated.*
 11. **Depths:** Uses 5-digit depths in v2/v3.
 12. **Levee Points:** Defines cells inside levee systems that must not be
@@ -60,6 +60,7 @@ boundaries, and smoothing rules for the basin. It relies on strict column
 positioning:
 
 <!-- markdownlint-disable MD060 -->
+
 | Columns | Description | Values / Flags |
 | :------ | :---------- | :------------- |
 | **1–11** | Basin Name | Standard string identifying the basin. |
@@ -82,6 +83,7 @@ positioning:
 |         |             | `'='` (HCRT=0.5), `'&'` (HCRT=0.4), `'^'` (HCRT=0.3), `'%'` (HCRT=0.2), `'*'` (HCRT=0.1) |
 | **45–51** | Revision Tag | Reserved for the string `REVISED`. |
 | **54–63** | Revision Date | Timestamp of when the basin was last updated. |
+
 <!-- markdownlint-enable MD060 -->
 
 <!----------------------------------------------------------------------------->
