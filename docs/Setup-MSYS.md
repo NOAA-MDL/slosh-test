@@ -21,7 +21,7 @@ and start using it.
     4. Wait for the installation
     5. Click **Finish** (Don't run MSYS2 now)
 
-3. Choose environment  
+3. Choose an environment  
     For more see: [MSYS-environment](https://www.msys2.org/docs/environments/)
 
     | Name       | Prefix      | Tool chain | Architecture | C-lib  | C++-lib   |

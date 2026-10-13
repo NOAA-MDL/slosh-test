@@ -31,8 +31,8 @@ SLOSH's official compiler has evolved over time as follows:
 | gcc v4.5.0, intel 19.0.5.281 | 2021-05-11  | P-Surge v2.9               |
 | gcc v4.5.0, intel 19.1.3.304 | 2022-06-28  | P-Surge v2.10, v3.0        |
 
-In 2017, with the migration of NWS's simulation studies to the super computer
-and NWS's implementation of P-Surge and P-ETSS, the official compiler shifted to
+In 2017, with the migration of NWS's simulation studies to the supercomputer and
+NWS's implementation of P-Surge and P-ETSS, the official compiler shifted to
 both purchased (intel) and free (gcc) options.
 
 Since these instructions assume you are building SLOSH on **MS-WINDOWS**, they
@@ -54,7 +54,7 @@ also assume you will use gcc v4.5.0.  To get a copy of gcc v4.5.0:
 2. Run the script:
 
     ```bash
-    # Following could take a 70 seconds depending on connectivity
+    # Following could take about 70 seconds depending on connectivity
     ./getMinGW-450.sh go
     ```
 
