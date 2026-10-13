@@ -2,7 +2,7 @@
 layout: default
 title: Install SLOSH
 ---
-<!-- Install-SLOSH.md                                Last Change: 2026-10-07 -->
+<!-- Install-SLOSH.md                                Last Change: 2026-10-13 -->
 
 This document is intended to help the user start to use the SLOSH model.
 
@@ -39,6 +39,8 @@ Since these instructions assume you are building SLOSH on **MS-WINDOWS**, they
 also assume you will use gcc v4.5.0.  To get a copy of gcc v4.5.0:
 
 1. Download `getMinGW-450.sh` script:
+
+    Start up the MSYS terminal and enter:
 
     ```bash
     cd ~

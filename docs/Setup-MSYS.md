@@ -2,7 +2,7 @@
 layout: default
 title: Setup (MSYS)
 ---
-<!-- Setup-MSYS.md                                   Last Change: 2026-10-08 -->
+<!-- Setup-MSYS.md                                   Last Change: 2026-10-13 -->
 
 This document is intended to help the user install [MSYS](http://www.msys2.org)
 and start using it.
@@ -82,6 +82,7 @@ packages, and install extra packages required by the SLOSH model.
 
     ```bash
     pacman -S --needed diffutils git make vim man
+    # Prompt: Proceed with installation? [Y/n] Y
     ```
 
 <!----------------------------------------------------------------------------->
@@ -103,13 +104,15 @@ terminal.
 2. Minimal ~/.bash_profile and ~/.bashrc
 
     ```bash
-    mv ~/.bash_profile bash_profile-orig ; vim ~/.bash_profile
+    mv ~/.bash_profile bash_profile-orig
+    vim ~/.bash_profile
     ```
 
     Enter the following [bash_profile](./config/bash_profile)
 
     ```bash
-    mv ~/.bashrc bashrc-orig ; vim ~/.bashrc
+    mv ~/.bashrc bashrc-orig
+    vim ~/.bashrc
     ```
 
     Enter the following [bashrc](./config/bashrc)
