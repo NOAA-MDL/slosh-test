@@ -84,6 +84,8 @@ To get the latest basins, gui, and regression (gcc450-o3) assets:
 ```bash
 cd slosh
 ./getAssets.sh all
+# Downloads complete.
+# Prompt: Do you want to install? (y/n): y 
 
 # Other options include:
 # ./getAssets.sh basin                 # Get just the basins
@@ -100,6 +102,9 @@ cd slosh
 
 ### Install Assets from /tar
 
+If you didn't choose to install in the previous step, or want to install later,
+then:
+
 ```bash
 ./installAssets.sh
 # ./installAssets.sh clean  # Remove all installed assets
@@ -107,8 +112,6 @@ cd slosh
 
 <!----------------------------------------------------------------------------->
 ## 4. BUILD SLOSH
-
-### MS-Windows
 
 **NOTE** - While `$HOME/mingw32/bin` should be in the path (based on the
 provided `.bash_profile`), it may not be able to find it.  This is likely
@@ -128,18 +131,6 @@ cd ~/slosh/sorc/slosh.fd
 # 'Makefile.MinGW' auto detects if you've installed the 'gui' package
 make -f Makefile.MinGW install
 make -f Makefile.MinGW clean
-```
-
-### Linux
-
-```bash
-# Add gcc to your path (may want to add this to your ~/.bash_profile)
-export PATH=/home/$USER/gcc/gcc-4.5.0/bin:$PATH
-export LD_LIBRARY_PATH=/home/$USER/gcc/gcc-4.5.0/lib:/home/$USER/gcc/lib64
-
-cd ~/slosh/sorc/slosh.fd
-make -f makefile.linux install
-make -f makefile.linux clean
 ```
 
 <!----------------------------------------------------------------------------->
