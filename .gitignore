@@ -2,14 +2,20 @@
 # ... the caveat is you'd need a .gitignore in each subfolder
 #
 # Ignore the basin data (since it is in svn)
-/parm/LICENSE.md
 /parm/README.md
-/parm/.svn
-/parm/bnt
-/parm/dta
-/parm/dta_o
-/parm/dta_m
-/parm/tidefile.ec2014
+/parm/bnt/?basins.dta
+/parm/bnt/basins.dta
+/parm/bnt/sloshdsp.bnt
+/parm/dta/*dta
+/parm/dta/etss/*dta
+/parm/tidefile.ec2014/*.gz
+/parm/tidefile.ec2014/*.adj
+/parm/tidefile.ec2014/*.bhc
+/parm/tidefile.ec2014/tide_*.txt
+/parm/tidefile.ec2014/ft03.dta
+/parm/tidefile.ec2014/etss/*.gz
+/parm/tidefile.ec2014/etss/*.adj
+/parm/tidefile.ec2014/etss/*.bhc
 #
 # Ignore .o and exec files in sorc
 /sorc/envutil.cd/*.o
@@ -28,7 +34,6 @@
 /exec/sloshLinux
 /exec/stm2trk.exe
 /exec/stm2trk
-/gui/exec/sloshGui.exe
 #
 # Ignore /work in dev
 /dev/log/*
@@ -41,14 +46,19 @@
 /storms/testAns/*
 #
 # Ignore tar folders
-/tar/*
+/tar/*.gz
 #
 # Ignore GUI folders
-/gui/.svn
-/gui/.svnignore
-/gui/exec
-/gui/geodata
-/gui/include
-/gui/lib
-/gui/sloshrun.ini
-/gui/work
+/gui/exec/*.dll
+/gui/exec/sloshGui.exe
+/gui/exec/surf.ico
+/gui/geodata/*.mrt
+/gui/geodata/*.txt
+/gui/geodata/colors.pal
+/gui/geodata/landfall.pts
+/gui/geodata/noaaball.gif
+/gui/include/tcl8.5.3_win/*.h
+/gui/include/tcl8.5.3_win/X11/*.h
+/gui/lib/tcl8/8.5/*.tm
+/gui/lib/tcl8.5/*
+/gui/lib/tk8.5/*
