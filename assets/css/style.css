@@ -1,0 +1,309 @@
+/* ========================================== */
+/* GLOBAL PAGE ENVIRONMENT SETUP              */
+/* ========================================== */
+body {
+  width: 1000px;
+  margin-top: 0px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0px;
+  background: #c5E5F5;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+h1 {
+  font-size: 24px;
+}
+h2 {
+  font-size: 20px;
+}
+h3 {
+  font-size: 16px;
+}
+h1, h2 {
+  border-bottom: 1px solid #eaecef; /* Light gray line similar to GitHub */
+  padding-bottom: 8px;              /* Adds breathing room above the line */
+  margin-bottom: 16px;              /* Adds space below the line */
+}
+
+/* Restore global link color */
+a:link {
+  color: #0000FF;
+  text-decoration: none;
+}
+
+/* ========================================== */
+/* TABLE STYLES                               */
+/* ========================================== */
+.main-content table {
+  border-collapse: collapse;
+  width: auto;
+  margin-bottom: 20px;
+}
+
+.main-content th,
+.main-content td {
+  border: 1px solid #ccc;
+  padding: 6px 8px;
+  text-align: left;
+}
+
+.main-content th {
+  background-color: #f4f4f4;
+  font-weight: bold;
+}
+
+/* ========================================== */
+/* MAIN CONTENT AREA                          */
+/* ========================================== */
+.main-content {
+  background: #ffffff;
+  padding: 10px 10px;
+  box-sizing: border-box; /* Keeps width strictly at 1000px */
+  min-height: 400px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Add GitHub's default paragraph and list spacing */
+.main-content p,
+.main-content ul,
+.main-content ol {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+/* Set the H3 headers to scale with the body */
+.main-content h3 {
+  font-size: 18px;
+}
+
+/* Remove default Markdown margins at the top and bottom of the content box */
+.main-content > :first-child { margin-top: 0; }
+.main-content > :last-child { margin-bottom: 0; }
+
+
+/* ========================================== */
+/* CODE BLOCK STYLES                          */
+/* ========================================== */
+pre, code {
+  background-color: #f4f4f4;
+  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+  font-size: 15px;
+}
+
+/* Inline code snippets (e.g., single backticks) */
+code {
+  padding: 2px 5px;
+  border-radius: 4px;        /* Rounded corners */
+}
+
+/* Multi-line code blocks (e.g., triple backticks) */
+pre {
+  position: relative;
+  padding: 12px 15px;
+  border-radius: 6px;
+  overflow-x: auto;
+  border: 1px solid #ddd;
+  line-height: 1.4;  /* Tightens the vertical space between lines */
+}
+
+/* Prevents double-padding when code is inside pre */
+pre code {
+  padding: 0;
+  border-radius: 0;
+  background-color: transparent;
+  font-size: 15px;
+}
+
+/* ========================================== */
+/* BUTTON & TOOLTIP STYLES                    */
+/* ========================================== */
+
+/* The pre block copy button */
+.copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 6px;
+  background-color: transparent;
+  color: #555;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.copy-btn:hover {
+  background-color: #e2e2e2;
+  color: #111;
+}
+
+/* The new inline file copy button */
+.inline-copy-btn {
+  position: relative;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #555;
+  margin-left: 6px;
+  vertical-align: middle;
+  padding: 4px;
+  border-radius: 4px;
+  display: inline-flex;
+}
+
+.inline-copy-btn:hover {
+  background-color: #e2e2e2;
+  color: #111;
+}
+
+/* Custom GitHub-style Tooltip placed to the left */
+[data-tooltip]::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: 100%;       /* Pushes tooltip to the left of the icon */
+  top: 50%;
+  transform: translateY(-50%);
+  margin-right: 8px; /* Spacing between button and tooltip */
+  padding: 5px 8px;
+  background-color: #24292f; /* GitHub dark gray */
+  color: #ffffff;
+  font-size: 12px;
+  font-family: Arial, sans-serif;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+}
+
+[data-tooltip]:hover::before {
+  opacity: 1;
+}
+
+/* Override for inline copy buttons: anchor tooltip to the right */
+.inline-copy-btn[data-tooltip]::before {
+  right: auto;       /* Removes the left-anchoring */
+  left: 100%;        /* Pushes the tooltip to the right of the icon */
+  margin-right: 0;   /* Removes the right spacing */
+  margin-left: 8px;  /* Adds spacing between the icon and the tooltip */
+}
+
+/* ========================================== */
+/* NWS HEADER STYLES                          */
+/* ========================================== */
+div.nwsHead {
+  height: 60px;
+  background-color: #ffffff;
+  margin-bottom: 1px;
+  box-shadow: 0px 7px 5px -3px #cccccc;
+}
+div.nwsHeadMid {
+  width: 680px;
+  margin-top: 5px;
+  margin-left: 9px;
+  font-size: 85%;
+  float: left;
+  display: block;
+}
+
+a.nwsHeadNoaa:link, a.nwsHeadNoaa:visited {
+  color: #003399;
+  text-decoration: none;
+}
+a.nwsHeadNoaa:hover { color: #ffad40; text-decoration: underline; }
+
+a.nwsHeadTitle:link, a.nwsHeadTitle:visited { color: #000000; font-size: 180%; text-decoration: none; }
+a.nwsHeadTitle:hover { color: #FF0000; text-decoration: underline; }
+.nwsHeadTitle {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 24px;
+  display: inline-block;
+  margin-bottom: 5px;
+}
+
+img.nwsHeadLf { float: left; height: 60px; display: block; }
+img.nwsHeadRt { float: right; height: 60px; display: block; }
+
+/* ========================================== */
+/* NWS NAVIGATION & SPACERS                   */
+/* ========================================== */
+div.exLink {
+  padding: 2px 2px 0px 2px;
+  background-color: #ffffff;
+  margin-bottom: 2px;
+  box-shadow: 0px 7px 5px -3px #cccccc;
+}
+td.exLink { font-weight: bold; font-size: 15px; }
+a.exLink:link, a.exLink:visited { color: #003399; text-decoration: none; }
+a.exLink:hover { color: #FF0000; text-decoration: underline; }
+
+div.topSpacer {
+  width: 1000px;
+  height: 2px;
+  margin-top: 0px;
+  background: url('../images/head_shadow.png') center;
+}
+
+/* Active Tab Highlighting */
+.nav-links a.active-tab {
+  color: #000000;
+  text-decoration: none;
+  /* Use text-shadow to fake bolding without shifting layout widths */
+  text-shadow: 0.3px 0 0 #000000, -0.3px 0 0 #000000;
+  cursor: default; /* Optional: Makes it feel like a label rather than a link */
+}
+
+/* ========================================== */
+/* SITE NAVIGATION STYLES                     */
+/* ========================================== */
+.nav-wrapper {
+  background-color: #ffffff;
+  padding: 5px 0;
+}
+
+.site-nav {
+  text-align: left;
+  padding: 0px 10px 0px 10px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.nav-divider {
+  border: 0;
+  border-top: 1px solid #e0e0e0;
+  margin: 6px 0;
+}
+
+/* ========================================== */
+/* NWS FOOTER STYLES                          */
+/* ========================================== */
+div.footer {
+  background-color: #FFFFFF;
+  width: 100%;
+  height: auto;
+  padding: 3px 0px 10px 0px;
+  overflow: hidden;
+}
+.footer a:link { color: #1763ab; text-decoration: none; }
+.footer a:visited { color: #921ab2; }
+.footer a:hover { text-decoration: underline; }
+
+div.footSpacer {
+  width: 1000px;
+  height: 10px;
+  margin-top: 0px;
+  background: url('../images/head_shadow.png') center;
+}
+div.footInfo {
+  width: 100%;
+  line-height: 16px;
+  padding-right: 50px;
+  font: 8pt 'Helvetica Neue', Arial, Helvetica, Geneva, sans-serif;
+}
+div.footCol { float: left; position: relative; }

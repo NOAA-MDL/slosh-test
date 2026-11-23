@@ -1,0 +1,46 @@
+#-------------------------------------------------------------------------------
+# @file    _config.yml                                   Last Change: 2026-11-23
+# @author  Arthur.Taylor (NWS/OMD/MDSD)
+# @brief   Jekyll settings for the SLOSH pages (GitHub Pages)
+#-------------------------------------------------------------------------------
+title: SLOSH
+pageOrder: order   # Sort the page list in the sidebar by the "order" field
+sdp:               # A link near the look button
+  title: SLOSH Display Program
+  url: https://noaa-mdl.github.io/sdp/
+markdown: kramdown
+
+# Only the pages are built; GitHub Pages would try every folder otherwise
+exclude:
+  - dev
+  - exec
+  - gui
+  - parm
+  - sorc
+  - storms
+  - tar
+  - versions
+  - getAssets.sh
+  - installAssets.sh
+  - CHANGELOG.txt
+
+# Turn links to other pages (./Setup-WSL.md) into links to the built pages
+plugins:
+  - jekyll-relative-links
+relative_links:
+  enabled: true
+  collections: false
+
+# Every page uses the layout in _layouts/default.html.  The home page and the
+# licence pages are not in the sidebar list.
+defaults:
+  - scope: { path: "" }
+    values: { layout: "default" }
+  - scope: { path: "README.md" }
+    values: { landing: true }
+  - scope: { path: "INTENT.md" }
+    values: { landing: true }
+  - scope: { path: "NOTICE.md" }
+    values: { landing: true }
+  - scope: { path: "LICENSE.md" }
+    values: { landing: true }

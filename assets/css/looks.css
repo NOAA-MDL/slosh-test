@@ -1,0 +1,255 @@
+/*------------------------------------------------------------------------------
+ * @file    looks.css                                     Last Change: 2026-11-23
+ * @author  Arthur.Taylor (NWS/OMD/MDSD)
+ * @brief   Page layout, sidebar, and the classic and dark looks
+ *----------------------------------------------------------------------------*/
+/* ========================================== */
+/* LOOKS: classic (light) and dark            */
+/* ========================================== */
+/* The <html> element has data-look="classic" or data-look="dark".  The      */
+/* button at the top of the sidebar switches it (the choice is kept in the   */
+/* browser).  The NWS header, link bar and footer keep their usual white     */
+/* look in both; the dark look changes the sidebar and the page.             */
+
+/* ----- Both looks: the page at the full width, with a sidebar ----- */
+body {
+  width: auto;
+  margin-left: 12px;
+  margin-right: 12px;
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  grid-template-rows: auto auto auto 1fr auto;
+  column-gap: 6px;
+}
+div.topSpacer,
+div.footSpacer { width: 100%; }
+.nwsHead      { grid-column: 1 / -1; grid-row: 1; }
+.exLink       { grid-column: 1 / -1; grid-row: 2; }
+.topSpacer    { grid-column: 1 / -1; grid-row: 3; }
+.main-content { grid-column: 2; grid-row: 4; min-width: 0; }
+.footer       { grid-column: 1 / -1; grid-row: 5; }
+
+/* The sidebar stays in view while the page scrolls */
+.side-nav {
+  grid-column: 1;
+  grid-row: 4;
+  align-self: start;
+  position: sticky;
+  top: 0;
+  max-height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  box-sizing: border-box;
+  background: #ffffff;
+  padding: 8px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font: 14px Arial, Helvetica, sans-serif;
+}
+
+/* A narrow window: the sidebar goes above the page */
+@media (max-width: 800px) {
+  body { grid-template-columns: 1fr; }
+  .side-nav { grid-column: 1; grid-row: 4; position: static; max-height: none; }
+  .main-content { grid-column: 1; grid-row: 5; }
+  .footer { grid-row: 6; }
+}
+
+a.look-btn:link,
+a.look-btn:visited {
+  display: inline-block;
+  align-self: flex-start;
+  font: bold 13px Arial, Helvetica, sans-serif;
+  padding: 2px 12px;
+  border: 1px solid #003399;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #003399;
+  text-decoration: none;
+  cursor: pointer;
+}
+a.look-btn:hover { background: #003399; color: #ffffff; }
+
+a.side-btn:link,
+a.side-btn:visited {
+  display: block;
+  padding: 5px 8px;
+  border-radius: 4px;
+  color: #003399;
+  text-decoration: none;
+}
+a.side-btn:hover { background: #e8f3fa; }
+a.side-home:link,
+a.side-home:visited {
+  font-weight: bold;
+  border-bottom: 1px solid #e0e0e0;
+  border-radius: 0;
+  margin-bottom: 4px;
+}
+a.side-on:link,
+a.side-on:visited {
+  background: #c5e5f5;
+  color: #000000;
+  font-weight: bold;
+  border-left: 3px solid #c77d1a;           /* Amber "you are here" bar */
+  border-radius: 4px 999px 999px 4px;       /* A rounded tab end */
+}
+.side-toc {
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 4px 12px;
+  border-left: 2px solid #c77d1a;
+}
+.side-toc a:link,
+.side-toc a:visited {
+  padding: 3px 8px;
+  font-size: 13px;
+  line-height: 1.3;
+  color: #003399;
+  text-decoration: none;
+}
+.side-toc a:hover { background: #e8f3fa; }
+.side-toc a.toc-now {
+  font-weight: bold;
+  color: #000000;
+  background: #e8f3fa;
+  border-radius: 0 999px 999px 0;
+}
+a.side-link:link,
+a.side-link:visited {
+  display: block;
+  padding: 2px 8px;
+  border: 1px solid #003399;
+  border-radius: 999px;
+  color: #003399;
+  font-size: 13px;
+  text-align: center;
+  text-decoration: none;
+}
+a.side-link:hover { background: #003399; color: #ffffff; }
+a.side-btn.side-kid { margin-left: 14px; font-size: 13px; }
+.side-toc.side-kid { margin-left: 26px; }
+.side-sep {
+  display: block;
+  border-top: 1px solid #c5c5c5;
+  margin: 6px 0 4px 0;
+}
+
+/* ----- Dark look ----- */
+html[data-look="dark"] {
+  --bg: #060913;      /* Deep space: the page and the code blocks */
+  --panel: #0c1428;   /* The text panel and the sidebar */
+  --raised: #17234a;  /* Table headers, hovers */
+  --line: #2a3a66;
+  --text: #e4ebf7;
+  --muted: #a3b2d0;
+  --link: #9fb4ff;    /* Near the LCARS periwinkle */
+  --visited: #d3a9e0; /* Near the LCARS lilac */
+  --mark: #1f3470;    /* The page and section marked in the sidebar */
+  --amber: #e8a24c;   /* The "you are here" bar */
+  --rule: #3a4a85;    /* The line under the headings */
+  color-scheme: dark;  /* dark scrollbars and form controls */
+}
+html[data-look="dark"] body { background: var(--bg); color: var(--text); }
+
+/* The page */
+html[data-look="dark"] .main-content {
+  background: var(--panel);
+  color: var(--text);
+}
+html[data-look="dark"] .main-content a:link { color: var(--link); }
+html[data-look="dark"] .main-content a:visited { color: var(--visited); }
+html[data-look="dark"] .main-content a:hover { text-decoration: underline; }
+html[data-look="dark"] h1,
+html[data-look="dark"] h2 { border-bottom-color: var(--rule); }
+html[data-look="dark"] hr { border-color: var(--line); }
+html[data-look="dark"] .main-content blockquote {
+  color: var(--muted);
+  border-left: 4px solid var(--line);
+  margin-left: 0;
+  padding-left: 12px;
+}
+html[data-look="dark"] .main-content th,
+html[data-look="dark"] .main-content td { border-color: var(--line); }
+html[data-look="dark"] .main-content th { background-color: var(--raised); }
+html[data-look="dark"] .main-content img { background: #ffffff; }
+
+/* Code */
+html[data-look="dark"] pre,
+html[data-look="dark"] code { background-color: var(--bg); color: var(--text); }
+html[data-look="dark"] pre { border-color: var(--line); }
+html[data-look="dark"] pre code { background-color: transparent; }
+html[data-look="dark"] .copy-btn,
+html[data-look="dark"] .inline-copy-btn { color: var(--muted); }
+html[data-look="dark"] .copy-btn:hover,
+html[data-look="dark"] .inline-copy-btn:hover {
+  background-color: var(--raised);
+  color: var(--text);
+}
+
+/* The sidebar */
+html[data-look="dark"] .side-nav { background: var(--panel); }
+html[data-look="dark"] a.side-btn:link,
+html[data-look="dark"] a.side-btn:visited { color: var(--link); }
+html[data-look="dark"] a.side-btn:hover { background: var(--raised); }
+html[data-look="dark"] a.side-home:link,
+html[data-look="dark"] a.side-home:visited { border-bottom-color: var(--line); }
+html[data-look="dark"] a.side-on:link,
+html[data-look="dark"] a.side-on:visited {
+  background: var(--mark);
+  color: var(--text);
+  border-left-color: var(--amber);
+}
+html[data-look="dark"] .side-toc { border-left-color: var(--amber); }
+html[data-look="dark"] .side-toc a:link,
+html[data-look="dark"] .side-toc a:visited { color: var(--link); }
+html[data-look="dark"] .side-toc a:hover { background: var(--raised); }
+html[data-look="dark"] .side-toc a.toc-now {
+  color: var(--text);
+  background: var(--raised);
+}
+html[data-look="dark"] a.side-link:link,
+html[data-look="dark"] a.side-link:visited {
+  color: var(--link);
+  border-color: var(--link);
+}
+html[data-look="dark"] a.side-link:hover {
+  background: var(--link);
+  color: var(--bg);
+}
+html[data-look="dark"] .side-sep { border-top-color: var(--line); }
+html[data-look="dark"] a.look-btn:link,
+html[data-look="dark"] a.look-btn:visited {
+  background: var(--panel);
+  color: var(--link);
+  border-color: var(--link);
+}
+html[data-look="dark"] a.look-btn:hover {
+  background: var(--link);
+  color: var(--bg);
+}
+
+/* ----- Reading comfort (both looks) ----- */
+/* Text lines stop at about 90 characters; tables and code keep the width */
+.main-content p,
+.main-content ul,
+.main-content ol,
+.main-content blockquote { max-width: 90ch; }
+pre, code, pre code { font-size: 14px; }
+
+/* Printing is always plain (also from the dark look) */
+@media print {
+  html[data-look] body {
+    display: block;
+    margin: 0;
+    background: #ffffff;
+    color: #000000;
+  }
+  html[data-look] .side-nav { display: none; }
+  html[data-look] .main-content { background: #ffffff; color: #000000; }
+  html[data-look] pre,
+  html[data-look] code { background-color: #f4f4f4; color: #000000; }
+  html[data-look] .main-content a:link,
+  html[data-look] .main-content a:visited { color: #0000ff; }
+}

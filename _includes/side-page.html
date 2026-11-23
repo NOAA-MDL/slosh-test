@@ -1,0 +1,20 @@
+{% comment %}
+  One entry of the sidebar page list, plus the outline (the ## headings) of
+  the page when it is the current page.  Parameters: include.p (the page) and
+  include.kid ("kid" for a page nested under another one).
+{% endcomment %}
+<a class="side-btn{% if include.kid %} side-kid{% endif %}{% if include.p.url == page.url %} side-on{% endif %}" href="{{ include.p.url | relative_url }}">{{ include.p.title | default: include.p.name }}</a>
+{% if include.p.url == page.url %}
+{% assign heads = content | split: '<h2' %}
+{% if heads.size > 1 %}
+<div class="side-toc{% if include.kid %} side-kid{% endif %}">
+  {% for part in heads offset: 1 %}
+  {% assign headId = part | split: 'id="' | slice: 1 | first | split: '"' | first %}
+  {% assign headText = '<h2' | append: part | split: '</h2>' | first | strip_html %}
+  {% if headId != '' and headId != nil %}
+  <a href="#{{ headId }}">{{ headText }}</a>
+  {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+{% endif %}
