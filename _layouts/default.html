@@ -170,11 +170,31 @@
         side.scrollTop = bottom - side.clientHeight + 30;
       }
     }
+    // The last sections cannot reach the top of a short page, so a click on
+    // an entry marks that entry until the reader scrolls.
+    var pinned = null;
+    function unpin() { pinned = null; }
+    ['wheel', 'touchstart', 'keydown'].forEach(function(ev) {
+      window.addEventListener(ev, unpin, { passive: true });
+    });
+    links.forEach(function(a) {
+      a.addEventListener('click', function() {
+        pinned = document.getElementById(a.getAttribute('href').slice(1));
+        window.setTimeout(update, 0);
+      });
+    });
     function update() {
       var now = null;
       heads.forEach(function(h) {
         if (h.getBoundingClientRect().top <= 100) { now = h; }
       });
+      if (pinned) { now = pinned; }
+      // At the very end of the page the last section is the one being read
+      var atEnd = window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 2;
+      if (atEnd && !pinned && heads.length > 0) {
+        now = heads[heads.length - 1];
+      }
       links.forEach(function(a) { a.classList.remove('toc-now'); });
       if (now) {
         byId[now.id].classList.add('toc-now');

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- * @file    looks.css                                     Last Change: 2026-11-23
+ * @file    looks.css                                     Last Change: 2026-11-24
  * @author  Arthur.Taylor (NWS/OMD/MDSD)
  * @brief   Page layout, sidebar, and the classic and dark looks
  *----------------------------------------------------------------------------*/
@@ -235,7 +235,7 @@ html[data-look="dark"] a.look-btn:hover {
 .main-content p,
 .main-content ul,
 .main-content ol,
-.main-content blockquote { max-width: 90ch; }
+.main-content blockquote { max-width: 110ch; }
 pre, code, pre code { font-size: 14px; }
 
 /* Printing is always plain (also from the dark look) */
